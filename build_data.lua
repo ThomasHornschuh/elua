@@ -23,6 +23,17 @@ local toolchain_list =
     cross_lualong = 'int 32',
     version = '--version'
   },
+  [ 'riscv32-gcc' ] = {
+    compile = 'riscv32-unknown-elf-gcc',
+    link = 'riscv32-unknown-elf-ld',
+    asm = 'riscv32-unknown-elf-as',
+    bin = 'riscv32-unknown-elf-objcopy',
+    size = 'riscv32-unknown-elf-size',
+    cross_cpumode = 'little',
+    cross_lua = 'float 64',
+    cross_lualong = 'int 32',
+    version = '--version'
+  },
   [ 'arm-eabi-gcc' ] = {
     compile = 'arm-eabi-gcc',
     link = 'arm-eabi-ld',
@@ -68,11 +79,11 @@ local toolchain_list =
     version = '--version'
   },
   [ 'i686-gcc' ] = {
-    compile = 'i686-elf-gcc',
-    link = 'i686-elf-ld',
+    compile = 'gcc',
+    link = 'ld',
     asm = 'nasm',
-    bin = 'i686-elf-objcopy',
-    size = 'i686-elf-size',
+    bin = 'objcopy',
+    size = 'size',
     cross_cpumode = 'little',
     cross_lua = 'float 64',
     cross_lualong = 'int 32',
@@ -88,7 +99,8 @@ local arch_data = {
   arm = 'little',
   cortexm = 'little',
   avr32 = 'big',
-  i386 = 'little' 
+  i386 = 'little',
+  rv32im= 'little' 
 }
 
 -- Toolchain to arch mapping
@@ -96,7 +108,8 @@ local toolchain_map = {
   arm = { 'arm-gcc', 'codesourcery', 'devkitarm', 'arm-eabi-gcc' },
   cortexm = { 'arm-gcc', 'codesourcery', 'devkitarm', 'arm-eabi-gcc' },
   avr32 = { 'avr32-gcc', 'avr32-unknown-none-gcc' },
-  i386 =  { 'i686-gcc' }
+  i386 =  { 'i686-gcc' },
+  rv32im =  { 'riscv32-gcc' }
 }
 
 -- List of platform/CPU combinations
@@ -117,6 +130,8 @@ local platform_list =
   lpc24xx = { cpus = { 'LPC2468' }, arch = 'arm' },
   lpc17xx = { cpus = { 'LPC1768', 'LPC1769' }, arch = 'cortexm' },
   xmc4000 = { cpus = { 'XMC4400F100X512', 'XMC4500F144K1024', 'XMC4500E144K1024', 'XMC4700F144K2048' }, arch = 'cortexm' },
+  riscv32spike   = {  cpus = { 'RV32IMSPIKE' }, arch = 'rv32im' }
+
 }
 
 -- Returns the platform of a given CPU

@@ -358,8 +358,8 @@ extern char end[];
 
 // 'sim' and 'pc' have memory allocated dynamically at run time, as opposed to all
 // the other targets
-
-#if !defined( ELUA_BOARD_SIM ) && !defined( ELUA_BOARD_PC )
+// TH: add also ELUA_BOARD_RISCV32_SPIKE here
+#if !defined( ELUA_BOARD_SIM ) && !defined( ELUA_BOARD_PC ) && !defined( ELUA_BOARD_RISCV32_SPIKE)
 #define ARRAYSPEC             static
 #else
 #define ARRAYSPEC
