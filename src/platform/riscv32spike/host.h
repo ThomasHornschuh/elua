@@ -9,11 +9,11 @@
 
 extern int host_errno;
 
-ssize_t host_read( int fd, void * buf, size_t count );
-ssize_t host_write( int fd, const void * buf, size_t count );
-int host_open( const char *name, int flags, mode_t mode );
-int host_close( int fd );
-long host_lseek( int fd, long pos, int whence );
+ssize_t host_read(int file, void* ptr, size_t len);
+ssize_t host_write(int file, const void* ptr, size_t len);
+int host_open(const char* name, int flags, int mode);
+int host_close(int file);
+int host_lseek(int file, long ptr, int dir);
 
 #define PROT_READ 0x1   /* Page can be read.  */
 #define PROT_WRITE  0x2   /* Page can be written.  */
@@ -31,8 +31,9 @@ long host_lseek( int fd, long pos, int whence );
 
 #define MAP_FAILED (void *)(-1)
 
-void *host_mmap2(void *addr, size_t length, int prot, int flags, int fd, off_t pgoffset);
-int host_gettimeofday( struct timeval *tv, struct timezone *tz );
+void* host_sbrk(ptrdiff_t incr);
+
+int host_gettimeofday(struct timeval* tp, void* tzp);
 void host_exit(int status);
 
 #endif // _HOST_H

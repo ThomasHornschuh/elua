@@ -12,6 +12,7 @@
 #include "term.h"
 
 // Platform specific includes
+#include "host.h"
 #include "hostif.h"
 
 // ****************************************************************************
@@ -29,7 +30,7 @@ static int i386_term_in( int mode )
   if( mode == TERM_INPUT_DONT_WAIT )
     return -1;
   else
-    return hostif_getch();
+   return hostif_getch();
 }
 
 static int i386_term_translate( int data )
@@ -88,15 +89,21 @@ static int kb_read( timer_data_type to )
 void *memory_start_address = 0;
 void *memory_end_address = 0;
 
+extern char end;
+
 void platform_ll_init( void )
 {
+	
+    hostif_putstr("ll_init\n");	
+	
   // Initialise heap memory region.
-  memory_start_address = hostif_getmem( MEM_LENGTH ); 
-  memory_end_address = memory_start_address + MEM_LENGTH;
+    memory_start_address = (void*) host_sbrk( MEM_LENGTH ); 
+    memory_end_address = memory_start_address + MEM_LENGTH;
 }
 
 int platform_init()
 { 
+  platform_ll_init();	
   if( memory_start_address == NULL ) 
   {
     hostif_putstr( "platform_init(): mmap failed\n" );
