@@ -34,11 +34,6 @@ int hostif_getch()
  
 }
 
-void* hostif_getmem( unsigned size )
-{
-  void *pmem = host_mmap2( 0, size, (PROT_READ|PROT_WRITE), (MAP_PRIVATE|MAP_ANONYMOUS), -1, 0 );
-  return pmem == MAP_FAILED ? NULL : pmem;
-}
 
 void hostif_exit()
 {

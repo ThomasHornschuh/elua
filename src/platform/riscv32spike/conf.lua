@@ -2,8 +2,8 @@
 -- Intended to run with the Proxy Kernel
 
 --specific_files = sf( "boot.s utils.s hostif_%s.c platform.c host.c", comp.cpu:lower() )
-specific_files = sf( "platform.c ", comp.cpu:lower() )
---local ldscript = "i386.ld"
+specific_files = sf( "platform.c stubs.c hostif_linux.c syscalls.c ", comp.cpu:lower() )
+local ldscript = "src/platform/riscv32spike/riscv_local.ld"
   
 -- Override default optimize settings
 delcf{ "-Os", "-fomit-frame-pointer" }
@@ -16,7 +16,7 @@ specific_files = utils.prepend_path( specific_files, sf( "src/platform/%s", plat
 -- Standard GCC flags
 addcf{ '-ffunction-sections', '-fdata-sections', '-fno-strict-aliasing', '-Wall' }
 --addlf{ '-nostartfiles', '-nostdlib', '-T', ldscript, '-Wl,--gc-sections', '-Wl,--allow-multiple-definition' }
-addlf{  '-Wl,--allow-multiple-definition' }
+addlf{  '-T', ldscript,  '-Wl,--allow-multiple-definition' }
 addlib{ 'c','gcc','m' }
 
 local target_flags = { '-march=RV32IM','-m32' }

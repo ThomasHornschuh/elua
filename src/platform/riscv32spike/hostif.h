@@ -14,8 +14,6 @@ void hostif_putstr(const char *c);
 // Get a char from keyboard
 int hostif_getch();
 
-// Get memory
-void *hostif_getmem( unsigned size );
 
 // Terminate the simulator (exit program)
 void hostif_exit();
