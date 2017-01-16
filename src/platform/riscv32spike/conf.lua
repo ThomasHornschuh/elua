@@ -6,8 +6,8 @@ specific_files = sf( "platform.c stubs.c hostif_linux.c syscalls.c ", comp.cpu:l
 local ldscript = "src/platform/riscv32spike/riscv_local.ld"
   
 -- Override default optimize settings
-delcf{ "-Os", "-fomit-frame-pointer" }
-addcf{ "-O0", "-g" }
+--delcf{ "-Os", "-fomit-frame-pointer" }
+--addcf{ "-O0", "-g" }
 
 -- Prepend with path
 specific_files = utils.prepend_path( specific_files, sf( "src/platform/%s", platform ) )
@@ -16,10 +16,11 @@ specific_files = utils.prepend_path( specific_files, sf( "src/platform/%s", plat
 -- Standard GCC flags
 addcf{ '-ffunction-sections', '-fdata-sections', '-fno-strict-aliasing', '-Wall' }
 --addlf{ '-nostartfiles', '-nostdlib', '-T', ldscript, '-Wl,--gc-sections', '-Wl,--allow-multiple-definition' }
-addlf{  '-T', ldscript,  '-Wl,--allow-multiple-definition' }
+addlf{  '-T', ldscript,  '-Wl,--allow-multiple-definition','-Wl,--gc-sections' }
 addlib{ 'c','gcc','m' }
 
-local target_flags = { '-march=RV32IM','-m32' }
+local target_flags = { '-march=RV32IM' }
+addcf{ target_flags}
 
 --addcf{ target_flags, '-fno-builtin', '-fno-stack-protector' }
 --addlf{ target_flags, '-Wl,-e,start', '-Wl,-static' }

@@ -15,6 +15,8 @@
 #include "host.h"
 #include "hostif.h"
 
+#include <stdio.h>
+
 // ****************************************************************************
 // Terminal support code
 
@@ -89,16 +91,25 @@ static int kb_read( timer_data_type to )
 void *memory_start_address = 0;
 void *memory_end_address = 0;
 
-extern char end;
+extern char end; // From linker script, end of data segment
 
 void platform_ll_init( void )
 {
+char buff[80];
+void *brk_start;
 	
-    hostif_putstr("ll_init\n");	
+  hostif_putstr("ll_init\n");	
 	
   // Initialise heap memory region.
-    memory_start_address = (void*) host_sbrk( MEM_LENGTH ); 
-    memory_end_address = memory_start_address + MEM_LENGTH;
+  
+  memory_start_address = &end;
+  
+  brk_start=(void*) host_sbrk( MEM_LENGTH ); 
+  memory_end_address = brk_start + MEM_LENGTH;
+  snprintf(buff,sizeof(buff),"mem %x-%x\n",memory_start_address,memory_end_address);
+  hostif_putstr(buff);
+  hostif_getch();  
+     
 }
 
 int platform_init()
