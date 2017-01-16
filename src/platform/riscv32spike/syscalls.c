@@ -71,6 +71,7 @@
 #include <unistd.h>
 #include <utime.h>
 #include "host.h"
+#include <stdio.h>
 
 //------------------------------------------------------------------------
 // environment                                                          
@@ -162,16 +163,24 @@ int host_close(int file)
 
 void* host_sbrk(ptrdiff_t incr)
 {
+char buff[80];
+
+	
   static unsigned long heap_end;
 
   if (heap_end == 0) {
     long brk = syscall_errno(SYS_brk, 0, 0, 0, 0);
+    snprintf(buff,sizeof(buff),"sys_brk 0= %x\n",brk);
+    host_write(1,buff,strlen(buff));
     if(brk == -1)
 	    return (void*)-1;
     heap_end = brk;
   }
 
-  if (syscall_errno(SYS_brk, heap_end + incr, 0, 0, 0) != heap_end + incr)
+  long brk2=syscall_errno(SYS_brk, heap_end + incr, 0, 0, 0); 
+  snprintf(buff,sizeof(buff),"brk %x heap_end %x inc %x\n",brk2,heap_end,incr);
+  host_write(1,buff,strlen(buff));
+  if (brk2 != heap_end + incr)
     return (void*)-1;
 
   heap_end += incr;
