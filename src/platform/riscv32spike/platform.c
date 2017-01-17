@@ -98,7 +98,7 @@ void platform_ll_init( void )
 char buff[80];
 void *brk_start;
 	
-  hostif_putstr("ll_init\n");	
+  hostif_putstr("platform_ll_init\n");	
 	
   // Initialise heap memory region.
   

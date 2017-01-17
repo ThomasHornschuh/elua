@@ -28,15 +28,18 @@ long_line_behaviour=1
 long_line_column=72
 
 [files]
-current_page=4
-FILE_NAME_0=293;Lua;0;EUTF-8;1;1;0;%2Fhome%2Fthomas%2Felua%2Fboards%2Fcustom%2FRISCV32_spike.lua;0;4
-FILE_NAME_1=2279;Lua;0;EUTF-8;1;1;0;%2Fhome%2Fthomas%2Felua%2Fbuild_data.lua;0;4
-FILE_NAME_2=1143;Lua;0;EUTF-8;1;1;0;%2Fhome%2Fthomas%2Felua%2Fsrc%2Fplatform%2Friscv32spike%2Fconf.lua;0;4
-FILE_NAME_3=0;None;0;EUTF-8;1;1;0;%2Fhome%2Fthomas%2Felua%2Fsrc%2Fplatform%2Friscv32spike%2Fboot.s;0;4
-FILE_NAME_4=0;C;0;EUTF-8;1;1;0;%2Fhome%2Fthomas%2Felua%2Fsrc%2Fplatform%2Friscv32spike%2Ftype.h;0;4
+current_page=6
+FILE_NAME_0=0;C;0;EUTF-8;1;1;0;%2Fhome%2Fthomas%2Felua%2Fsrc%2Fplatform%2Friscv32spike%2Ftype.h;0;4
+FILE_NAME_1=734;Lua;0;EUTF-8;1;1;0;%2Fhome%2Fthomas%2Felua%2Fsrc%2Fplatform%2Friscv32spike%2Fconf.lua;0;4
+FILE_NAME_2=1693;C;0;EUTF-8;1;1;0;%2Fhome%2Fthomas%2Felua%2Fsrc%2Fplatform%2Friscv32spike%2Fplatform.c;0;4
+FILE_NAME_3=901373;None;0;EUTF-8;1;1;0;%2Fhome%2Fthomas%2Felua%2Flualong.dmp;0;4
+FILE_NAME_4=76;None;0;EUTF-8;1;1;0;%2Fhome%2Fthomas%2Felua%2Fsrc%2Fplatform%2Friscv32spike%2Fboot.S;0;4
+FILE_NAME_5=4016;None;0;EUTF-8;1;1;0;%2Fhome%2Fthomas%2Felua%2Fsrc%2Fplatform%2Friscv32spike%2Friscv_local.ld;0;4
+FILE_NAME_6=2455205;None;0;EUTF-8;1;1;0;%2Fhome%2Fthomas%2Felua%2Felualong.lst;0;4
+FILE_NAME_7=6608;C;0;EUTF-8;1;1;0;%2Fhome%2Fthomas%2Felua%2Fsrc%2Fplatform%2Friscv32spike%2Fsyscalls.c;0;4
 
 [VTE]
-last_dir=/home/thomas/elua/src/platform/riscv32spike
+last_dir=/home/thomas/riscv/lxp32soc/software/wildfire/monitor
 
 [build-menu]
 NF_00_LB=_Make

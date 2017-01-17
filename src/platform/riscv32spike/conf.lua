@@ -1,8 +1,8 @@
--- Configuration file for the RV32IM on Spike Simulator
+-- Configuration file for the RV32IM on,  Spike Simulator
 -- Intended to run with the Proxy Kernel
 
 --specific_files = sf( "boot.s utils.s hostif_%s.c platform.c host.c", comp.cpu:lower() )
-specific_files = sf( "platform.c stubs.c hostif_linux.c syscalls.c ", comp.cpu:lower() )
+specific_files = sf( "platform.c stubs.c hostif_linux.c syscalls.c   ", comp.cpu:lower() )
 local ldscript = "src/platform/riscv32spike/riscv_local.ld"
   
 -- Override default optimize settings
@@ -14,12 +14,12 @@ specific_files = utils.prepend_path( specific_files, sf( "src/platform/%s", plat
 --local ldscript = sf( "src/platform/%s/%s", platform, ldscript ) 
 
 -- Standard GCC flags
-addcf{ '-ffunction-sections', '-fdata-sections', '-fno-strict-aliasing', '-Wall' }
+addcf{ '-ffunction-sections', '-fdata-sections', '-fno-strict-aliasing', '-Wall'}
 --addlf{ '-nostartfiles', '-nostdlib', '-T', ldscript, '-Wl,--gc-sections', '-Wl,--allow-multiple-definition' }
-addlf{  '-T', ldscript,  '-Wl,--allow-multiple-definition','-Wl,--gc-sections' }
+addlf{  '-Wl,--allow-multiple-definition','-Wl,--gc-sections' , '-T', ldscript } 
 addlib{ 'c','gcc','m' }
 
-local target_flags = { '-march=RV32IM' }
+local target_flags = { '-march=rv32im' } -- '-mabi=ilp32'
 addcf{ target_flags}
 
 --addcf{ target_flags, '-fno-builtin', '-fno-stack-protector' }
