@@ -26,3 +26,6 @@ sdcard.img
 core
 luarpc*
 *.map
+/elua.lst
+/elualong.lst
+/lualong.dmp
