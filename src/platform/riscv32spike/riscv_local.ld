@@ -95,7 +95,6 @@ SECTIONS
     *(.text)
     *(.text.*)
     *(.gnu.linkonce.t.*)
-    PROVIDE(etext = .);
   } 
   
   /* init: Code to execute before main (called by crt0.S) */

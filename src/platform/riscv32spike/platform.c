@@ -105,10 +105,13 @@ void *brk_start;
   memory_start_address = &end;
   
   brk_start=(void*) host_sbrk( MEM_LENGTH ); 
+  //memory_start_address=brk_start;
   memory_end_address = brk_start + MEM_LENGTH;
-  snprintf(buff,sizeof(buff),"mem %x-%x\n",memory_start_address,memory_end_address);
+  snprintf(buff,sizeof(buff),"mem %x - %x\n",memory_start_address,memory_end_address);
   hostif_putstr(buff);
   hostif_getch();  
+  
+ // memset(memory_start_address,0,memory_end_address-memory_start_address);
      
 }
 
