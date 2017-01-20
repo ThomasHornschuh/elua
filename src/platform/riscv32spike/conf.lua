@@ -8,6 +8,7 @@ local ldscript = "src/platform/riscv32spike/riscv_local.ld"
 -- Override default optimize settings
 --delcf{ "-Os", "-fomit-frame-pointer" }
 --addcf{ "-O0", "-g" }
+addcf{"-g"}
 
 -- Prepend with path
 specific_files = utils.prepend_path( specific_files, sf( "src/platform/%s", platform ) )
@@ -19,7 +20,7 @@ addcf{ '-ffunction-sections', '-fdata-sections', '-fno-strict-aliasing', '-Wall'
 addlf{  '-Wl,--allow-multiple-definition','-Wl,--gc-sections' , '-T', ldscript } 
 addlib{ 'c','gcc','m' }
 
-local target_flags = { '-march=rv32im' } -- '-mabi=ilp32'
+local target_flags = { '-march=rv32im' ,'-mabi=ilp32'}  
 addcf{ target_flags}
 
 --addcf{ target_flags, '-fno-builtin', '-fno-stack-protector' }
