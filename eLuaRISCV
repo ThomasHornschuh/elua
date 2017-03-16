@@ -28,20 +28,29 @@ long_line_behaviour=1
 long_line_column=72
 
 [files]
-current_page=6
-FILE_NAME_0=0;C;0;EUTF-8;1;1;0;%2Fhome%2Fthomas%2Felua%2Fsrc%2Fplatform%2Friscv32spike%2Ftype.h;0;4
-FILE_NAME_1=734;Lua;0;EUTF-8;1;1;0;%2Fhome%2Fthomas%2Felua%2Fsrc%2Fplatform%2Friscv32spike%2Fconf.lua;0;4
-FILE_NAME_2=1693;C;0;EUTF-8;1;1;0;%2Fhome%2Fthomas%2Felua%2Fsrc%2Fplatform%2Friscv32spike%2Fplatform.c;0;4
-FILE_NAME_3=901373;None;0;EUTF-8;1;1;0;%2Fhome%2Fthomas%2Felua%2Flualong.dmp;0;4
-FILE_NAME_4=76;None;0;EUTF-8;1;1;0;%2Fhome%2Fthomas%2Felua%2Fsrc%2Fplatform%2Friscv32spike%2Fboot.S;0;4
-FILE_NAME_5=4016;None;0;EUTF-8;1;1;0;%2Fhome%2Fthomas%2Felua%2Fsrc%2Fplatform%2Friscv32spike%2Friscv_local.ld;0;4
-FILE_NAME_6=2455205;None;0;EUTF-8;1;1;0;%2Fhome%2Fthomas%2Felua%2Felualong.lst;0;4
-FILE_NAME_7=6608;C;0;EUTF-8;1;1;0;%2Fhome%2Fthomas%2Felua%2Fsrc%2Fplatform%2Friscv32spike%2Fsyscalls.c;0;4
+current_page=8
+FILE_NAME_0=540;None;0;EUTF-8;1;1;0;%2Fhome%2Fthomas%2Fnotizen.txt;0;4
+FILE_NAME_1=49;C;0;EUTF-8;1;1;0;%2Fhome%2Fthomas%2Felua%2Fsrc%2Fplatform%2Fbonfire%2Fsystimer.c;0;4
+FILE_NAME_2=3067;C;0;EUTF-8;1;1;0;%2Fhome%2Fthomas%2Felua%2Fsrc%2Fplatform%2Fbonfire%2Fuart.c;0;4
+FILE_NAME_3=1351;C;0;EUTF-8;1;1;0;%2Fhome%2Fthomas%2Felua%2Fsrc%2Fplatform%2Fbonfire%2Fcpu_bonfire10.h;0;4
+FILE_NAME_4=4152;Lua;0;EUTF-8;1;1;0;%2Fhome%2Fthomas%2Felua%2Fbuild_data.lua;0;4
+FILE_NAME_5=18450;Lua;0;EUTF-8;1;1;0;%2Fhome%2Fthomas%2Felua%2Fbuild_elua.lua;0;4
+FILE_NAME_6=1160;Lua;0;EUTF-8;1;1;0;%2Fhome%2Fthomas%2Felua%2Fsrc%2Fplatform%2Fbonfire%2Fconf.lua;0;4
+FILE_NAME_7=2575;None;0;EUTF-8;1;1;0;%2Fhome%2Fthomas%2Felua%2Fsrc%2Fplatform%2Fbonfire%2Fstart.S;0;4
+FILE_NAME_8=2981;C;0;EUTF-8;1;1;0;%2Fhome%2Fthomas%2Felua%2Fsrc%2Fplatform%2Fbonfire%2Fplatform.c;0;4
+FILE_NAME_9=2916402;None;0;EUTF-8;1;1;0;%2Fhome%2Fthomas%2Felua%2Fbonf_elualong.lst;0;4
 
 [VTE]
-last_dir=/home/thomas/riscv/lxp32soc/software/wildfire/monitor
+last_dir=/home/thomas/elua
 
 [build-menu]
 NF_00_LB=_Make
-NF_00_CM=lua5.1 build_elua.lua board=RISCV32_spike
+NF_00_CM=lua5.1 build_elua.lua board=RISCV32_spike  target=lualong
 NF_00_WD=/home/thomas/elua
+CFT_01_LB=_Build
+CFT_01_CM=lua5.1 build_elua.lua board=RISCV32_spike target=lualong
+CFT_01_WD=/home/thomas/elua
+filetypes=C;Lua;
+LuaFT_00_LB=build bonfire
+LuaFT_00_CM=lua5.1 build_elua.lua board=bonfire_papilio_pro  target=lualong
+LuaFT_00_WD=/home/thomas/elua

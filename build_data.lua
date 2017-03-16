@@ -130,8 +130,10 @@ local platform_list =
   lpc24xx = { cpus = { 'LPC2468' }, arch = 'arm' },
   lpc17xx = { cpus = { 'LPC1768', 'LPC1769' }, arch = 'cortexm' },
   xmc4000 = { cpus = { 'XMC4400F100X512', 'XMC4500F144K1024', 'XMC4500E144K1024', 'XMC4700F144K2048' }, arch = 'cortexm' },
-  riscv32spike   = {  cpus = { 'RV32IMSPIKE' }, arch = 'rv32im' }
-
+  lpc17xx = { cpus = { 'LPC1768' }, arch = 'cortexm' },
+  riscv32spike   = {  cpus = { 'RV32IMSPIKE' }, arch = 'rv32im' },
+  bonfire   = {  cpus = { 'BONFIRE10' }, arch = 'rv32im' }
+  
 }
 
 -- Returns the platform of a given CPU
