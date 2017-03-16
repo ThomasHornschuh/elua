@@ -140,9 +140,10 @@ int platform_init()
  
   uart_write_console("platform_init\n");	
   cmn_systimer_set_base_freq(SYSCLK);
-  cmn_systimer_set_interrupt_freq(SYSCLK/0x0ffffffff);
+  cmn_systimer_set_interrupt_period_us(0x0ffffffff/SYSCLK *1000000);
   
   set_csr(mstatus,MSTATUS_MIE); // Global Interrupt Enable
+  platform_timer_sys_enable_int();
  
  
 
@@ -215,12 +216,22 @@ timer_data_type platform_timer_read_sys( void )
 
 int platform_cpu_set_global_interrupts( int status )
 {
-  uart_write_console("platform_cpu_set_global_interrupts\n");		
+  
+  if (status==PLATFORM_CPU_ENABLE)
+    set_csr(mstatus,MSTATUS_MIE); // Global Interrupt Enable	
+  else
+    clear_csr(mstatus,MSTATUS_MIE); // Global Interrupt Enable	
+    
   return PLATFORM_OK;
 }
 
 int platform_cpu_get_global_interrupts( void )
 {
- return PLATFORM_OK;
+uint32_t m = read_csr(mstatus);
+   
+   if (m & MSTATUS_MIE)
+     return 1;
+   else  	
+    return 0;
 }
 

@@ -107,12 +107,12 @@ _start:
 
 la gp, _gp
 li sp, STACK_TOP // set SP to end of RAM
-//csrw mscratch,sp // save stacktop as trap handler stack
+csrw mscratch,sp // save stacktop as trap handler stack
 
 addi sp,sp,- STACK_SIZE_IRQ // save STACK_SIZE_IRQ Bytes for Trap handler stack
 
 la a1, __trap
-//csrw mtvec,a1
+csrw mtvec,a1
 
 // From riscv-gnu-toolchain/riscv-newlib/libgloss/riscv
  # Clear the bss segment
