@@ -29,3 +29,7 @@ luarpc*
 /elua.lst
 /elualong.lst
 /lualong.dmp
+/lualong.sym
+/exec.log
+/src/platform/bonfire/cpu_bonfire10.h.gch
+/bonf_elualong.lst
