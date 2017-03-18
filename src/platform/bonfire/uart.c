@@ -70,20 +70,19 @@ char uart_readchar()
 
 
 // adpated version for elua:
-// if timeout=PLATFORM_TIMER_INF_TIMEOUT then this function waits indefinity until data is received
-// if timout is anything else the function  returns immediatly with available data or -1 
+// if timeout==0 and data from the UART is available the data is returned, otherwise -1 is returned 
+// if timeout != 0 then it waits until data read from the UART becomes available
 int uart_wait_receive(long timeout)
 {
 uint8_t status;
-bool forever = timeout==PLATFORM_TIMER_INF_TIMEOUT;
-    
+
   do {
     status=uartadr[UART_STATUS];
     if ((status & 0x01)==0) { // receive buffer not empty?
       return uartadr[UART_RECV];
     }
      
-  }while(forever);
+  }while(timeout);
   return -1;    
 }
 

@@ -46,9 +46,9 @@ void dump_tf(trapframe_t* tf)
   for(int i = 0; i < 32; i+=4)
   {
     for(int j = 0; j < 4; j++)
-      printk("%s %lx%c",regnames[i+j],tf->gpr[i+j],j < 3 ? ' ' : '\n');
+      printk("%s %08lx%c",regnames[i+j],tf->gpr[i+j],j < 3 ? ' ' : '\n');
   }
-  printk("pc %lx va %lx op %x sr %lx\n\n\n", tf->epc, tf->badvaddr,
+  printk("pc %08lx va %08lx op %08lx sr %08lx\n\n\n", tf->epc, tf->badvaddr,
          (uint32_t)tf->insn, tf->status);
 }
 

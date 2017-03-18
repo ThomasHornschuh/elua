@@ -182,6 +182,7 @@ void cmn_platform_init(void)
 #endif
 
 #ifdef BUILD_SERMUX
+#pragma message "Build SERMUX"
   unsigned i;
   unsigned bufsizes[] = SERMUX_BUFFER_SIZES;
 
@@ -196,6 +197,7 @@ void cmn_platform_init(void)
 #endif // #ifdef BUILD_SERMUX
 
 #if defined( CON_UART_ID ) && ( CON_UART_ID < SERMUX_SERVICE_ID_FIRST ) && ( CON_UART_ID != CDC_UART_ID )
+#pragma message "Init Console UART"
   // Setup console UART
   platform_uart_setup( CON_UART_ID, CON_UART_SPEED, 8, PLATFORM_UART_PARITY_NONE, PLATFORM_UART_STOPBITS_1 );
   platform_uart_set_flow_control( CON_UART_ID, CON_FLOW_TYPE );
