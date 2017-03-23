@@ -1,5 +1,5 @@
--- Configuration file for the RV32IM on,  Spike Simulator
--- Intended to run with the Proxy Kernel
+-- Configuration file for the RV32IM on bonfire Platform
+-- Intended to run standalone
 
 --specific_files = sf( "boot.s utils.s hostif_%s.c platform.c host.c", comp.cpu:lower() )
 specific_files = sf( "start.S platform.c stubs.c uart.c systimer.c console.c ", comp.cpu:lower() )
@@ -8,7 +8,7 @@ local ldscript = "src/platform/bonfire/riscv_local.ld"
 -- Override default optimize settings
 --delcf{ "-Os", "-fomit-frame-pointer" }
 --addcf{ "-O0", "-g" }
-addcf{"-g"}
+addcf{"-g", "-O2"}
 
 -- Prepend with path
 specific_files = utils.prepend_path( specific_files, sf( "src/platform/%s", platform ) )
