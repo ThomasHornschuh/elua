@@ -70,19 +70,17 @@ void platform_ll_init( void )
 
 int platform_init()
 { 
+#define __sys_timer_period ((long)((double)(4294967296.0 / SYSCLK *1000000.0)))  // for 96Mhz Clock it should be 44739242
+
  
   uart_write_console("eLua for Bonfire SoC 1.0\n");	
+  printk("Seting System Timer Period to %ld\n",__sys_timer_period);
   cmn_systimer_set_base_freq(SYSCLK);
-  cmn_systimer_set_interrupt_period_us(0x0ffffffff/SYSCLK *1000000);
+  cmn_systimer_set_interrupt_period_us(__sys_timer_period);
   
   set_csr(mstatus,MSTATUS_MIE); // Global Interrupt Enable
   platform_timer_sys_enable_int();
  
-  // Set term functions
-//#ifdef BUILD_TERM  
-  //term_init( TERM_LINES, TERM_COLS, i386_term_out, i386_term_in, i386_term_translate );
-//#endif
-
 
   cmn_platform_init(); // call the common initialiation code
   return PLATFORM_OK;

@@ -25,6 +25,7 @@
 
 #include "bonfire_platform.h"
 #include "platform.h" // eLua platform in this case !!!!
+#include "uart.h"
 
 #define UART_TX 0x0
 #define UART_RECV 0x04
@@ -61,6 +62,8 @@ void uart_writechar(char c)
   uartadr[UART_TX]=(uint8_t)c;
 
 }
+
+
 
 char uart_readchar()
 {
