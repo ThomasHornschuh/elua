@@ -5,6 +5,7 @@
 
 #include "bonfire_platform.h"
 #include "stacks.h"
+#include "platform_ints.h"
 
 #define CPU_FREQUENCY SYSCLK
 
@@ -18,6 +19,7 @@
 #define NUM_PWM               0
 #define NUM_ADC               0
 #define NUM_CAN               0
+
 
 // PIO prefix ('0' for P0, P1, ... or 'A' for PA, PB, ...)
 #define PIO_PREFIX            'A'
