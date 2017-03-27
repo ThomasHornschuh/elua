@@ -1,6 +1,6 @@
 TARGETDIR ?= ~/upload
 BOARD ?=  bonfire_papilio_pro
-TARGET ?= lualong
+TARGET ?= lua
 
 .PHONY: build
 build:

@@ -70,16 +70,17 @@ void platform_ll_init( void )
 
 int platform_init()
 { 
-#define __sys_timer_period ((long)((double)(4294967296.0 / SYSCLK *1000000.0)))  // for 96Mhz Clock it should be 44739242
+#define __virt_timer_period ((long)(SYSCLK/VTMR_FREQ_HZ)) 
 
  
-  uart_write_console("eLua for Bonfire SoC 1.0\n");	
-  printk("Seting System Timer Period to %ld\n",__sys_timer_period);
+  uart_write_console("eLua for Bonfire SoC 1.0a\n");	
+  printk("__virt_timer_period %ld\n",__virt_timer_period);
   cmn_systimer_set_base_freq(SYSCLK);
-  cmn_systimer_set_interrupt_period_us(__sys_timer_period);
+  
+  mtime_setinterval(__virt_timer_period);
   
   set_csr(mstatus,MSTATUS_MIE); // Global Interrupt Enable
-  platform_timer_sys_enable_int();
+  
  
 
   cmn_platform_init(); // call the common initialiation code
@@ -123,13 +124,23 @@ timer_data_type platform_s_timer_op( unsigned id, int op, timer_data_type data )
   return 0;
 }
 
+int platform_s_timer_set_match_int( unsigned id, timer_data_type period_us, int type )
+{
+  //printk("platform_s_timer_set_match_int called, should not happen..."); 	
+  return 0;
+}
+
+
+// ****************************************************************************
+// System Timer functions
+
 timer_data_type platform_timer_read_sys( void )
 {
   return cmn_systimer_get();
 }
 
 // ****************************************************************************
-// "Dummy" CPU functions
+// CPU functions
 
 
 int platform_cpu_set_global_interrupts( int status )
