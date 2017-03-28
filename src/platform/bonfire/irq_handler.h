@@ -15,6 +15,5 @@ typedef struct
 
 void timer_irq_handler();
 
-long mtime_setinterval(long interval);
 
 #endif
