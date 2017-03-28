@@ -8,7 +8,7 @@ local ldscript = "src/platform/bonfire/riscv_local.ld"
 -- Override default optimize settings
 --delcf{ "-Os", "-fomit-frame-pointer" }
 --addcf{ "-O0", "-g" }
-addcf{"-g", "-O2"}
+addcf{"-g", "-O2","-fomit-frame-pointer"}
 
 -- Prepend with path
 specific_files = utils.prepend_path( specific_files, sf( "src/platform/%s", platform ) )

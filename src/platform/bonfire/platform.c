@@ -70,19 +70,10 @@ void platform_ll_init( void )
 
 int platform_init()
 { 
-#define __virt_timer_period ((long)(SYSCLK/VTMR_FREQ_HZ)) 
-
  
-  uart_write_console("eLua for Bonfire SoC 1.0a\n");	
-  printk("__virt_timer_period %ld\n",__virt_timer_period);
+  uart_write_console("eLua for Bonfire SoC 1.0a\n");	 
   cmn_systimer_set_base_freq(SYSCLK);
   
-  mtime_setinterval(__virt_timer_period);
-  
-  set_csr(mstatus,MSTATUS_MIE); // Global Interrupt Enable
-  
- 
-
   cmn_platform_init(); // call the common initialiation code
   return PLATFORM_OK;
 }
@@ -139,28 +130,4 @@ timer_data_type platform_timer_read_sys( void )
   return cmn_systimer_get();
 }
 
-// ****************************************************************************
-// CPU functions
-
-
-int platform_cpu_set_global_interrupts( int status )
-{
-  
-  if (status==PLATFORM_CPU_ENABLE)
-    set_csr(mstatus,MSTATUS_MIE); // Global Interrupt Enable	
-  else
-    clear_csr(mstatus,MSTATUS_MIE); // Global Interrupt Enable	
-    
-  return PLATFORM_OK;
-}
-
-int platform_cpu_get_global_interrupts( void )
-{
-uint32_t m = read_csr(mstatus);
-   
-   if (m & MSTATUS_MIE)
-     return 1;
-   else  	
-    return 0;
-}
 
