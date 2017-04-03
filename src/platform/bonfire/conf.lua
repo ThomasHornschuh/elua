@@ -2,7 +2,7 @@
 -- Intended to run standalone
 
 --specific_files = sf( "boot.s utils.s hostif_%s.c platform.c host.c", comp.cpu:lower() )
-specific_files = sf( "start.S platform.c stubs.c uart.c systimer.c console.c platform_int.c", comp.cpu:lower() )
+specific_files = sf( "start.S platform.c stubs.c uart.c systimer.c console.c platform_int.c mod_riscv.c", comp.cpu:lower() )
 local ldscript = "src/platform/bonfire/riscv_local.ld"
   
 -- Override default optimize settings
