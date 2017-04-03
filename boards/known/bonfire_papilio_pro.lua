@@ -16,7 +16,8 @@ return {
     vtmr= { num=4, freq=50 }
   },
   modules = {
-    generic = { 'pd', 'all_lua', 'term','uart','tmr','elua',"cpu" }
+    generic = { 'pd', 'all_lua', 'term','uart','tmr','elua',"cpu" },
+    platform = { 'riscv' }
   },
   cpu_constants = {
     'INT_TMR_MATCH',
