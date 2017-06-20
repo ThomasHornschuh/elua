@@ -23,7 +23,7 @@
 #include <stdbool.h>
 
 
-#include "bonfire_platform.h"
+#include ELUA_CPU_HEADER
 #include "platform.h" // eLua platform in this case !!!!
 #include "uart.h"
 

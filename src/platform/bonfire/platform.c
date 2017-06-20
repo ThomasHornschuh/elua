@@ -63,9 +63,7 @@ extern char end; // From linker script, end of data segment
 
 void platform_ll_init( void )
 {
-  printk("Heap: %08lx .. %08lx\n",&INTERNAL_RAM1_FIRST_FREE,INTERNAL_RAM1_LAST_FREE);
-  
-	   
+  printk("Heap: %08lx .. %08lx\n",&INTERNAL_RAM1_FIRST_FREE,INTERNAL_RAM1_LAST_FREE);	   
 }
 
 int platform_init()

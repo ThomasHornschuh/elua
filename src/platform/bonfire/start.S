@@ -14,7 +14,7 @@
 
 
 #include "bits.h"
-#include "bonfire_platform.h"
+#include ELUA_CPU_HEADER
 #include "stacks.h"
 
  .macro save_tf
