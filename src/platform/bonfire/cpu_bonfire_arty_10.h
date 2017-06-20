@@ -1,11 +1,14 @@
-// "CPU" Description for Bonfire SoC Version 1.0 on Papilio Pro board
+// "CPU" Description for Bonfire SoC Version 1.0 on ARTY Board
 
-#ifndef __CPU_BONFIRE10_H__
-#define __CPU_BONFIRE10_H__
+#ifndef __CPU_BONFIRE_ARTY_10_H__
+#define __CPU_BONFIRE_ARTY_10_H__
 
-#include "bonfire_platform.h"
+#include "arty.h"
 #include "stacks.h"
+
+#ifndef __ASSEMBLER__
 #include "platform_ints.h"
+#endif
 
 #define CPU_FREQUENCY SYSCLK
 

@@ -1,6 +1,7 @@
 #ifndef BONFIRE_PLATFORM_H
 #define BONFIRE_PLATFORM_H
 
+#pragma message "bonfire_platform.h"
 
 #define UART_BASE 0x08000000
 #define SPIFLASH_BASE 0x08000100

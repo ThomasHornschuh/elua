@@ -33,7 +33,6 @@ wofs.img
 /lualong.sym
 /exec.log
 /src/platform/bonfire/cpu_bonfire10.h.gch
-/bonf_elualong.lst
-/lua_bonfire_papilio_pro.lst
-/lualong_bonfire_papilio_pro.lst
-/elua.dmp
+*.sym
+*.dmp
+*.lst
