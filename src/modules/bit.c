@@ -15,6 +15,11 @@
 
 
 // In addtion I added the tohex and rotate functions from http://bitop.luajit.org/
+// This is also consitent with other parts of eLua  e.g. the cpu module
+// It is may not really good together with lualong, we have to check it
+// The newer bitop Library always works with signed numbers for this reason,
+// but it does not work well with eLua. 
+// Added the tohex and rotate functions from bitop
 
 
 #include <limits.h>
@@ -83,6 +88,17 @@ void  bit_pushuinteger(lua_State *L, lua_UInteger n)
                           (unsigned)luaL_checknumber(L, 2));            \
     return 1;                                                           \
   }
+  
+// Added TH  
+#define BIT_SH(name, fn)                                      \
+  static int bit_ ## name(lua_State *L) {                               \
+    bit_pushuinteger(L, fn((lua_UInteger)TOBIT(L, 1),                    \
+                          (unsigned)luaL_checknumber(L, 2)));            \
+    return 1;                                                           \
+  }  
+  
+#define brol(b, n)  ((b << n) | (b >> (32-n)))
+#define bror(b, n)  ((b << (32-n)) | (b >> n))  
 
 // Added TH
 // TH:08.08.2017: The assignments to local vars in the
@@ -179,6 +195,21 @@ static int bit_tohex(lua_State *L)
   return 1;
 }
 
+//TH: "Borrowed" from luaBitop
+static int bit_tohex(lua_State *L)
+{
+  lua_UInteger b = ( lua_UInteger )TOBIT( L, 1 );
+  int n = lua_isnone(L, 2) ? 8 : luaL_checkinteger(L, 2);
+  const char *hexdigits = "0123456789abcdef";
+  char buf[8];
+  int i;
+  if (n < 0) { n = -n; hexdigits = "0123456789ABCDEF"; }
+  if (n > 8) n = 8;
+  for (i = (int)n; --i >= 0; ) { buf[i] = hexdigits[b & 15]; b >>= 4; }
+  lua_pushlstring(L, buf, (size_t)n);
+  return 1;
+}
+
 #define MIN_OPT_LEVEL 2
 #include "lrodefs.h"
 const LUA_REG_TYPE bit_map[] = {
@@ -194,9 +225,9 @@ const LUA_REG_TYPE bit_map[] = {
   { LSTRKEY( "clear" ),   LFUNCVAL( bit_clear ) },
   { LSTRKEY( "isset" ),   LFUNCVAL( bit_isset ) },
   { LSTRKEY( "isclear" ), LFUNCVAL( bit_isclear ) },
-  { LSTRKEY( "tohex" ),   LFUNCVAL( bit_tohex ) }, // TH
-  { LSTRKEY("rol"),       LFUNCVAL( bit_rol ) }, // TH
-  { LSTRKEY("ror"),       LFUNCVAL( bit_ror ) }, // TH
+  { LSTRKEY( "tohex" ), LFUNCVAL( bit_tohex ) }, // TH
+  { LSTRKEY("rol"),	LFUNCVAL(bit_rol) }, // TH
+  { LSTRKEY("ror"),	LFUNCVAL(bit_ror) }, // TH
   { LNILKEY, LNILVAL}
 };
 
