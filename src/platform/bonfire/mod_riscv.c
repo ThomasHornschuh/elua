@@ -11,7 +11,7 @@
 
 static int riscv_readcsr( lua_State* L )
 {
-  unsigned csr = ( unsigned )luaL_checkinteger( L, 1 );	
+  unsigned csr = ( unsigned )luaL_checknumber( L, 1 );	
   unsigned r;
   switch(csr) {
 	case CSR_MISA: r=read_csr(misa); break;
@@ -22,7 +22,7 @@ static int riscv_readcsr( lua_State* L )
 	default: r= -1;
   }	  
   
-  lua_pushinteger( L, r );
+  lua_pushnumber( L,( lua_Number ) r );
   return 1;
 }
 
@@ -30,7 +30,7 @@ extern uint32_t *pmtime; // declared in platform_int.c
 
 static int riscv_readmtime( lua_State* L )
 {
-	lua_pushnumber( L, (double)pmtime[0] );
+	lua_pushnumber( L, (lua_Number)pmtime[0] );
 	return 1;
 }
 
@@ -39,7 +39,7 @@ static int riscv_readmcycle( lua_State* L )
 {
 u64 cycle=platform_timer_sys_raw_read();
 	
-	lua_pushnumber( L, (double)cycle);
+	lua_pushnumber( L, (lua_Number)cycle);
 	return 1;
 }
 
