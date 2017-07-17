@@ -12,6 +12,10 @@
 #define GPIO_BASE (AXI_IO_SPACE)
 #define MTIME_BASE 0x0FFFF0000
 
+#define ETHERLITE_BASE (AXI_IO_SPACE+0x0E00000)
+
+#define BONFIRE_SYSIO (WISHBONE_IO_SPACE+0x200)
+
 
 #define DRAM_BASE 0x0
 #define DRAM_TOP  0x0fffffff
@@ -20,12 +24,12 @@
 #define SRAM_SIZE (32*1024)
 #define SRAM_TOP  (SRAM_BASE+SRAM_SIZE-1)
 
-#define SYSCLK 83333333  
+#define SYSCLK 83333333
 
 #define CLK_PERIOD (1e+9 / SYSCLK)  // in ns...
 
 
-// Parameters for SPI Flash 
+// Parameters for SPI Flash
 
 #define FLASHSIZE (16384*1024)
 #define MAX_FLASH_IMAGESIZE (2024*1024) // Max 2MB of flash used for boot image
