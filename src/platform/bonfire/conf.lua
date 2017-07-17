@@ -2,9 +2,9 @@
 -- Intended to run standalone
 
 --specific_files = sf( "boot.s utils.s hostif_%s.c platform.c host.c", comp.cpu:lower() )
-specific_files = sf( "start.S platform.c stubs.c uart.c systimer.c console.c platform_int.c mod_riscv.c", comp.cpu:lower() )
+specific_files = sf( "start.S platform.c stubs.c uart.c systimer.c console.c platform_int.c mod_riscv.c xil_etherlite.c", comp.cpu:lower() )
 local ldscript = "src/platform/bonfire/riscv_local.ld"
-  
+
 -- Override default optimize settings
 --delcf{ "-Os", "-fomit-frame-pointer" }
 --addcf{ "-O0", "-g" }
@@ -12,15 +12,15 @@ addcf{"-g", "-O2","-fomit-frame-pointer"}
 
 -- Prepend with path
 specific_files = utils.prepend_path( specific_files, sf( "src/platform/%s", platform ) )
---local ldscript = sf( "src/platform/%s/%s", platform, ldscript ) 
+--local ldscript = sf( "src/platform/%s/%s", platform, ldscript )
 
 -- Standard GCC flags
 addcf{ '-ffunction-sections', '-fdata-sections', '-fno-strict-aliasing', '-Wall'}
 addlf{ '-nostartfiles', '-nostdlib', '-T', ldscript, '-Wl,--gc-sections', '-Wl,--allow-multiple-definition' }
---addlf{  '-Wl,--allow-multiple-definition','-Wl,--gc-sections' , '-T', ldscript } 
+--addlf{  '-Wl,--allow-multiple-definition','-Wl,--gc-sections' , '-T', ldscript }
 addlib{ 'c','gcc','m' }
 
-local target_flags = { '-march=rv32im' ,'-mabi=ilp32'}  
+local target_flags = { '-march=rv32im' ,'-mabi=ilp32'}
 addcf{ target_flags}
 
 --addcf{ target_flags, '-fno-builtin', '-fno-stack-protector' }

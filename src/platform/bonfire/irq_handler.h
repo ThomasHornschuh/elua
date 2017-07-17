@@ -13,7 +13,10 @@ typedef struct
 } trapframe_t;
 
 
-void timer_irq_handler();
+void ethernet_irq_handler();
 
+extern volatile uint32_t eth_timer_fired;
+
+#define __virt_timer_period ((long)(SYSCLK/VTMR_FREQ_HZ))
 
 #endif
