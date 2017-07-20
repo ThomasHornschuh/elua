@@ -62,9 +62,11 @@ static struct uip_eth_addr sTempAddr = {
 }
 
 
-// Copy from to Buffers. Because the Etherlite core don't
-// support byte writes the code ensures to do 32 Bit transfers
-void copy_buffer(void* dest, const void* src, size_t size)
+// Copy dwords between Buffers. Because the Etherlite core don't
+// support byte writes, the code ensures to do only 32 Bit transfers
+// Attentions: Because it rounds up, it can transfer up to three bytes more
+// then specified in size
+void eth_copy_buffer(void* dest, const void* src, size_t size)
 {
 const uint32_t *psrc = src;
 uint32_t *pdest = dest;
@@ -83,13 +85,12 @@ int i;
 
 void platform_eth_send_packet( const void* src, u32 size )
 {
-   //printk("send packet\n");
+
    while (_read_word(ETHL_TX_PING_CTRL) & 0x01); // Wait until buffer ready
 
-   copy_buffer(ETHL_TX_PING_BUFF,src,size);
+   eth_copy_buffer(ETHL_TX_PING_BUFF,src,size);
    _write_word(ETHL_TX_PING_LEN,size);
    _write_word(ETHL_TX_PING_CTRL,0x01); // Start send
-   //printk("packet send started\n");
 
 }
 
@@ -98,7 +99,7 @@ u32 platform_eth_get_packet_nb( void* buf, u32 maxlen )
 {
 static BOOL is_PingBuff = true;      // start always with the ping buffer
 void * currentBuff;
-int i;
+
 
   if (is_PingBuff)
     currentBuff= ETHL_RX_PING_BUFF;
@@ -107,9 +108,9 @@ int i;
 
 
   if (_read_word(currentBuff+0x7fc) & 0x01) {
-     //copy_buffer(buf,currentBuff,maxlen);
      memcpy(buf,currentBuff,maxlen);
      _write_word(currentBuff+0x7fc,0x8); // clear buffer, enable interrupts
+     //int i;
      //for(i=0;i<16;i++) printk("%x ",((uint8_t*)buf)[i]);
      //printk("\n");
      is_PingBuff = !is_PingBuff; // toggle
@@ -130,7 +131,7 @@ u32 platform_eth_get_elapsed_time(void)
     if( eth_timer_fired )
     {
       eth_timer_fired = 0;
-      return __virt_timer_period;
+      return 1000/VTMR_FREQ_HZ; // time must be returned in ms !!!
     }
     else
       return 0;
@@ -144,7 +145,7 @@ void ethernet_irq_handler()
    if (_read_word((void*)BONFIRE_SYSIO) & 0x01) { // Pending IRQ
       _write_word((void*)BONFIRE_SYSIO,0x01); // clear IRQ
 #ifdef  BUILD_UIP
-     // printk("ethernet_irq_handler\n");
+      //printk("ethernet_irq_handler\n");
       elua_uip_mainloop();
 
 #endif

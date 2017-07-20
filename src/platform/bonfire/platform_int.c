@@ -22,7 +22,7 @@ uint32_t tick_interval=0;
 
 volatile uint32_t eth_timer_fired=0;
 
-
+#define __virt_timer_period ((long)(SYSCLK/VTMR_FREQ_HZ))
 
 
 

@@ -122,7 +122,7 @@ typedef unsigned short uip_stats_t;
 //
 // Logging on or off
 //
-#define UIP_CONF_LOGGING            1
+#define UIP_CONF_LOGGING            0
 
 //
 // Broadcast Support
@@ -138,6 +138,7 @@ typedef unsigned short uip_stats_t;
 // CPU byte order.
 //
 #define UIP_CONF_BYTE_ORDER         UIP_LITTLE_ENDIAN
+
 
 //
 // Here we include the header file for the application we are using in
