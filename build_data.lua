@@ -95,12 +95,12 @@ local toolchain_list =
 toolchain_list[ 'devkitarm' ] = toolchain_list[ 'arm-eabi-gcc' ]
 
 -- List of acrhitectures and their endianness
-local arch_data = { 
+local arch_data = {
   arm = 'little',
   cortexm = 'little',
   avr32 = 'big',
   i386 = 'little',
-  rv32im= 'little' 
+  rv32im= 'little'
 }
 
 -- Toolchain to arch mapping
@@ -123,7 +123,7 @@ local platform_list =
   lpc288x = { cpus = { 'LPC2888' }, arch = 'arm' },
   str7 = { cpus = { 'STR711FR2' }, arch = 'arm' },
   stm32f2 = { cpus = { 'STM32F205RF' }, arch = 'cortexm' },
-  stm32 = { cpus = { 'STM32F103ZE', 'STM32F103RE' }, arch = 'cortexm' },
+  stm32 = { cpus = { 'STM32F103ZE', 'STM32F103RE', 'STM32F103VCT6' }, arch = 'cortexm' },
   stm32f4 = { cpus =  { 'STM32F401RE', 'STM32F407VG', 'STM32F407ZG' }, arch = 'cortexm' },
   avr32 = { cpus = { 'AT32UC3A0128', 'AT32UC3A0256', 'AT32UC3A0512', 'AT32UC3B0256' }, arch = 'avr32' },
   lpc23xx = { cpus = { 'LPC2368' }, arch = 'arm' },
@@ -131,8 +131,9 @@ local platform_list =
   lpc17xx = { cpus = { 'LPC1768' }, arch = 'cortexm' },
   xmc4000 = { cpus = { 'XMC4500F144K1024', 'XMC4500E144K1024', 'XMC4700F144K2048' }, arch = 'cortexm' },
   riscv32spike   = {  cpus = { 'RV32IMSPIKE' }, arch = 'rv32im' },
-  bonfire   = {  cpus = { 'BONFIRE10','BONFIRE_ARTY_10' }, arch = 'rv32im' }
-  
+  bonfire   = {  cpus = { 'BONFIRE10','BONFIRE_ARTY_10' }, arch = 'rv32im' },
+  lpc17xx = { cpus = { 'LPC1768', 'LPC1769' }, arch = 'cortexm' },
+  xmc4000 = { cpus = { 'XMC4400F100X512', 'XMC4500F144K1024', 'XMC4500E144K1024', 'XMC4700F144K2048' }, arch = 'cortexm' },
 }
 
 -- Returns the platform of a given CPU
