@@ -112,7 +112,7 @@ typedef unsigned short uip_stats_t;
 //
 // uIP buffer size.
 //
-#define UIP_CONF_BUFFER_SIZE        2048
+#define UIP_CONF_BUFFER_SIZE        1514
 
 //
 // uIP statistics on or off

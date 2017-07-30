@@ -16,6 +16,9 @@
 
 #define BONFIRE_SYSIO (WISHBONE_IO_SPACE+0x200)
 
+#define ARTY_LEDS4TO7 (AXI_IO_SPACE)
+
+
 
 #define DRAM_BASE 0x0
 #define DRAM_TOP  0x0fffffff

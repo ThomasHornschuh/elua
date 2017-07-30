@@ -15,6 +15,10 @@
 #include "encoding.h"
 #include <stdio.h>
 
+#ifdef BUILD_IP
+#include "elua_uip.h"
+#endif
+
 
 volatile uint32_t *pmtime = (uint32_t*)MTIME_BASE; // Pointer to memory mapped RISC-V Timer registers
 
@@ -101,9 +105,12 @@ void timer_irq_handler()
    // Indicate that a SysTick interrupt has occurred.
     eth_timer_fired = 1;
 
-    // Generate a fake Ethernet interrupt.  This will perform the actual work
+    // Call the net mainloop.  This will perform the actual work
     // of incrementing the timers and taking the appropriate actions.
-    platform_eth_force_interrupt();
+    // Because we are already at irq level we can avoid the overhead of
+    // calling the loop indirectly with platform_eth_force_interrupt
+
+    elua_uip_mainloop();
 #endif
 
    cmn_virtual_timer_cb(); // call eLua
@@ -126,13 +133,14 @@ void platform_int_init()
 
 int platform_cpu_set_global_interrupts( int status )
 {
+int result = platform_cpu_get_global_interrupts();
 
   if (status==PLATFORM_CPU_ENABLE)
     set_csr(mstatus,MSTATUS_MIE); // Global Interrupt Enable
   else
     clear_csr(mstatus,MSTATUS_MIE); // Global Interrupt Diable
 
-  return PLATFORM_OK;
+  return result;
 }
 
 int platform_cpu_get_global_interrupts( void )
@@ -140,9 +148,9 @@ int platform_cpu_get_global_interrupts( void )
 uint32_t m = read_csr(mstatus);
 
    if (m & MSTATUS_MIE)
-     return 1;
+     return PLATFORM_CPU_ENABLE;
    else
-    return 0;
+    return PLATFORM_CPU_DISABLE;
 }
 
 
