@@ -22,14 +22,21 @@
 
 inline void _write_word(void* address,uint32_t value)
 {
-  *((uint32_t*)(address))=value;
+  *(( uint32_t* )( address ))=value;
 }
 
 
-uint32_t _read_word(void* address)
+inline uint32_t _read_word(void* address)
 {
-  return  *((uint32_t*)(address));
+  return  *(( uint32_t* )( address ));
 
+}
+
+
+inline void _write_leds(uint8_t value)
+{
+   _write_word(( void* )( ARTY_LEDS4TO7+4 ),0); // Set Output Mode
+   _write_word(( void* )ARTY_LEDS4TO7,value);
 }
 
 
@@ -122,7 +129,16 @@ void * currentBuff;
 }
 void platform_eth_force_interrupt(void)
 {
+// force_interrupt is called from non-interrupt code
+// so we need to disable interrupts to avoid a real IRQ happening at the same time
+
+int oldstate=platform_cpu_get_global_interrupts();
+
+  platform_cpu_set_global_interrupts(PLATFORM_CPU_DISABLE);
+  _write_leds(0x02); // light LED5
   elua_uip_mainloop();
+   _write_leds(0x0);
+  platform_cpu_set_global_interrupts(oldstate);
 }
 
 u32 platform_eth_get_elapsed_time(void)
@@ -146,7 +162,9 @@ void ethernet_irq_handler()
       _write_word((void*)BONFIRE_SYSIO,0x01); // clear IRQ
 #ifdef  BUILD_UIP
       //printk("ethernet_irq_handler\n");
+      _write_leds(0x01); // light LED4
       elua_uip_mainloop();
+      _write_leds(0x0);
 
 #endif
    } else
@@ -158,5 +176,5 @@ void ethernet_irq_handler()
 void uip_log(char *msg)
 {
 
- // printk("UIP Log %s\n",msg);
+  printk("UIP Log %s\n",msg);
 }
