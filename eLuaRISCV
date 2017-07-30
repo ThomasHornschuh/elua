@@ -6,12 +6,12 @@ auto_continue_multiline=true
 [file_prefs]
 final_new_line=true
 ensure_convert_new_lines=false
-strip_trailing_spaces=false
-replace_tabs=false
+strip_trailing_spaces=true
+replace_tabs=true
 
 [indentation]
-indent_width=4
-indent_type=1
+indent_width=2
+indent_type=0
 indent_hard_tab_width=8
 detect_indent=false
 detect_indent_width=false
@@ -19,7 +19,7 @@ indent_mode=2
 
 [project]
 name=eLuaRISCV
-base_path=/home/thomas/elua
+base_path=/home/thomas/development/elua
 description=
 file_patterns=
 
@@ -28,29 +28,37 @@ long_line_behaviour=1
 long_line_column=72
 
 [files]
-current_page=8
-FILE_NAME_0=540;None;0;EUTF-8;1;1;0;%2Fhome%2Fthomas%2Fnotizen.txt;0;4
-FILE_NAME_1=49;C;0;EUTF-8;1;1;0;%2Fhome%2Fthomas%2Felua%2Fsrc%2Fplatform%2Fbonfire%2Fsystimer.c;0;4
-FILE_NAME_2=3067;C;0;EUTF-8;1;1;0;%2Fhome%2Fthomas%2Felua%2Fsrc%2Fplatform%2Fbonfire%2Fuart.c;0;4
-FILE_NAME_3=1351;C;0;EUTF-8;1;1;0;%2Fhome%2Fthomas%2Felua%2Fsrc%2Fplatform%2Fbonfire%2Fcpu_bonfire10.h;0;4
-FILE_NAME_4=4152;Lua;0;EUTF-8;1;1;0;%2Fhome%2Fthomas%2Felua%2Fbuild_data.lua;0;4
-FILE_NAME_5=18450;Lua;0;EUTF-8;1;1;0;%2Fhome%2Fthomas%2Felua%2Fbuild_elua.lua;0;4
-FILE_NAME_6=1160;Lua;0;EUTF-8;1;1;0;%2Fhome%2Fthomas%2Felua%2Fsrc%2Fplatform%2Fbonfire%2Fconf.lua;0;4
-FILE_NAME_7=2575;None;0;EUTF-8;1;1;0;%2Fhome%2Fthomas%2Felua%2Fsrc%2Fplatform%2Fbonfire%2Fstart.S;0;4
-FILE_NAME_8=2981;C;0;EUTF-8;1;1;0;%2Fhome%2Fthomas%2Felua%2Fsrc%2Fplatform%2Fbonfire%2Fplatform.c;0;4
-FILE_NAME_9=2916402;None;0;EUTF-8;1;1;0;%2Fhome%2Fthomas%2Felua%2Fbonf_elualong.lst;0;4
+current_page=13
+FILE_NAME_0=193;Lua;0;EUTF-8;0;1;0;%2Fhome%2Fthomas%2Fupload%2Ftcp_timeout.lua;0;4
+FILE_NAME_1=3587;C;0;EUTF-8;0;1;0;%2Fhome%2Fthomas%2Fdevelopment%2Felua%2Fsrc%2Fplatform%2Fbonfire%2Fxil_etherlite.c;0;4
+FILE_NAME_2=691;Lua;0;EUTF-8;0;1;0;%2Fhome%2Fthomas%2Fupload%2Fhttp_get.lua;0;4
+FILE_NAME_3=9138;C;0;EUTF-8;0;1;0;%2Fhome%2Fthomas%2Fdevelopment%2Felua%2Fsrc%2Fuip%2Fuipopt.h;0;4
+FILE_NAME_4=4466;C;0;EUTF-8;0;1;0;%2Fhome%2Fthomas%2Fdevelopment%2Felua%2Fsrc%2Felua_uip.c;0;4
+FILE_NAME_5=407;Lua;0;EUTF-8;0;1;0;%2Fhome%2Fthomas%2Fdevelopment%2Felua%2Fromfs%2Flife_server.lua;0;4
+FILE_NAME_6=2711;C;0;EUTF-8;0;1;0;%2Fhome%2Fthomas%2Fdevelopment%2Felua%2Fsrc%2Fplatform%2Fbonfire%2Fplatform_int.c;0;4
+FILE_NAME_7=3398;C;0;EUTF-8;0;1;0;%2Fhome%2Fthomas%2Fdevelopment%2Felua%2Fsrc%2Fplatform%2Fbonfire%2Fuip-conf.h;0;4
+FILE_NAME_8=271;Lua;0;EUTF-8;0;1;0;%2Fhome%2Fthomas%2Fdevelopment%2Felua%2Fboards%2Fknown%2Fbonfire_arty.lua;0;4
+FILE_NAME_9=5296;C;0;EUTF-8;0;1;0;%2Fhome%2Fthomas%2Fdevelopment%2Felua%2Fsrc%2Fcommon.c;0;4
+FILE_NAME_10=5218;C;0;EUTF-8;0;1;0;%2Fhome%2Fthomas%2Fdevelopment%2Felua%2Fsrc%2Flinenoise.c;0;4
+FILE_NAME_11=1304;C;0;EUTF-8;0;1;0;%2Fhome%2Fthomas%2Fdevelopment%2Felua%2Finc%2Fvalidate.h;0;4
+FILE_NAME_12=1010;C;0;EUTF-8;0;1;0;%2Fhome%2Fthomas%2Fdevelopment%2Felua%2Fsrc%2Fshell%2Fshell.c;0;4
+FILE_NAME_13=7499;C;0;EUTF-8;0;1;0;%2Fhome%2Fthomas%2Fdevelopment%2Felua%2Fsrc%2Fmodules%2Fnet.c;0;4
+FILE_NAME_14=402;C;0;EUTF-8;0;1;0;%2Fhome%2Fthomas%2Fdevelopment%2Felua%2Finc%2Felua_net.h;0;4
 
 [VTE]
-last_dir=/home/thomas/elua
+last_dir=/home/thomas/development/elua
 
 [build-menu]
 NF_00_LB=_Make
-NF_00_CM=lua5.1 build_elua.lua board=RISCV32_spike  target=lualong
-NF_00_WD=/home/thomas/elua
+NF_00_CM=lua5.1 build_elua.lua board=bonfire_arty  target=lua
+NF_00_WD=/home/thomas/development/elua
 CFT_01_LB=_Build
-CFT_01_CM=lua5.1 build_elua.lua board=RISCV32_spike target=lualong
-CFT_01_WD=/home/thomas/elua
+CFT_01_CM=make all BOARD=bonfire_arty
+CFT_01_WD=/home/thomas/development/elua
 filetypes=C;Lua;
 LuaFT_00_LB=build bonfire
 LuaFT_00_CM=lua5.1 build_elua.lua board=bonfire_papilio_pro  target=lualong
 LuaFT_00_WD=/home/thomas/elua
+CFT_00_LB=_Compile
+CFT_00_CM=lua5.1 build_elua.lua board=bonfire_arty  target=lua %d/%f
+CFT_00_WD=/home/thomas/development/elua
