@@ -6,10 +6,12 @@
 
 // TH: Fixed various places to do all conversions to/from lua numbers as unsigned
 // This is also consitent with other parts of eLua  e.g. the cpu module
-// It is may not really good together with lualong, we have to check it
-// The newer bitop Library always works with signed numbers for this reason,
-// but it does not work well with eLua. 
-// Added the tohex and rotate functions from bitop
+// If have also considered using signed integers like in http://bitop.luajit.org/
+// This would have the advantage that the behaviour for lua "long" would be
+// identical to lua "double".  But it also a lot of drawbacks, and would be inconsistent
+// with e.g. the cpu.r/w operations, because they expect unsigned numbers.
+//
+// In addtion I added the tohex and rotate functions from http://bitop.luajit.org/
 
 
 #include <limits.h>
@@ -28,14 +30,14 @@ typedef u32 lua_UInteger;
 //TH: Local Push unsigned integer
 void  bit_pushuinteger(lua_State *L, lua_UInteger n)
 {
-	
-	lua_pushnumber( L, ( lua_Number )n);
-	
-}	
+
+  lua_pushnumber( L, ( lua_Number )n);
+
+}
 
 /* Define TOBIT to get a bit value */
 #define TOBIT(L, n)                    \
-  ((lua_UInteger)luaL_checknumber((L), (n)))
+  ( ( (s64)luaL_checknumber((L), (n))) & 0x0ffffffff  )
 
 /* Operations
 
@@ -48,7 +50,7 @@ void  bit_pushuinteger(lua_State *L, lua_UInteger n)
    ARITHMETIC_SHIFT does not truncate its left-hand operand, so that
    the sign bits are not removed and right shift work properly.
    */
-  
+
 #define MONADIC(name, op)                                       \
   static int bit_ ## name(lua_State *L) {                       \
     bit_pushuinteger(L, op TOBIT(L, 1));                         \
@@ -78,17 +80,18 @@ void  bit_pushuinteger(lua_State *L, lua_UInteger n)
                           (unsigned)luaL_checknumber(L, 2));            \
     return 1;                                                           \
   }
-  
-// Added TH  
+
+// Added TH
 #define BIT_SH(name, fn)                                      \
-  static int bit_ ## name(lua_State *L) {                               \
-    bit_pushuinteger(L, fn((lua_UInteger)TOBIT(L, 1),                    \
-                          (unsigned)luaL_checknumber(L, 2)));            \
-    return 1;                                                           \
-  }  
-  
+  static int bit_ ## name(lua_State *L) {   \
+    lua_UInteger b= (lua_UInteger)TOBIT(L, 1);                  \
+    unsigned sh = (unsigned)luaL_checknumber(L, 2); \
+    bit_pushuinteger(L, fn(b,sh));    \
+    return 1;                                                       \
+  }
+
 #define brol(b, n)  ((b << n) | (b >> (32-n)))
-#define bror(b, n)  ((b << (32-n)) | (b >> n))  
+#define bror(b, n)  ((b << (32-n)) | (b >> n))
 
 MONADIC(bnot,  ~)
 VARIADIC(band, &=)
@@ -115,7 +118,7 @@ static int bit_isset( lua_State* L )
 {
   lua_UInteger val = ( lua_UInteger )TOBIT( L, 1 );
   unsigned pos = ( unsigned )luaL_checkinteger( L, 2 );
-  
+
   lua_pushboolean( L, val & ( 1 << pos ) ? 1 : 0 );
   return 1;
 }
@@ -125,17 +128,17 @@ static int bit_isclear( lua_State* L )
 {
   lua_UInteger val = ( lua_UInteger )TOBIT( L, 1 );
   unsigned pos = ( unsigned )luaL_checkinteger( L, 2 );
-  
+
   lua_pushboolean( L, val & ( 1 << pos ) ? 0 : 1 );
   return 1;
 }
 
 // Lua: res = set( value, pos1, pos2, ... )
 static int bit_set( lua_State* L )
-{ 
+{
   lua_UInteger val = ( lua_UInteger )TOBIT( L, 1 );
   unsigned total = lua_gettop( L ), i;
-  
+
   for( i = 2; i <= total; i ++ )
     val |= 1 << ( unsigned )luaL_checkinteger( L, i );
   bit_pushuinteger( L, ( lua_UInteger )val );
@@ -147,11 +150,11 @@ static int bit_clear( lua_State* L )
 {
   lua_UInteger val = ( lua_UInteger )TOBIT( L, 1 );
   unsigned total = lua_gettop( L ), i;
-  
+
   for( i = 2; i <= total; i ++ )
     val &= ~( 1 << ( unsigned )luaL_checkinteger( L, i ) );
   bit_pushuinteger( L, ( lua_UInteger )val );
-  return 1; 
+  return 1;
 }
 
 //TH: "Borrowed" from luaBitop
@@ -185,8 +188,8 @@ const LUA_REG_TYPE bit_map[] = {
   { LSTRKEY( "isset" ),   LFUNCVAL( bit_isset ) },
   { LSTRKEY( "isclear" ), LFUNCVAL( bit_isclear ) },
   { LSTRKEY( "tohex" ), LFUNCVAL( bit_tohex ) }, // TH
-  { LSTRKEY("rol"),	LFUNCVAL(bit_rol) }, // TH
-  { LSTRKEY("ror"),	LFUNCVAL(bit_ror) }, // TH
+  { LSTRKEY("rol"), LFUNCVAL(bit_rol) }, // TH
+  { LSTRKEY("ror"), LFUNCVAL(bit_ror) }, // TH
   { LNILKEY, LNILVAL}
 };
 
