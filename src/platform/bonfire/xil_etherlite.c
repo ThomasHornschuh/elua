@@ -22,13 +22,13 @@
 
 inline void _write_word(void* address,uint32_t value)
 {
-  *(( uint32_t* )( address ))=value;
+  *(( volatile uint32_t* )( address ))=value;
 }
 
 
 inline uint32_t _read_word(void* address)
 {
-  return  *(( uint32_t* )( address ));
+  return  *((volatile uint32_t* )( address ));
 
 }
 
