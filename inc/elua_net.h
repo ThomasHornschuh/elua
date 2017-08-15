@@ -7,7 +7,8 @@
 #include "platform.h"
 
 // eLua network typedefs
-typedef s16 elua_net_size;
+//typedef s16 elua_net_size;
+typedef size_t elua_net_size;
 
 // eLua net error codes
 enum
