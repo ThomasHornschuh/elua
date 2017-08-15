@@ -364,10 +364,12 @@ void elua_uip_appcall()
   }
 
   // Handle data send
-  if( ( uip_acked() || uip_rexmit() || uip_poll() ) && ( s->state == ELUA_UIP_STATE_SEND ) )
+  if(  uip_acked() || uip_rexmit() || ( uip_poll()  &&  s->state == ELUA_UIP_STATE_SEND )  )
   {
-    // Special translation for TELNET: prepend all '\n' with '\r'
-    // We write directly in UIP's buffer
+     if ( uip_poll() ) {
+       s->state = ELUA_UIP_STATE_SEND_ACKWAIT;
+     }
+
     if( uip_acked() )
     {
       elua_net_size minlen = UMIN( s->len, uip_mss() );
@@ -381,6 +383,8 @@ void elua_uip_appcall()
 #ifdef BUILD_CON_TCP
       if( sockno == elua_uip_telnet_socket )
       {
+        // Special translation for TELNET: prepend all '\n' with '\r'
+        // We write directly in UIP's buffer
         temp = elua_uip_telnet_prep_send( s->ptr, s->len );
         uip_send( uip_sappdata, temp );
       }
@@ -404,6 +408,7 @@ void elua_uip_appcall()
   {
     if( s->state == ELUA_UIP_STATE_RECV_2 )
     {
+      //printk("uip_datalen: %d, s->len: %d, Flags: %x \n",uip_datalen(),s->len,uip_conn->tcpstateflags );
 #ifdef BUILD_CON_TCP
       if( sockno == elua_uip_telnet_socket )
       {
@@ -413,6 +418,7 @@ void elua_uip_appcall()
 #endif
       int lastfound = 0;
 
+      s->received_bytes+= uip_datalen(); // TH
       // Check end of transmission
       if( uip_datalen() < UIP_RECEIVE_WINDOW )
         lastfound = 1;
@@ -420,7 +426,11 @@ void elua_uip_appcall()
       if( s->len < uip_datalen() )
       {
         s->res = ELUA_NET_ERR_OVERFLOW;
-        temp = s->len;
+        // TH: Fixed handling of OVERFLOW error
+        s->state = ELUA_UIP_STATE_IDLE;
+        uip_stop();
+        return;
+        //temp = s->len;
       }
       else
         temp = uip_datalen();
@@ -460,7 +470,7 @@ void elua_uip_appcall()
       }
 
       // Do we need to read another packet?
-      if( s->len == 0 || lastfound )
+      if( s->len == 0  || lastfound )
       {
         uip_stop();
         s->res = ELUA_NET_ERR_OK;
@@ -538,6 +548,7 @@ static void elua_prep_socket_state( volatile struct elua_uip_state *pstate, void
   pstate->res = res;
   pstate->readto = readto;
   pstate->state = state;
+  pstate->received_bytes=0; // TH
 }
 
 int elua_net_socket( int type )
@@ -587,6 +598,7 @@ static elua_net_size elua_net_recv_internal( int s, void* buf, elua_net_size max
   volatile struct elua_uip_state *pstate = ( volatile struct elua_uip_state* )&( uip_conns[ s ].appstate );
   timer_data_type tmrstart = 0;
   int old_status;
+  elua_net_size last_recv_bytes; // TH
 
   if( !ELUA_UIP_IS_SOCK_OK( s ) || !uip_conn_active( s ) )
     return -1;
@@ -595,12 +607,21 @@ static elua_net_size elua_net_recv_internal( int s, void* buf, elua_net_size max
   elua_prep_socket_state( pstate, buf, maxsize, readto, with_buffer, ELUA_UIP_STATE_RECV );
   if( to_us > 0 )
     tmrstart = platform_timer_start( timer_id );
+
+  last_recv_bytes = pstate->received_bytes; // TH
   while( 1 )
   {
     if( pstate->state == ELUA_UIP_STATE_IDLE )
       break;
+
+    //TH: reset timeout when data was received in the meantime
+    if (to_us > 0  &&  pstate->received_bytes > last_recv_bytes) {
+      tmrstart = platform_timer_start( timer_id );
+      last_recv_bytes = pstate->received_bytes;
+    }
     if( to_us > 0 && platform_timer_get_diff_crt( timer_id, tmrstart ) >= to_us )
     {
+
       old_status = platform_cpu_set_global_interrupts( PLATFORM_CPU_DISABLE );
       if( pstate->state != ELUA_UIP_STATE_IDLE )
       {
