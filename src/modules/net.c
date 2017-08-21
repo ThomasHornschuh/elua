@@ -72,7 +72,7 @@ static int net_accept( lua_State *L )
 
   lua_pushinteger( L,sock = elua_accept( port, timer_id, timeout, &remip ) );
   lua_pushinteger( L, ( sock>=0 ) ? remip.ipaddr:0 );
-  lua_pushinteger( L, ( sock>=0 )? elua_net_get_last_err( sock ):ELUA_NET_ERR_WAIT_TIMEDOUT );
+  lua_pushinteger( L, ( sock>=0 )? ELUA_NET_ERR_OK:ELUA_NET_ERR_WAIT_TIMEDOUT );
   return 3;
 }
 
