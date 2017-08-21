@@ -99,20 +99,24 @@ typedef unsigned short uip_stats_t;
 //
 #define UIP_CONF_MAX_LISTENPORTS    4
 
+
+//
+// uIP buffer size.
+//
+#define UIP_CONF_BUFFER_SIZE        1514
+
+
 //
 // Size of advertised receiver's window
 //
-//#define UIP_CONF_RECEIVE_WINDOW     400
+#define UIP_CONF_RECEIVE_WINDOW     511 //  400
+
 
 //
 // Size of ARP table
 //
 #define UIP_CONF_ARPTAB_SIZE        16
 
-//
-// uIP buffer size.
-//
-#define UIP_CONF_BUFFER_SIZE        1514
 
 //
 // uIP statistics on or off
