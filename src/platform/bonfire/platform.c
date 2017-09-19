@@ -24,11 +24,6 @@
 #endif
 
 
-
-
-
-
-
 // ****************************************************************************
 // Platform initialization (low-level and full)
 
@@ -36,7 +31,6 @@
 //void *memory_end_address = 0;
 
 extern char end; // From linker script, end of data segment
-
 
 
 

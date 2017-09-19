@@ -3,9 +3,12 @@
 #ifndef __CPU_BONFIRE10_H__
 #define __CPU_BONFIRE10_H__
 
-#include "bonfire_platform.h"
+#include "papilio_pro.h"
 #include "stacks.h"
+
+#ifndef __ASSEMBLER__
 #include "platform_ints.h"
+#endif
 
 #define CPU_FREQUENCY SYSCLK
 
