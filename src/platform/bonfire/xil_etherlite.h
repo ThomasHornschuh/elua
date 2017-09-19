@@ -1,7 +1,6 @@
 #ifndef _XIL_ETHERLITE_H_
 #define _XIL_ETHERLITE_H_
 
-#include "arty.h"
 
 #define ETHL_MDIOADDR (ETHERLITE_BASE+0x7e4)
 #define ETHL_MDIOWR (ETHERLITE_BASE+0x7e8)

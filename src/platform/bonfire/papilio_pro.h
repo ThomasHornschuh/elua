@@ -1,7 +1,7 @@
-#ifndef BONFIRE_PLATFORM_H
-#define BONFIRE_PLATFORM_H
+#ifndef PAPILIO_PRO_H
+#define PAPILIO_PRO_H
 
-#pragma message "bonfire_platform.h"
+#pragma message "PAPILIO_PRO_H"
 
 #define UART_BASE 0x08000000
 #define SPIFLASH_BASE 0x08000100
@@ -22,7 +22,7 @@
 #define CLK_PERIOD (1e+9 / SYSCLK)  // in ns...
 
 
-// Parameters for SPI Flash 
+// Parameters for SPI Flash
 
 #define FLASHSIZE (8192*1024)
 #define MAX_FLASH_IMAGESIZE (1024*512) // Max 512KB of flash used for boot image

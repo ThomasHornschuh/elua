@@ -29,7 +29,7 @@ volatile uint32_t eth_timer_fired=0;
 #define __virt_timer_period ((long)(SYSCLK/VTMR_FREQ_HZ))
 
 
-
+#ifdef __ARTY_H
 void ext_irq_handler()
 {
 uint32_t pending;
@@ -42,6 +42,7 @@ uint32_t pending;
 
 }
 
+#endif
 
 /*
  * Because currently only support for Lua interrupts on virtual timers is implemented,
@@ -164,9 +165,12 @@ char c;
          case 0x07:
            timer_irq_handler();
            break;
+
+#ifdef __ARTY_H
          case 0x0b:
            ext_irq_handler();
            break;
+#endif
          default:
            printk("Unexepted Interrupt cause %x\n",ptf->cause);
       }
