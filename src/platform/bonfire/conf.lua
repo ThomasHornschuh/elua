@@ -13,7 +13,7 @@ local ldscript = "src/platform/bonfire/riscv_local.ld"
 -- Override default optimize settings
 --delcf{ "-Os", "-fomit-frame-pointer" }
 --addcf{ "-O0", "-g" }
-addcf{"-g", "-O2","-fomit-frame-pointer"}
+addcf{"-g", "-O3","-fomit-frame-pointer"}
 
 -- Prepend with path
 specific_files = utils.prepend_path( specific_files, sf( "src/platform/%s", platform ) )
@@ -25,7 +25,7 @@ addlf{ '-nostartfiles', '-nostdlib', '-T', ldscript, '-Wl,--gc-sections', '-Wl,-
 --addlf{  '-Wl,--allow-multiple-definition','-Wl,--gc-sections' , '-T', ldscript }
 addlib{ 'c','gcc','m' }
 
-local target_flags = { '-march=rv32im' ,'-mabi=ilp32'}
+local target_flags = { '-march=rv32im' ,'-mabi=ilp32' } --, '-mstrict-align','-mbranch-cost=6'}
 addcf{ target_flags}
 
 --addcf{ target_flags, '-fno-builtin', '-fno-stack-protector' }

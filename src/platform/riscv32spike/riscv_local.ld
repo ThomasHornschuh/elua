@@ -86,32 +86,32 @@ SECTIONS
   . = 0x00010000;
   _ftext = .;
   PROVIDE( eprol = . );
-  
+
   /* text: Program code section */
-  .text : 
+  .text :
   {
      PROVIDE(stext = .);
-    *(.init)  
+    *(.init)
     *(.text)
     *(.text.*)
     *(.gnu.linkonce.t.*)
-  } 
-  
+  }
+
   /* init: Code to execute before main (called by crt0.S) */
  /*
-  .init : 
+  .init :
   {
     KEEP( *(.init) )
   }
 */
   /* fini: Code to execute after main (called by crt0.S) */
-  .fini : 
+  .fini :
   {
     KEEP( *(.fini) )
   }
 
   /* rodata: Read-only data */
-  .rodata : 
+  .rodata :
   {
     *(.rdata)
     *(.rodata)
@@ -160,7 +160,7 @@ SECTIONS
   .eh_frame_hdr     : { *(.eh_frame_hdr)     }
   .eh_frame         : { KEEP( *(.eh_frame) ) }
   .gcc_except_table : { *(.gcc_except_table) }
-  .jcr              : { KEEP (*(.jcr))       } 
+  .jcr              : { KEEP (*(.jcr))       }
 
   /*--------------------------------------------------------------------*/
   /* Initialized data segment                                           */
@@ -171,20 +171,21 @@ SECTIONS
    _fdata = .;
 
   /* data: Writable data */
-  .data : 
+  .data :
   {
     *(.data)
     *(.data.*)
     *(.gnu.linkonce.d.*)
   }
 
-  
+
 /* Have _gp point to middle of sdata/sbss to maximize displacement range */
   . = ALIGN(16);
-  _gp = . + 0x800;
+  __global_pointer$ = . + 0x800;
+  _gp =  __global_pointer$;
 
   /* Writable small data segment */
-  .sdata : 
+  .sdata :
   {
     *(.sdata)
     *(.sdata.*)
@@ -195,7 +196,7 @@ SECTIONS
    /* End of initialized data segment */
    PROVIDE( edata = . );
     _edata = .;
-  
+
 
   /*--------------------------------------------------------------------*/
   /* Uninitialized data segment                                         */
@@ -206,7 +207,7 @@ SECTIONS
   _fbss = .;
 
   /* Writable uninitialized small data segment */
-  .sbss : 
+  .sbss :
   {
     *(.sbss)
     *(.sbss.*)
@@ -216,7 +217,7 @@ SECTIONS
   /* bss: Uninitialized writeable data section */
   . = .;
   _bss_start = .;
-  .bss : 
+  .bss :
   {
     *(.bss)
     *(.bss.*)

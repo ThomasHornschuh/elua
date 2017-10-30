@@ -20,6 +20,8 @@
 
 #define ETH_BUFSIZE_WORDS (0x07f0/4)
 
+static volatile int in_ethernet_irq = 0;
+
 inline void _write_word(void* address,uint32_t value)
 {
   *(( volatile uint32_t* )( address ))=value;
@@ -39,6 +41,11 @@ inline void _write_leds(uint8_t value)
    _write_word(( void* )ARTY_LEDS4TO7,value);
 }
 
+inline uint32_t _read_leds()
+{
+   return _read_word(( void* )ARTY_LEDS4TO7);
+}
+
 
 void platform_eth_init()
 {
@@ -53,14 +60,14 @@ static struct uip_eth_addr sTempAddr = {
   };
 
   printk("Initalizing Ethernet core\n");
-  _write_word(ETHL_GIE,0x80000000); // Enable Interrupts
+
   set_csr(mie,MIP_MEIP); // Enable External Interrupt
 
-
-  // clear pending packets
+  // clear pending packets, enable receive interrupts
   _write_word(ETHL_RX_PING_CTRL,0x8);
-  _write_word(ETHL_RX_PONG_CTRL,0x8);
+  _write_word(ETHL_RX_PONG_CTRL,0x0);
   _write_word(ETHL_TX_PING_CTRL,0);
+  _write_word(ETHL_GIE,0x80000000); // Enable Ethernet Interrupts
 
 
    elua_uip_init( &sTempAddr );
@@ -108,33 +115,39 @@ static BOOL is_PingBuff = true;      // start always with the ping buffer
 void * currentBuff;
 
 
+
   if (is_PingBuff)
     currentBuff= ETHL_RX_PING_BUFF;
   else
     currentBuff= ETHL_RX_PONG_BUFF;
 
 
-  if (_read_word(currentBuff+0x7fc) & 0x01) {
+  if (_read_word(currentBuff+ETHL_OFFSET_CTRL) & 0x01) {
+
+     if (is_PingBuff)
+      _write_leds((0x01<<2) |_read_leds()); // light LED6
+     else
+       _write_leds((0x01<<3) | _read_leds()); // light LED7
+
      memcpy(buf,currentBuff,maxlen);
-     _write_word(currentBuff+0x7fc,0x8); // clear buffer, enable interrupts
+     _write_word(currentBuff+ETHL_OFFSET_CTRL,0x8); // clear buffer, enable interrupts
      //int i;
      //for(i=0;i<16;i++) printk("%x ",((uint8_t*)buf)[i]);
      //printk("\n");
      is_PingBuff = !is_PingBuff; // toggle
      return maxlen;
 
-  } else
-    return 0;
-
+  } else {
+      return 0;
+  }
 }
 void platform_eth_force_interrupt(void)
 {
 // force_interrupt is called from non-interrupt code
 // so we need to disable interrupts to avoid a real IRQ happening at the same time
 
-int oldstate=platform_cpu_get_global_interrupts();
+int oldstate=platform_cpu_set_global_interrupts(PLATFORM_CPU_DISABLE);
 
-  platform_cpu_set_global_interrupts(PLATFORM_CPU_DISABLE);
   _write_leds(0x02); // light LED5
   elua_uip_mainloop();
    _write_leds(0x0);
@@ -159,11 +172,13 @@ u32 platform_eth_get_elapsed_time(void)
 void ethernet_irq_handler()
 {
    if (_read_word((void*)BONFIRE_SYSIO) & 0x01) { // Pending IRQ
-      _write_word((void*)BONFIRE_SYSIO,0x01); // clear IRQ
+
 #ifdef  BUILD_UIP
-      //printk("ethernet_irq_handler\n");
       _write_leds(0x01); // light LED4
+      in_ethernet_irq=1;
       elua_uip_mainloop();
+      in_ethernet_irq=0;
+      _write_word((void*)BONFIRE_SYSIO,0x01); // clear IRQ
       _write_leds(0x0);
 
 #endif
