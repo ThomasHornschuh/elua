@@ -43,6 +43,7 @@ int platform_init()
 {
 
   uart_write_console("eLua for Bonfire SoC 1.0a\n");
+  printk("Build with GCC %s\n",__VERSION__);
   cmn_systimer_set_base_freq(SYSCLK);
 
 #ifdef BUILD_UIP

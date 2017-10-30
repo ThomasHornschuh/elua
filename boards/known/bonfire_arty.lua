@@ -19,7 +19,7 @@ return {
     vtmr= { num=4, freq=50 }
   },
   modules = {
-    generic = { 'pd', 'all_lua', 'term','uart','tmr','elua',"cpu","bit","net" },
+    generic = { 'pd', 'all_lua', 'term','uart','tmr','elua',"cpu","bit","net","pack" },
     platform = { 'riscv' }
   },
   cpu_constants = {

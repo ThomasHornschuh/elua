@@ -1,7 +1,7 @@
 #ifndef __ARTY_H
 #define __ARTY_H
 
-#pragma message "arty.h"
+//#pragma message "arty.h"
 
 #define WISHBONE_IO_SPACE 0x40000000
 #define AXI_IO_SPACE 0x80000000
