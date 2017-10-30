@@ -32,3 +32,4 @@ luarpc*
 *.dmp
 *.lst
 /elua_lua_bonfire_arty.img
+/eLuaRISCV
