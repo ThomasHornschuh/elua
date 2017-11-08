@@ -24,14 +24,7 @@
 #include "platform.h" // eLua platform in this case !!!!
 #include "uart.h"
 
-#define UART_TX 0x0
-#define UART_RECV 0x04
-#define UART_STATUS 0x08
-#define UART_DIVISOR 0x0c
-#define UART_INTE 0x10
-#define UART_REVISION 0x14
 
-#define ENABLE_SEND_DELAY 0
 
 #define UART_TX 0
 #define UART_RECV 0
@@ -43,8 +36,8 @@
 //#define ENABLE_SEND_DELAY 1
 
 
-volatile uint32_t *uartadr=(uint32_t *)UART_BASE;
-volatile uint32_t *gpioadr=(uint32_t *)GPIO_BASE;
+static volatile uint32_t *uartadr=(uint32_t *)UART_BASE;
+//static volatile uint32_t *gpioadr=(uint32_t *)GPIO_BASE;
 
 
 
