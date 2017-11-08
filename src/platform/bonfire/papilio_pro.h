@@ -3,9 +3,17 @@
 
 #pragma message "PAPILIO_PRO_H"
 
-#define UART_BASE 0x08000000
-#define SPIFLASH_BASE 0x08000100
-#define GPIO_BASE 0x04000000
+// New Defintions for new bonfire-soc-io core
+#define IO_BASE 0x04000000
+#define SOC_IO_OFFSET 0x10000 // Offset from one I/O Device to the next (64K range)
+
+#define UART0_BASE IO_BASE
+#define SPIFLASH_BASE (IO_BASE+SOC_IO_OFFSET)
+#define GPIO_BASE (IO_BASE+3*SOC_IO_OFFSET)
+#define UART1_BASE (IO_BASE+2*SOC_IO_OFFSET)
+
+#define UART_BASE UART0_BASE // Backwards compatiblity
+
 #define MTIME_BASE 0x0FFFF0000
 
 #define DRAM_BASE 0x0
