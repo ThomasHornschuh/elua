@@ -6,7 +6,7 @@
 .extern _stacktop
 .extern trap_handler
 
-.extern __libc_fini_array 
+.extern __libc_fini_array
 .extern __libc_init_array
 .extern atexit
 .extern memset
@@ -107,9 +107,9 @@ _start:
 
 la gp, _gp
 li sp, STACK_TOP // set SP to end of RAM
-csrw mscratch,sp // save stacktop as trap handler stack
-
-addi sp,sp,- STACK_SIZE_IRQ // save STACK_SIZE_IRQ Bytes for Trap handler stack
+//TH: Remove usage of an IRQ stack, just use the "normal" stack
+//csrw mscratch,sp // save stacktop as trap handler stack
+//addi sp,sp,- STACK_SIZE_IRQ // save STACK_SIZE_IRQ Bytes for Trap handler stack
 
 la a1, __trap
 csrw mtvec,a1
@@ -125,7 +125,7 @@ csrw mtvec,a1
   //la      a0, __libc_fini_array   # Register global termination functions
   //call    atexit                  #  to be called upon exit
   //call    __libc_init_array       # Run global initialization functions
-  
+
    call platform_ll_init
    call main
 
@@ -142,8 +142,9 @@ ret
 
 
 __trap:
-csrrw sp,mscratch,sp // swap SP
-addi sp,sp, -(37*4) // allocate space for Trap frame
+//csrrw sp,mscratch,sp // swap SP
+csrw mscratch,sp // save SP
+addi sp,sp, -(37*REGBYTES) // allocate space for Trap frame
 save_tf
 mv a0,sp // Pointer to trap frame
 jal trap_handler
@@ -153,9 +154,9 @@ jal trap_handler
 // a0 points to returned trap frame
 
 LOAD  t1,33*REGBYTES(a0) // set epc
-csrw mepc,t1 
-addi sp,sp, 37*4 // restore Trap handler SP
-csrw mscratch,sp // save SP
+csrw mepc,t1
+//addi sp,sp, 37*4 // restore Trap handler SP
+//csrw mscratch,sp // save SP
 // The SP of the trapped context will be restored below
 
 # restore x registers

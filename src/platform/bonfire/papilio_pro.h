@@ -1,7 +1,7 @@
 #ifndef PAPILIO_PRO_H
 #define PAPILIO_PRO_H
 
-#pragma message "PAPILIO_PRO_H"
+//#pragma message "PAPILIO_PRO_H"
 
 // New Defintions for new bonfire-soc-io core
 #define IO_BASE 0x04000000
@@ -23,6 +23,8 @@
 #define SRAM_BASE 0x0C000000
 #define SRAM_SIZE 32768
 #define SRAM_TOP  (SRAM_BASE+SRAM_SIZE-1)
+
+#define DCACHE_SIZE (2048*4)
 
 
 #define SYSCLK 96000000
