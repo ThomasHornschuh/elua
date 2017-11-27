@@ -1,6 +1,12 @@
 -- Configuration file for the RV32IM on bonfire Platform
 -- Intended to run standalone
 
+function _pt(t)
+  for k,v in pairs(t) do print(k,v) end
+end
+
+
+
 specific_files = "start.S platform.c stubs.c uart.c systimer.c console.c platform_int.c mod_riscv.c"
 
 if comp.cpu:lower()=="bonfire_arty_10" then
@@ -8,7 +14,7 @@ if comp.cpu:lower()=="bonfire_arty_10" then
 end
 
 -- Debug support
-  specific_files = specific_files .. " gdb_interface.c riscv-gdb-stub.c"
+  specific_files = specific_files .. " gdb_interface.c riscv-gdb-stub.c mod_gdbserver.c"
 
 
 local ldscript = sf( "src/platform/%s/%s", platform, "riscv_local.ld" )
