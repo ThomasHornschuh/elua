@@ -20,6 +20,7 @@
 #endif
 
 #include "riscv-gdb-stub.h"
+t_ptrapfuntion gdb_debug_handler=NULL;
 
 volatile uint32_t *pmtime = (uint32_t*)MTIME_BASE; // Pointer to memory mapped RISC-V Timer registers
 
@@ -119,22 +120,21 @@ void timer_irq_handler()
 }
 
 
-static t_ptrapfuntion debug_handler=NULL;
 
-#define DEBUG_BAUD 115200
+//#define DEBUG_BAUD 115200
 
-void init_gdb_stub()
-{
-  gdb_setup_interface(DEBUG_BAUD);
-  debug_handler=gdb_initDebugger(0);
-  printk("Connect with Debugger port with %d baud\n",DEBUG_BAUD);
-  gdb_breakpoint();
+//void init_gdb_stub()
+//{
+  //gdb_setup_interface(DEBUG_BAUD);
+  //gdb_debug_handler=gdb_initDebugger(0);
+  //printk("Connect with Debugger port with %d baud\n",DEBUG_BAUD);
+  //gdb_breakpoint();
 
-}
+//}
 
 void platform_int_init()
 {
-   init_gdb_stub();
+   //init_gdb_stub();
    printk("__virt_timer_period %ld\n",__virt_timer_period);
    mtime_setinterval(__virt_timer_period);
 
@@ -194,7 +194,7 @@ char c;
     }  else {
      // trap
 
-        if (debug_handler) return debug_handler(ptf);
+        if (gdb_debug_handler) return gdb_debug_handler(ptf);
 
         printk("\nTrap cause: %lx\n",ptf->cause);
         dump_tf(ptf);

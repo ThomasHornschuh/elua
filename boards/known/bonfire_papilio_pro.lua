@@ -17,7 +17,7 @@ return {
   },
   modules = {
     generic = { 'pd', 'all_lua', 'term','uart','tmr','elua',"cpu","bit","pack" },
-    platform = { 'riscv' }
+    platform = { 'riscv','gdbserver' }
   },
   cpu_constants = {
     'INT_TMR_MATCH',

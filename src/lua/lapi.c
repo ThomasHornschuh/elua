@@ -195,13 +195,13 @@ LUA_API void lua_insert (lua_State *L, int idx) {
   lua_lock(L);
   p = index2adr(L, idx);
 
-  TValue v_save= *(L->top-1);
+  //TValue v_save= *(L->top-1);
 
   api_checkvalidindex(L, p);
   for (q = L->top; q>p; q--) {
     setobjs2s(L, q, q-1);
   }
-  setobjs2s(L, p, &v_save);
+  setobjs2s(L, p, L->top);
   lua_unlock(L);
 }
 
