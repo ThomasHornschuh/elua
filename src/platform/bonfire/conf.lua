@@ -7,7 +7,14 @@ end
 
 
 
-specific_files = "start.S platform.c stubs.c uart.c systimer.c console.c platform_int.c mod_riscv.c"
+specific_files = "start.S platform.c stubs.c  systimer.c console.c platform_int.c mod_riscv.c"
+
+-- UART
+if comp.board:lower()=="bonfire_papilio_pro" then
+  specific_files = specific_files .. "uart.c"
+else
+  specific_files = specific_files .. " socz80_uart.c"
+end
 
 if comp.cpu:lower()=="bonfire_arty_10" then
   specific_files = specific_files .. " xil_etherlite.c"
