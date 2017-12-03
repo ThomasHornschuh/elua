@@ -14,6 +14,13 @@
 
 #define UART_BASE UART0_BASE // Backwards compatiblity
 
+
+// Interrupts
+
+#define UART0_INTNUM (16+6) // Assume UART0 is assigned to LI6
+#define UART1_INTNUM (16+7) // Assume UART1 is assigned to LI7
+
+
 #define MTIME_BASE 0x0FFFF0000
 
 #define DRAM_BASE 0x0

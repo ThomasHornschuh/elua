@@ -1,6 +1,5 @@
 // Platform-dependent functions
 
-#include "platform.h"
 #include "platform_conf.h"
 #include "type.h"
 #include "devman.h"
@@ -13,7 +12,10 @@
 #include "console.h"
 #include "common.h"
 
-#include "uart.h"
+
+#include "bonfire_uart.h"
+
+
 #include "irq_handler.h"
 #include "encoding.h"
 
@@ -25,6 +27,7 @@
 
 
 
+
 // ****************************************************************************
 // Platform initialization (low-level and full)
 
@@ -33,11 +36,12 @@
 
 extern char end; // From linker script, end of data segment
 
-
+extern  int initgdbserver( lua_State* L );
 
 void platform_ll_init( void )
 {
   printk("Heap: %08lx .. %08lx\n",&INTERNAL_RAM1_FIRST_FREE,INTERNAL_RAM1_LAST_FREE);
+  //initgdbserver(NULL);
 
 }
 
@@ -56,30 +60,103 @@ int platform_init()
   return PLATFORM_OK;
 }
 
+
+
 // ****************************************************************************
-// "Dummy" UART functions
+// UART functions
+
+
+
+
+uint32_t* get_uart_base(unsigned id) {
+
+  if (id>NUM_UART-1) return 0;
+  switch(id) {
+    case 0:
+      return (uint32_t*)UART0_BASE;
+    case 1:
+      return (uint32_t*)UART1_BASE;
+    default:
+     return 0;
+  }
+}
+
+
+// Extended Control register:
+// Bit [15:0] - UARTPRES UART prescaler (16 bits)   (f_clk / (baudrate * 16)) - 1
+// Bit 16 - UARTEN UARTEN bit controls whether UART is enabled or not
+// Bit 17 - EXT_EN: Enable extended mode - when set one the extended mode is activated
+// Bit [31..18] - FIFO "Nearly Full" Threshold. The number of bits actual used depends on the confirued FIFO size
 
 u32 platform_uart_setup( unsigned id, u32 baud, int databits, int parity, int stopbits )
 {
-  //printk("UART Setup %d %d %d %d %d\n",id,baud,databits,parity,stopbits);
+
+#ifndef ZPUINO_UART
+
   uart_setBaudRate(baud);
+#else
+volatile uint32_t *uartadr=get_uart_base(id);
+
+  if (uartadr) {
+     uint32_t ft;
+     #ifdef UART_FIFO_THRESHOLD
+       ft= UART_FIFO_THRESHOLD<<18;
+     #else
+       ft=0;
+     #endif
+     // Set Baudrate divisor, enable port, extended mode and set FIFO Threshold
+     uartadr[UART_EXT_CONTROL]= 0x030000L | ft | (uint16_t)(SYSCLK / (baud*16) -1);
+
+  }
+#endif
   return baud;
 }
 
 void platform_s_uart_send( unsigned id, u8 data )
 {
-    uart_writechar(data);
+#ifndef ZPUINO_UART
+
+   uart_writechar((char)data);
+#else
+
+volatile uint32_t *uartadr=get_uart_base(id);
+
+  if (uartadr) {
+    while (!(uartadr[UART_STATUS] & 0x2)); // Wait until transmitter ready
+    uartadr[UART_TXRX]=(uint32_t)data;
+  }
+#endif
 }
+
+
 
 int platform_s_uart_recv( unsigned id, timer_data_type timeout )
 {
+
+#ifndef ZPUINO_UART
   return uart_wait_receive(timeout);
+#else
+volatile uint32_t *uartadr=get_uart_base(id);
+
+  if (uartadr) {
+   uint32_t status;
+   do {
+     status=uartadr[UART_STATUS];
+     if  (status & 0x01) { // receive buffer not empty?
+       return uartadr[UART_TXRX];
+     }
+   }while(timeout);
+  }
+  return -1;
+#endif
 }
 
 int platform_s_uart_set_flow_control( unsigned id, int type )
 {
   return PLATFORM_ERR;
 }
+
+
 
 // ****************************************************************************
 // "Dummy" timer functions

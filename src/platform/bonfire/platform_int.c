@@ -10,7 +10,11 @@
 #include "console.h"
 #include "common.h"
 
-#include "uart.h"
+
+#include "bonfire_uart.h"
+
+#include "uart.h" // depreciated !!!!
+
 #include "irq_handler.h"
 #include "encoding.h"
 #include <stdio.h>
@@ -32,7 +36,7 @@ volatile uint32_t eth_timer_fired=0;
 
 
 #ifdef __ARTY_H
-void ext_irq_handler()
+static void ext_irq_handler()
 {
 uint32_t pending;
 
@@ -45,6 +49,78 @@ uint32_t pending;
 }
 
 #endif
+
+
+static int uart_irq_table[1]= {UART0_INTNUM}; // LIRQ "Offsets" for UARTs
+
+static int pending[NUM_UART];
+static int enabled[NUM_UART];
+
+
+#define FIFO_INT_MASK (1<<BIT_FIFO_INT_PENDING)
+
+static void  uart_irq_handler(int cause)
+{
+int i;
+volatile uint32_t *uart_base;
+
+   for(i=0;i<NUM_UART;i++) {
+      if (cause==uart_irq_table[i]) {
+         uart_base=get_uart_base(i);
+         if (!uart_base) kassert_fail("Unexpected UART interrupt");
+         // read FIFO nearly full interrupt and disable all further interrupts
+         if  (uart_base[UART_INT_REGISTER] & FIFO_INT_MASK) {
+           pending[i]=1;
+           uart_base[UART_INT_REGISTER]= FIFO_INT_MASK; // Clear and disable
+           cmn_int_handler(INT_UART_RX_FIFO,i);
+         }
+      }
+   }
+}
+
+int int_uart_rx_fifo_set_status( elua_int_resnum resnum, int state)
+{
+int old = enabled[resnum];
+volatile uint32_t *uart_base;
+
+    enabled[resnum]=state;
+    uart_base=get_uart_base(resnum);
+    if (uart_base) {
+       if (state) {
+         uart_base[UART_INT_REGISTER]=1<<BIT_FIFO_INT_ENABLE;
+         set_csr(mie,1<<uart_irq_table[resnum]);
+       } else {
+         uart_base[UART_INT_REGISTER]=0;
+         clear_csr(mie,1<<uart_irq_table[resnum]);
+       }
+    }
+
+    return old;
+}
+
+
+int int_uart_rx_fifo_get_status(elua_int_resnum resnum)
+{
+   return enabled[resnum];
+}
+
+int int_uart_rx_fifo_get_flag( elua_int_resnum resnum, int clear)
+{
+int res = pending[resnum];
+volatile uint32_t *uart_base;
+
+     if (clear) {
+       pending[resnum]=0;
+       // clearing the ""soft"" pending flag triggers also reactivating
+       // the hardware interrupt if enabled
+       if (enabled[resnum]) {
+          uart_base=get_uart_base(resnum);
+          if (uart_base) uart_base[UART_INT_REGISTER]=1<<BIT_FIFO_INT_ENABLE;
+       }
+     }
+     return res;
+}
+
 
 /*
  * Because currently only support for Lua interrupts on virtual timers is implemented,
@@ -78,7 +154,8 @@ const elua_int_descriptor elua_int_table[ INT_ELUA_LAST ] =
 {
   //{ int_gpio_posedge_set_status, int_gpio_posedge_get_status, int_gpio_posedge_get_flag },
   //{ int_gpio_negedge_set_status, int_gpio_negedge_get_status, int_gpio_negedge_get_flag },
-  { int_tmr_match_set_status, int_tmr_match_get_status, int_tmr_match_get_flag }
+  { int_tmr_match_set_status, int_tmr_match_get_status, int_tmr_match_get_flag },
+  { int_uart_rx_fifo_set_status, int_uart_rx_fifo_get_status,int_uart_rx_fifo_get_flag }
 };
 
 
@@ -134,9 +211,15 @@ void timer_irq_handler()
 
 void platform_int_init()
 {
+int i;
    //init_gdb_stub();
    printk("__virt_timer_period %ld\n",__virt_timer_period);
    mtime_setinterval(__virt_timer_period);
+
+   for(i=0;i<NUM_UART;i++) {
+      int_uart_rx_fifo_set_status(i,0);
+      int_uart_rx_fifo_get_flag(i,1);
+   }
 
    set_csr(mstatus,MSTATUS_MIE); // Global Interrupt Enable
 }
@@ -179,6 +262,13 @@ char c;
          case 0x07:
            timer_irq_handler();
            break;
+
+#ifdef PAPILIO_PRO_H
+         case 16+6: // Local Interrupt 6 (lxp irq_i(7))
+         case 16+5: // Local Interrupt 5 (lxp irq_i(6))
+           uart_irq_handler(ptf->cause & 0x0ff);
+           break;
+#endif
 
 #ifdef __ARTY_H
          case 0x0b:

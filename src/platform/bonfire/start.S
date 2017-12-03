@@ -153,10 +153,11 @@ jal trap_handler
 
 // a0 points to returned trap frame
 
-LOAD  t1,33*REGBYTES(a0) // set epc
+LOAD  t1,33*REGBYTES(a0) //  mepc
 csrw mepc,t1
-//addi sp,sp, 37*4 // restore Trap handler SP
-//csrw mscratch,sp // save SP
+LOAD  t1,32*REGBYTES(a0)  // mstatus
+csrw mstatus,t1
+
 // The SP of the trapped context will be restored below
 
 # restore x registers

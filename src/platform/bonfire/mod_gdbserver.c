@@ -17,7 +17,7 @@ extern t_ptrapfuntion gdb_debug_handler;
 
 static int debug_initalized=0;
 
-static int initgdbserver( lua_State* L )
+int initgdbserver( lua_State* L )
 {
   gdb_setup_interface(DEBUG_BAUD);
   gdb_debug_handler=gdb_initDebugger(0);
