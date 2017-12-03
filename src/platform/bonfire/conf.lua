@@ -11,7 +11,7 @@ specific_files = "start.S platform.c stubs.c  systimer.c console.c platform_int.
 
 -- UART
 if comp.board:lower()=="bonfire_papilio_pro" then
-  specific_files = specific_files .. "uart.c"
+  specific_files = specific_files .. " uart.c"
 else
   specific_files = specific_files .. " socz80_uart.c"
 end
@@ -29,7 +29,7 @@ local ldscript = sf( "src/platform/%s/%s", platform, "riscv_local.ld" )
 
 -- Override default optimize settings
 delcf{ "-Os", "-fomit-frame-pointer" }
-addcf{"-g", "-O2" ,"-fomit-frame-pointer"}
+addcf{"-g", "-Og" ,"-fomit-frame-pointer"}
 
 -- Prepend with path
 specific_files = utils.prepend_path( specific_files, sf( "src/platform/%s", platform ) )
