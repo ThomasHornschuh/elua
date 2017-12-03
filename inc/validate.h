@@ -21,7 +21,7 @@
 // For TCP console we need to enable TCP support
 #ifdef BUILD_CON_TCP
   #ifndef BUILD_UIP
-  #error "BUILD_CON_TCP requires BUILD_UIP to be defined in cpu, board headers" 
+  #error "BUILD_CON_TCP requires BUILD_UIP to be defined in cpu, board headers"
   #endif // #ifndef BUILD_UIP
 #endif // #ifdef BUILD_CON_TCP
 
@@ -64,19 +64,19 @@
 #endif // #ifdef BUILD_LINENOISE
 
 // For BUF_ENABLE_UART we also need C interrupt handlers support and specific INT_UART_RX support
-#if defined( BUF_ENABLE_UART ) 
+#if defined( BUF_ENABLE_UART )
   #if !defined( BUILD_C_INT_HANDLERS )
   #error "Buffering support on UART neeeds C interrupt handlers support, define BUILD_C_INT_HANDLERS in your cpu, board headers"
   #endif
-  #if !defined( INT_UART_RX )
-  #error "Buffering support on UART needs support for the INT_UART_RX interrupt"
+  #if !defined( INT_UART_RX ) && !defined( INT_UART_RX_FIFO )
+  #error "Buffering support on UART needs support for the INT_UART_RX or INT_UART_RX_FIFO  interrupt"
   #endif
 #endif
 
 // Virtual UARTs need buffering and a few specific macros
 #if defined( BUILD_SERMUX )
   #if !defined( BUF_ENABLE_UART )
-  #error "Virtual UARTs need buffering support, enable BUF_ENABLE_UART"  
+  #error "Virtual UARTs need buffering support, enable BUF_ENABLE_UART"
   #endif
 #endif
 
@@ -99,11 +99,9 @@
   #error "BUILD_ADVANCED_SHELL needs BUILD_SHELL"
 #endif
 
-// The memory error callback can only be enabled when using either the muliple allocator or the simple allocator
-// (but not the built-in allocator)
-#if defined( MEM_ERROR_CALLBACK ) && !defined( USE_MULTIPLE_ALLOCATOR ) && !defined( USE_SIMPLE_ALLOCATOR )
-  #error "A memory error callback can only be specified when using the multiple allocator or the simple allocator, but not the built-in allocator"
-#endif
-  
+ #if defined( MEM_ERROR_CALLBACK ) && !defined( USE_MULTIPLE_ALLOCATOR ) && !defined( USE_SIMPLE_ALLOCATOR )
+   #error "A memory error callback can only be specified when using the multiple allocator or the simple allocator, but not the built-in allocator"
+ #endif
+
 #endif // #ifndef __VALIDATE_H__
 

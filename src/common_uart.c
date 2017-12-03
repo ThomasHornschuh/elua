@@ -35,58 +35,7 @@ int platform_uart_exists( unsigned id )
   return 0;
 }
 
-// Helper function for buffers
-static int cmn_recv_helper( unsigned id, timer_data_type timeout )
-{
-#ifdef BUF_ENABLE_UART
-  t_buf_data data;
-#endif
 
-#ifdef BUF_ENABLE_UART
-  if( buf_is_enabled( BUF_ID_UART, id ) )
-  {
-    if( timeout == 0 )
-    {
-      if ( ( buf_read( BUF_ID_UART, id, &data ) ) == PLATFORM_UNDERFLOW )
-        return -1;
-    }
-    else
-    {
-      while( ( buf_read( BUF_ID_UART, id, &data ) ) == PLATFORM_UNDERFLOW );
-    }
-    return ( int )data;
-  }
-  else
-#endif // #ifdef BUF_ENABLE_UART
-  if( id < NUM_UART || id == CDC_UART_ID )
-    return platform_s_uart_recv( id, timeout );
-
-  return -1;
-}
-
-int platform_uart_recv( unsigned id, unsigned timer_id, timer_data_type timeout )
-{
-  timer_data_type tmr_start;
-  int res;
-  
-  if( timeout == 0 )
-    return cmn_recv_helper( id, timeout );
-  else if( timeout ==  PLATFORM_TIMER_INF_TIMEOUT )
-    return cmn_recv_helper( id, timeout );
-  else
-  {
-    // Receive char with the specified timeout
-    tmr_start = platform_timer_start( timer_id );
-    while( 1 )
-    {
-      if( ( res = cmn_recv_helper( id, 0 ) ) >= 0 )
-        break;
-      if( platform_timer_get_diff_crt( timer_id, tmr_start ) >= timeout )
-        break;
-    }
-    return res;
-  }
-}
 
 #ifdef BUF_ENABLE_UART
 static void cmn_rx_handler( int usart_id, u8 data )
@@ -131,7 +80,7 @@ static void cmn_rx_handler( int usart_id, u8 data )
 #endif // #ifdef BUF_ENABLE_UART
 
 // Send: version with and without mux
-void platform_uart_send( unsigned id, u8 data ) 
+void platform_uart_send( unsigned id, u8 data )
 {
 #ifdef BUILD_SERMUX
   if( id >= SERMUX_SERVICE_ID_FIRST && id < SERMUX_SERVICE_ID_FIRST + SERMUX_NUM_VUART )
@@ -155,22 +104,50 @@ void platform_uart_send( unsigned id, u8 data )
 }
 
 #ifdef BUF_ENABLE_UART
-static elua_int_c_handler prev_uart_rx_handler;
 
-static void cmn_uart_rx_inthandler( elua_int_resnum resnum )
+
+
+static void cmn_uart_read_fifo( elua_int_resnum resnum ) // TH
 {
-  int data;
-
+ int data;
   if( buf_is_enabled( BUF_ID_UART, resnum ) || resnum == SERMUX_PHYS_ID )
   {
     while( -1 != ( data = platform_s_uart_recv( resnum, 0 ) ) )
       cmn_rx_handler( resnum, ( u8 )data );
   }
 
+}
+
+#ifdef INT_UART_RX
+static elua_int_c_handler prev_uart_rx_handler;
+static void cmn_uart_rx_inthandler( elua_int_resnum resnum )
+{
+
+  cmn_uart_read_fifo(resnum);
+
   // Chain to previous handler
   if( prev_uart_rx_handler != NULL )
-    prev_uart_rx_handler( resnum );  
+    prev_uart_rx_handler( resnum );
 }
+#endif
+
+
+#ifdef INT_UART_RX_FIFO
+static elua_int_c_handler prev_uart_rx_fifo_handler; //  TH
+static void cmn_uart_rx_fifo_inthandler( elua_int_resnum resnum )
+{
+
+  cmn_uart_read_fifo(resnum);
+   // Clear pending interrupt, will reenable it
+  platform_cpu_get_interrupt_flag(INT_UART_RX_FIFO,resnum,1);
+
+  // Chain to previous handler
+  if( prev_uart_rx_fifo_handler != NULL )
+    prev_uart_rx_fifo_handler( resnum );
+}
+#endif
+
+
 #endif // #ifdef BUF_ENABLE_UART
 
 int platform_uart_set_buffer( unsigned id, unsigned log2size )
@@ -181,36 +158,58 @@ int platform_uart_set_buffer( unsigned id, unsigned log2size )
   if( log2size == 0 )
   {
     if( id >= SERMUX_SERVICE_ID_FIRST ) // Virtual UARTs need buffers no matter what
-      return PLATFORM_ERR; 
+      return PLATFORM_ERR;
 
     if( id != CDC_UART_ID )
     {
       // Disable the UART interrupt if it was set
-      if( platform_cpu_get_interrupt( INT_UART_RX, id ) ==  PLATFORM_CPU_ENABLE )
-        platform_cpu_set_interrupt( INT_UART_RX, id, PLATFORM_CPU_DISABLE );
+      #ifdef INT_UART_RX
+        if( platform_cpu_get_interrupt( INT_UART_RX, id ) ==  PLATFORM_CPU_ENABLE )
+          platform_cpu_set_interrupt( INT_UART_RX, id, PLATFORM_CPU_DISABLE );
 
-      // If our C interrupt handler is installed, restore the previous one
-      if( elua_int_get_c_handler( INT_UART_RX ) == cmn_uart_rx_inthandler )
-        (void) elua_int_set_c_handler( INT_UART_RX, prev_uart_rx_handler );
+        // If our C interrupt handler is installed, restore the previous one
+        if( elua_int_get_c_handler( INT_UART_RX ) == cmn_uart_rx_inthandler )
+          (void) elua_int_set_c_handler( INT_UART_RX, prev_uart_rx_handler );
+      #endif
+      #ifdef INT_UART_RX_FIFO // TH..
+        if( platform_cpu_get_interrupt( INT_UART_RX_FIFO, id ) ==  PLATFORM_CPU_ENABLE )
+          platform_cpu_set_interrupt( INT_UART_RX_FIFO, id, PLATFORM_CPU_DISABLE );
+
+        // If our C interrupt handler is installed, restore the previous one
+        if( elua_int_get_c_handler( INT_UART_RX_FIFO ) == cmn_uart_rx_fifo_inthandler )
+          (void) elua_int_set_c_handler( INT_UART_RX_FIFO, prev_uart_rx_fifo_handler );
+
+      #endif
     }
 
     // Disable buffering
     buf_set( BUF_ID_UART, id, BUF_SIZE_NONE, BUF_DSIZE_U8 );
-  }  
+  }
   else
   {
     // Enable buffering
     if( buf_set( BUF_ID_UART, id, log2size, BUF_DSIZE_U8 ) == PLATFORM_ERR )
       return PLATFORM_ERR;
     if( id == CDC_UART_ID || id >= SERMUX_SERVICE_ID_FIRST ) // No need for aditional setup on virtual UARTs or the CDC UART
-      return PLATFORM_OK;    
+      return PLATFORM_OK;
     // Setup our C handler
-    if( elua_int_get_c_handler( INT_UART_RX ) != cmn_uart_rx_inthandler )
-      prev_uart_rx_handler = elua_int_set_c_handler( INT_UART_RX, cmn_uart_rx_inthandler );
+    #ifdef INT_UART_RX
+      if( elua_int_get_c_handler( INT_UART_RX ) != cmn_uart_rx_inthandler )
+        prev_uart_rx_handler = elua_int_set_c_handler( INT_UART_RX, cmn_uart_rx_inthandler );
 
-    // Enable UART RX interrupt 
-    if( platform_cpu_set_interrupt( INT_UART_RX, id, PLATFORM_CPU_ENABLE ) < 0 )
-      return PLATFORM_ERR;
+      // Enable UART RX interrupt
+      if( platform_cpu_set_interrupt( INT_UART_RX, id, PLATFORM_CPU_ENABLE ) < 0 )
+        return PLATFORM_ERR;
+    #endif
+
+    #ifdef INT_UART_RX_FIFO // TH
+       if( elua_int_get_c_handler( INT_UART_RX_FIFO ) != cmn_uart_rx_fifo_inthandler )
+        prev_uart_rx_fifo_handler = elua_int_set_c_handler( INT_UART_RX_FIFO, cmn_uart_rx_fifo_inthandler );
+
+      // Enable UART RX FIFO interrupt
+      if( platform_cpu_set_interrupt( INT_UART_RX_FIFO, id, PLATFORM_CPU_ENABLE ) < 0 )
+        return PLATFORM_ERR;
+    #endif
   }
   return PLATFORM_OK;
 #else // BUF_ENABLE_UART
@@ -222,7 +221,7 @@ int platform_uart_set_buffer( unsigned id, unsigned log2size )
 // Setup the serial multiplexer
 void cmn_uart_setup_sermux()
 {
-  // Enable UART RX interrupt 
+  // Enable UART RX interrupt
   if( platform_cpu_set_interrupt( INT_UART_RX, SERMUX_PHYS_ID, PLATFORM_CPU_ENABLE ) == PLATFORM_INT_OK )
   {
     // Setup our C handler
@@ -230,14 +229,76 @@ void cmn_uart_setup_sermux()
       prev_uart_rx_handler = elua_int_set_c_handler( INT_UART_RX, cmn_uart_rx_inthandler );
   }
   else // We don't have a choice but to get stuck here, as we can't print an error anyway, since the console most likely lives on a virtual UART
-    while( 1 );      
+    while( 1 );
 }
 #endif // #ifdef BUILD_SERMUX
 
 int platform_uart_set_flow_control( unsigned id, int type )
-{ 
+{
   if( id >= SERMUX_SERVICE_ID_FIRST || id == CDC_UART_ID )
     return PLATFORM_ERR;
   return platform_s_uart_set_flow_control( id, type );
+}
+
+// Helper function for buffers
+static int cmn_recv_helper( unsigned id, timer_data_type timeout )
+{
+#ifdef BUF_ENABLE_UART
+  t_buf_data data;
+#endif
+
+#ifdef BUF_ENABLE_UART
+  if( buf_is_enabled( BUF_ID_UART, id ) )
+  {
+    #ifdef INT_UART_RX_FIFO
+    // FIFO Interrupt will raise with a threshold, so there may be yet
+    // unread characters in the Hardware FIFO
+      cmn_uart_read_fifo( id );
+    #endif
+    if( timeout == 0 )
+    {
+      if ( ( buf_read( BUF_ID_UART, id, &data ) ) == PLATFORM_UNDERFLOW )
+        return -1;
+    }
+    else
+    {
+      while( ( buf_read( BUF_ID_UART, id, &data ) ) == PLATFORM_UNDERFLOW ) {
+        #ifdef INT_UART_RX_FIFO
+        cmn_uart_read_fifo( id );
+        #endif
+      }
+    }
+    return ( int )data;
+  }
+  else
+#endif // #ifdef BUF_ENABLE_UART
+  if( id < NUM_UART || id == CDC_UART_ID )
+    return platform_s_uart_recv( id, timeout );
+
+  return -1;
+}
+
+int platform_uart_recv( unsigned id, unsigned timer_id, timer_data_type timeout )
+{
+  timer_data_type tmr_start;
+  int res;
+
+  if( timeout == 0 )
+    return cmn_recv_helper( id, timeout );
+  else if( timeout ==  PLATFORM_TIMER_INF_TIMEOUT )
+    return cmn_recv_helper( id, timeout );
+  else
+  {
+    // Receive char with the specified timeout
+    tmr_start = platform_timer_start( timer_id );
+    while( 1 )
+    {
+      if( ( res = cmn_recv_helper( id, 0 ) ) >= 0 )
+        break;
+      if( platform_timer_get_diff_crt( timer_id, tmr_start ) >= timeout )
+        break;
+    }
+    return res;
+  }
 }
 
