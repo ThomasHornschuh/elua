@@ -1,7 +1,7 @@
 // "Borrowed" from RISC-V proxy kernel
 // See LICENSE for license details.
 
-
+#include "platform_conf.h"
 
 #include <stdint.h>
 #include <stdarg.h>
@@ -19,7 +19,12 @@ static void vprintk(const char* s, va_list vl)
   char out[2048];
 
   vsnprintf(out, sizeof(out), s, vl);
-  uart_write_console(out);
+  char *p=out;
+  while (*p) {
+    if (*p=='\n') platform_s_uart_send(0,'\r');
+    platform_s_uart_send(0,*p);
+    p++;
+  }
 }
 
 void printk(const char* s, ...)

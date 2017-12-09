@@ -288,7 +288,7 @@ char c;
 
         printk("\nTrap cause: %lx\n",ptf->cause);
         dump_tf(ptf);
-        c=uart_readchar();
+        c=platform_s_uart_recv(0,1);
         if (c=='r' || c=='R')
           ptf->epc=SRAM_BASE; // will cause reset
         else
