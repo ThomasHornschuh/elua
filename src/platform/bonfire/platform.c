@@ -14,6 +14,8 @@
 
 
 #include "bonfire_uart.h"
+#include "bonfire_gpio.h"
+#include "mem_rw.h"
 
 
 #include "irq_handler.h"
@@ -48,13 +50,18 @@ void platform_ll_init( void )
 int platform_init()
 {
 
-  uart_write_console("eLua for Bonfire SoC 1.0a\n");
+  printk("eLua for Bonfire SoC 1.0a\n");
   printk("Build with GCC %s\n",__VERSION__);
   cmn_systimer_set_base_freq(SYSCLK);
 
 #ifdef BUILD_UIP
   platform_eth_init();
 #endif
+
+   #if NUM_PIO>0
+    // GPIO Input is always enabled
+    _write_word((void*)GPIO_BASE+GPIO_INPUT_EN,0xffffffff);
+   #endif
 
   cmn_platform_init(); // call the common initialiation code
   return PLATFORM_OK;
@@ -91,6 +98,7 @@ uint32_t* get_uart_base(unsigned id) {
 u32 platform_uart_setup( unsigned id, u32 baud, int databits, int parity, int stopbits )
 {
 
+  //printk("Platform UART setup id: %d, baud :%d",id,baud);
 #ifndef ZPUINO_UART
 
   uart_setBaudRate(baud);
@@ -185,4 +193,67 @@ timer_data_type platform_timer_read_sys( void )
   return cmn_systimer_get();
 }
 
+// ****************************************************************************
+// PIO Functions
+
+
+static int port_shift[] = PORT_SHIFT; // Bit offsets of the ports in the GPIO module
+
+// return a mask with bits for a given port set to 1
+static pio_type gen_port_mask(unsigned port)
+{
+static int pins[] = PIO_PIN_ARRAY;
+int i;
+pio_type mask=0;
+int left=port_shift[port];
+
+  for(i=left;i<pins[port]+left;i++)
+    mask|= 1 << i;
+
+  return mask;
+}
+
+
+pio_type platform_pio_op( unsigned port, pio_type pinmask, int op )
+{
+
+pio_type shifted_pinmask = pinmask << port_shift[port];
+
+pio_type temp;
+
+  switch(op) {
+     case PLATFORM_IO_PIN_SET:
+       _mem_or((void*)GPIO_BASE+GPIO_OUTPUT_VAL,shifted_pinmask); break;
+     case PLATFORM_IO_PIN_CLEAR:
+       _mem_and((void*)GPIO_BASE+GPIO_OUTPUT_VAL,~shifted_pinmask); break;
+     case PLATFORM_IO_PIN_GET:
+       return _read_word((void*)GPIO_BASE+GPIO_INPUT_VAL) & shifted_pinmask?1:0;
+     case PLATFORM_IO_PIN_DIR_INPUT:
+        _mem_and((void*)GPIO_BASE+GPIO_OUTPUT_EN,~shifted_pinmask);
+        //_mem_or((void*)GPIO_BASE+GPIO_INPUT_EN,shifted_pinmask);
+        break;
+     case PLATFORM_IO_PIN_DIR_OUTPUT:
+       //_mem_and((void*)GPIO_BASE+GPIO_INPUT_EN,~shifted_pinmask);
+       _mem_or((void*)GPIO_BASE+GPIO_OUTPUT_EN,shifted_pinmask);
+       break;
+     case  PLATFORM_IO_PORT_SET_VALUE:
+       _mem_or((void*)GPIO_BASE+GPIO_OUTPUT_VAL,shifted_pinmask & gen_port_mask(port));
+       break;
+     case  PLATFORM_IO_PORT_GET_VALUE:
+       return (_read_word((void*)GPIO_BASE+GPIO_INPUT_VAL) & gen_port_mask(port)) >> port_shift[port];
+     case PLATFORM_IO_PORT_DIR_INPUT:
+        temp=gen_port_mask(port);
+        _mem_and((void*)GPIO_BASE+GPIO_OUTPUT_EN,~temp);
+        //_mem_or((void*)GPIO_BASE+GPIO_INPUT_EN,temp);
+        break;
+     case PLATFORM_IO_PORT_DIR_OUTPUT:
+        temp=gen_port_mask(port);
+        //_mem_and((void*)GPIO_BASE+GPIO_INPUT_EN,~temp);
+        _mem_or((void*)GPIO_BASE+GPIO_OUTPUT_EN,temp);
+        break;
+     default:
+       return 0;
+  }
+  return 1;
+}
 

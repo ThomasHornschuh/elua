@@ -16,7 +16,7 @@ return {
     vtmr= { num=4, freq=50 }
   },
   modules = {
-    generic = { 'pd', 'all_lua', 'term','uart','tmr','elua',"cpu","bit","pack" },
+    generic = { 'pd', 'all_lua', 'term','uart','tmr','elua',"cpu","bit","pack","pio" },
     platform = { 'riscv','gdbserver' }
   },
 

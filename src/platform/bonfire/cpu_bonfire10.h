@@ -15,7 +15,7 @@
 #define PLATFORM_HAS_SYSTIMER
 
 // Number of resources (0 if not available/not implemented)
-#define NUM_PIO               0
+#define NUM_PIO               3
 #define NUM_SPI               0
 #define NUM_UART              1
 #define NUM_TIMER             1
@@ -30,7 +30,9 @@
 // #define PIO_PINS_PER_PORT (n) if each port has the same number of pins, or
 // #define PIO_PIN_ARRAY { n1, n2, ... } to define pins per port in an array
 // Use #define PIO_PINS_PER_PORT 0 if this isn't needed
-#define PIO_PINS_PER_PORT     0
+#define PIO_PIN_ARRAY   {11,0,14}
+
+#define PORT_SHIFT {0,0,11}
 
 //// Allocator data: define your free memory zones here in two arrays
 //// (start address and end address)
