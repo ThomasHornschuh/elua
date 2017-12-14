@@ -13,7 +13,8 @@ return {
     luaints=true
   },
   config = {
-    vtmr= { num=4, freq=50 }
+    vtmr= { num=4, freq=50 },
+    i2c = { scl_bit=30, sda_bit=29 }
   },
   modules = {
     generic = { 'pd', 'all_lua', 'term','uart','tmr','elua',"cpu","bit","pack","pio" },
