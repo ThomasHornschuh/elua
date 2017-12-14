@@ -1,6 +1,25 @@
 module( ..., package.seeall )
 
+local at = require "attributes"
 
+local function pt(t)
+
+local level=0
+
+  local function doprint(t)
+
+    for k,v in pairs(t) do
+      print(string.rep(" ",level) ..string.format("%s = %s",k,tostring(v)))
+      if type(v)=="table"or type(v)=="romtable" then
+        level=level+1
+        doprint(v)
+        level=level-1
+      end
+    end
+  end
+
+  doprint(t)
+end
 
 
 -- Add specific components to the 'components' table
@@ -15,14 +34,19 @@ end
 -- Add specific configuration to the 'configs' table
 function add_platform_configs( t, board, cpu )
 
+    print(board,cpu)
 
-  --t.lm3s_adc_timers = {
-    --attrs = {
-      --first_timer = at.int_attr( 'ADC_TIMER_FIRST_ID', 0 ),
-      --num_timers = at.int_attr( 'ADC_NUM_TIMERS', 0 )
-    --},
-    --required = { first_timer = 0, num_timers = "NUM_TIMER" }
-  --}
+  --if board:lower()=="bonfire_papilio_pro" then
+    t.i2c = {
+      attrs = {
+        scl_bit = at.int_attr('I2C_SCL_BIT',0 ,31),
+        sda_bit = at.int_attr('I2C_SDA_BIT', 0,31)
+      }
+    }
+--  end
+   pt(t)
+
+
 end
 
 -- Return an array of all the available platform modules for the given cpu
