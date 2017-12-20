@@ -17,7 +17,7 @@ return {
     i2c = { scl_bit=30, sda_bit=29 }
   },
   modules = {
-    generic = { 'pd', 'all_lua', 'term','uart','tmr','elua',"cpu","bit","pack","pio" },
+    generic = { 'pd', 'all_lua', 'term','uart','tmr','elua',"cpu","bit","pack","pio","i2c" },
     platform = { 'riscv','gdbserver' }
   },
 
