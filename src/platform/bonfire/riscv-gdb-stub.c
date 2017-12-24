@@ -612,9 +612,9 @@ trapframe_t* handle_exception (trapframe_t *ptf)
 
       ptf->epc=SRAM_BASE;
       semaphore=0;
-      printk("MSTATUS: %lx\n",read_csr(mstatus));
-      clear_csr(mstatus,MSTATUS_MPIE); // Global Interrupt Disable
-      printk("MSTATUS: %lx\n",read_csr(mstatus));
+      printk("MSTATUS: %lx\n",ptf->status);
+      ptf->status &= ~MSTATUS_MPIE; // Global Interrupt Disable
+
       return ptf;
 
 
@@ -627,7 +627,7 @@ trapframe_t* handle_exception (trapframe_t *ptf)
 
       ptf->epc=SRAM_BASE;
       semaphore=0;
-      clear_csr(mstatus,MSTATUS_MPIE); // Global Interrupt Disable
+      ptf->status &= ~MSTATUS_MPIE; // Global Interrupt Disable
       return ptf;
 
     }           /* switch */

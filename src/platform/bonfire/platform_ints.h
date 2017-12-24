@@ -8,8 +8,14 @@
 //#define INT_GPIO_POSEDGE      ELUA_INT_FIRST_ID
 //#define INT_GPIO_NEGEDGE      ( ELUA_INT_FIRST_ID + 1 )
 #define INT_TMR_MATCH         ( ELUA_INT_FIRST_ID  )
+#ifdef PAPILIO_PRO_H
 #define INT_UART_RX_FIFO      ( ELUA_INT_FIRST_ID + 1 )
 #define INT_ELUA_LAST         INT_UART_RX_FIFO
+
+#else
+#define INT_ELUA_LAST         INT_TMR_MATCH
+
+#endif
 
 #endif // #ifndef __PLATFORM_INTS_H__
 

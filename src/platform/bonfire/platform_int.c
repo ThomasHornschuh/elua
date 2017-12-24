@@ -50,6 +50,7 @@ uint32_t pending;
 
 #endif
 
+#ifdef INT_UART_RX_FIFO
 
 static int uart_irq_table[1]= {UART0_INTNUM}; // LIRQ "Offsets" for UARTs
 
@@ -111,7 +112,7 @@ volatile uint32_t *uart_base;
 
      if (clear) {
        pending[resnum]=0;
-       // clearing the ""soft"" pending flag triggers also reactivating
+       // clearing the "soft" pending flag triggers also reactivating
        // the hardware interrupt if enabled
        if (enabled[resnum]) {
           uart_base=get_uart_base(resnum);
@@ -121,6 +122,7 @@ volatile uint32_t *uart_base;
      return res;
 }
 
+#endif
 
 /*
  * Because currently only support for Lua interrupts on virtual timers is implemented,
@@ -154,8 +156,11 @@ const elua_int_descriptor elua_int_table[ INT_ELUA_LAST ] =
 {
   //{ int_gpio_posedge_set_status, int_gpio_posedge_get_status, int_gpio_posedge_get_flag },
   //{ int_gpio_negedge_set_status, int_gpio_negedge_get_status, int_gpio_negedge_get_flag },
-  { int_tmr_match_set_status, int_tmr_match_get_status, int_tmr_match_get_flag },
+  { int_tmr_match_set_status, int_tmr_match_get_status, int_tmr_match_get_flag }
+#ifdef INT_UART_RX_FIFO
+  ,
   { int_uart_rx_fifo_set_status, int_uart_rx_fifo_get_status,int_uart_rx_fifo_get_flag }
+#endif
 };
 
 
@@ -198,29 +203,21 @@ void timer_irq_handler()
 
 
 
-//#define DEBUG_BAUD 115200
 
-//void init_gdb_stub()
-//{
-  //gdb_setup_interface(DEBUG_BAUD);
-  //gdb_debug_handler=gdb_initDebugger(0);
-  //printk("Connect with Debugger port with %d baud\n",DEBUG_BAUD);
-  //gdb_breakpoint();
-
-//}
 
 void platform_int_init()
 {
-int i;
-   //init_gdb_stub();
+
    printk("__virt_timer_period %ld\n",__virt_timer_period);
    mtime_setinterval(__virt_timer_period);
 
+#ifdef INT_UART_RX_FIFO
+   int i;
    for(i=0;i<NUM_UART;i++) {
       int_uart_rx_fifo_set_status(i,0);
       int_uart_rx_fifo_get_flag(i,1);
    }
-
+#endif
    set_csr(mstatus,MSTATUS_MIE); // Global Interrupt Enable
 }
 
@@ -263,7 +260,7 @@ char c;
            timer_irq_handler();
            break;
 
-#ifdef PAPILIO_PRO_H
+#ifdef INT_UART_RX_FIFO
          case 16+6: // Local Interrupt 6 (lxp irq_i(7))
          case 16+5: // Local Interrupt 5 (lxp irq_i(6))
            uart_irq_handler(ptf->cause & 0x0ff);

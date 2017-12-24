@@ -17,11 +17,10 @@
 
 int platform_i2c_exists( unsigned id )
 {
-#ifdef I2C_SDA_BIT
+
   if (id==0)
     return 1;
   else
-#endif
     return 0;
 }
 
@@ -66,12 +65,19 @@ static u32 _i2c_hticks;
 static u32 _i2c_lticks;
 
 
+static void platform_i2c_delay(u32 ticks)
+{
+volatile u64 cnt;
+
+  cnt=platform_timer_sys_raw_read()+ticks;
+  while ( platform_timer_sys_raw_read()<=cnt );
+}
 
 
 u32 platform_i2c_setup( unsigned id, u32 speed )
 {
   if (id!=0) return 0;
-#ifdef I2C_SDA_BIT
+
 
   if (!platform_timer_sys_available()) {
      fprintf(stderr,"Software I2C module requires systimer\n");
@@ -86,28 +92,28 @@ u32 platform_i2c_setup( unsigned id, u32 speed )
     _i2c_lticks = _i2c_ticks / 2;
   }
   printk("i2c ticks set to: %ld\n",_i2c_ticks);
-  set_SCL(TRUE);
+  set_SCL(FALSE);
+  platform_i2c_delay(_i2c_lticks/2);
   set_SDA(TRUE);
-
+  platform_i2c_delay(_i2c_lticks/2);
+  set_SCL(TRUE);
   return SYSCLK / _i2c_ticks; // return "rounded" speed
-#endif
+
 }
 
-// Waits for one clock period
-static void platform_i2c_delay(u32 ticks)
-{
-volatile u64 cnt;
 
-  cnt=platform_timer_sys_raw_read()+ticks;
-  while ( platform_timer_sys_raw_read()<=cnt );
-}
 
 
 void platform_i2c_send_start( unsigned id )
 {
   if (id!=0) return;
-#ifdef I2C_SDA_BIT
+
  // For repeated start:
+
+  if (!get_SDA()) {
+     fprintf(stderr,"i2c send_start: SDA line busy error");
+     return;
+  }
 
   platform_i2c_delay(_i2c_lticks/2);
   set_SCL(TRUE);
@@ -123,7 +129,6 @@ void platform_i2c_send_start( unsigned id )
   set_SDA(FALSE);
   platform_i2c_delay(_i2c_hticks); //t HD_STA
 
-#endif
 }
 
 
@@ -146,15 +151,13 @@ void platform_i2c_send_stop( unsigned id )
 {
 
   if (id!=0) return;
-#ifdef I2C_SDA_BIT
+
   set_SCL(TRUE);
 
   wait_SCL_high();
 
   platform_i2c_delay(_i2c_hticks); // tSU:STO
   set_SDA(TRUE);
-
-#endif
 
 }
 
@@ -190,9 +193,8 @@ BOOL v;
   set_SDA(TRUE);
   platform_i2c_delay(_i2c_lticks/2);
   if (!wait_SCL_high()) return 0;
-  platform_i2c_delay(_i2c_hticks/2);
-  BOOL ack= ! get_SDA(); // sample in the midle
-  platform_i2c_delay(_i2c_hticks/2);
+  platform_i2c_delay(_i2c_hticks);
+  BOOL ack= ! get_SDA();
   set_SCL(FALSE);
 
   return ack;
@@ -210,9 +212,8 @@ uint8_t byte=0;
 
      platform_i2c_delay(_i2c_lticks);
      if (!wait_SCL_high()) return 0;
-     platform_i2c_delay(_i2c_hticks/2);
-     byte |= get_SDA() << bit ; // Sample in the midle of the high phase
-     platform_i2c_delay(_i2c_hticks/2);
+     platform_i2c_delay(_i2c_hticks);
+     byte |= get_SDA() << bit ;
      set_SCL(FALSE);
 
   }
@@ -223,7 +224,8 @@ uint8_t byte=0;
   if (!wait_SCL_high()) return 0;
   platform_i2c_delay(_i2c_hticks);
   set_SCL(FALSE);
-  set_SDA(TRUE);
+  platform_i2c_delay(_i2c_lticks/8); // wait a short moment
+  set_SDA(TRUE); // release SDA line
 
   return byte;
 }

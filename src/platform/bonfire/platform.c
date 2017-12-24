@@ -27,7 +27,9 @@
 #include "xil_etherlite.h"
 #endif
 
-
+#ifndef ZPUINO_UART
+#include "uart.h"
+#endif
 
 
 // ****************************************************************************
@@ -74,7 +76,7 @@ int platform_init()
 
 
 
-
+#ifdef ZPUINO_UART
 uint32_t* get_uart_base(unsigned id) {
 
   if (id>NUM_UART-1) return 0;
@@ -87,7 +89,7 @@ uint32_t* get_uart_base(unsigned id) {
      return 0;
   }
 }
-
+#endif
 
 // Extended Control register:
 // Bit [15:0] - UARTPRES UART prescaler (16 bits)   (f_clk / (baudrate * 16)) - 1
@@ -196,6 +198,7 @@ timer_data_type platform_timer_read_sys( void )
 // ****************************************************************************
 // PIO Functions
 
+#if NUM_PIO>0
 
 static int port_shift[] = PORT_SHIFT; // Bit offsets of the ports in the GPIO module
 
@@ -257,3 +260,4 @@ pio_type temp;
   return 1;
 }
 
+#endif
