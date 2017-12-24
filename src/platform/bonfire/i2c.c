@@ -107,7 +107,11 @@ void platform_i2c_send_start( unsigned id )
 {
   if (id!=0) return;
 #ifdef I2C_SDA_BIT
+ // For repeated start:
+
+  platform_i2c_delay(_i2c_lticks/2);
   set_SCL(TRUE);
+
   timer_data_type s = platform_timer_read_sys();
   // wait until bus idle
   while (!get_SCL() || !get_SDA() ) {
@@ -118,7 +122,7 @@ void platform_i2c_send_start( unsigned id )
   }
   set_SDA(FALSE);
   platform_i2c_delay(_i2c_hticks); //t HD_STA
-  set_SCL(FALSE);
+
 #endif
 }
 
@@ -157,7 +161,9 @@ void platform_i2c_send_stop( unsigned id )
 
 int platform_i2c_send_address( unsigned id, u16 address, int direction )
 {
-  return 0;
+uint8_t adr = ((address & 0x7f) << 1) | (direction==PLATFORM_I2C_DIRECTION_RECEIVER?1:0) ;
+
+  return platform_i2c_send_byte(id,adr);
 }
 
 
@@ -167,21 +173,26 @@ int platform_i2c_send_byte( unsigned id, u8 data )
 int bit;
 BOOL v;
 
-  // assume SCL is low on start
+  set_SCL(FALSE);
+
+  platform_i2c_delay(_i2c_lticks/2);
   for(bit=7;bit>=0;bit--) {
      v = (data >> bit) & 0x1; // Bit to shift out
      set_SDA(v);
-     platform_i2c_delay(_i2c_lticks);
+     platform_i2c_delay(_i2c_lticks/2);
      if (!wait_SCL_high()) return 0;
      platform_i2c_delay(_i2c_hticks);
      set_SCL(FALSE);
+     platform_i2c_delay(_i2c_lticks/2);
 
   }
   // Handle ack bit
-  platform_i2c_delay(_i2c_lticks);
+  set_SDA(TRUE);
+  platform_i2c_delay(_i2c_lticks/2);
   if (!wait_SCL_high()) return 0;
-  platform_i2c_delay(_i2c_hticks);
-  BOOL ack= ! get_SDA();
+  platform_i2c_delay(_i2c_hticks/2);
+  BOOL ack= ! get_SDA(); // sample in the midle
+  platform_i2c_delay(_i2c_hticks/2);
   set_SCL(FALSE);
 
   return ack;
@@ -190,5 +201,29 @@ BOOL v;
 
 int platform_i2c_recv_byte( unsigned id, int ack )
 {
-  return 0;
+int bit;
+uint8_t byte=0;
+
+  set_SCL(FALSE);
+
+  for(bit=7;bit>=0;bit--) {
+
+     platform_i2c_delay(_i2c_lticks);
+     if (!wait_SCL_high()) return 0;
+     platform_i2c_delay(_i2c_hticks/2);
+     byte |= get_SDA() << bit ; // Sample in the midle of the high phase
+     platform_i2c_delay(_i2c_hticks/2);
+     set_SCL(FALSE);
+
+  }
+  // Handle ack bit
+  platform_i2c_delay(_i2c_lticks/2);
+  set_SDA(ack?0:1);
+  platform_i2c_delay(_i2c_lticks/2);
+  if (!wait_SCL_high()) return 0;
+  platform_i2c_delay(_i2c_hticks);
+  set_SCL(FALSE);
+  set_SDA(TRUE);
+
+  return byte;
 }
