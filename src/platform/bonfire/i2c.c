@@ -102,17 +102,30 @@ u32 platform_i2c_setup( unsigned id, u32 speed )
 }
 
 
+static BOOL wait_SCL_high()
+{
+  set_SCL(TRUE);
+  // wait for SCL  really going high (clock stretching...)
+  timer_data_type s = platform_timer_read_sys();
+  while (!get_SCL()) {
+    if ((platform_timer_read_sys()-s) > I2C_TIMEOUT ) {
+       fprintf(stderr,"I2C clock stretch timeout exceeded\n");
+       return FALSE;
+    }
+  }
+  return TRUE;
+}
 
 
 void platform_i2c_send_start( unsigned id )
 {
-  if (id!=0) return;
-
- // For repeated start:
-
+  set_SDA(TRUE);
   if (!get_SDA()) {
-     fprintf(stderr,"i2c send_start: SDA line busy error");
-     return;
+     platform_i2c_send_stop(id);
+     if (!get_SDA()) {
+       fprintf(stderr,"i2c send_start: SDA line busy error\n");
+       return;
+     }
   }
 
   platform_i2c_delay(_i2c_lticks/2);
@@ -132,28 +145,13 @@ void platform_i2c_send_start( unsigned id )
 }
 
 
-static BOOL wait_SCL_high()
-{
-  set_SCL(TRUE);
-  // wait for SCL  really going high (clock stretching...)
-  timer_data_type s = platform_timer_read_sys();
-  while (!get_SCL()) {
-    if ((platform_timer_read_sys()-s) > I2C_TIMEOUT ) {
-       fprintf(stderr,"I2C clock stretch timeout exceeded\n");
-       return FALSE;
-    }
-  }
-  return TRUE;
-}
-
 
 void platform_i2c_send_stop( unsigned id )
 {
 
-  if (id!=0) return;
-
-  set_SCL(TRUE);
-
+  platform_i2c_delay(_i2c_lticks/8); // wait a short moment
+  // Assume SCL is low,
+  set_SDA(FALSE);
   wait_SCL_high();
 
   platform_i2c_delay(_i2c_hticks); // tSU:STO
@@ -211,7 +209,7 @@ uint8_t byte=0;
   for(bit=7;bit>=0;bit--) {
 
      platform_i2c_delay(_i2c_lticks);
-     if (!wait_SCL_high()) return 0;
+     if (!wait_SCL_high()) return -1;
      platform_i2c_delay(_i2c_hticks);
      byte |= get_SDA() << bit ;
      set_SCL(FALSE);
@@ -221,7 +219,7 @@ uint8_t byte=0;
   platform_i2c_delay(_i2c_lticks/2);
   set_SDA(ack?0:1);
   platform_i2c_delay(_i2c_lticks/2);
-  if (!wait_SCL_high()) return 0;
+  if (!wait_SCL_high()) return -1;
   platform_i2c_delay(_i2c_hticks);
   set_SCL(FALSE);
   platform_i2c_delay(_i2c_lticks/8); // wait a short moment
