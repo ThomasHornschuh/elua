@@ -37,8 +37,10 @@ specific_files = utils.prepend_path( specific_files, sf( "src/platform/%s", plat
 
 -- Standard GCC flags
 
+addaf{ '-march=rv32im' ,'-mabi=ilp32' }
 addcf{ '-march=rv32im' ,'-mabi=ilp32' }
 addcf{ '-ffunction-sections', '-fdata-sections', '-fno-strict-aliasing', '-Wall'}
+addlf{ '-march=rv32im' ,'-mabi=ilp32' }
 addlf{ '-nostartfiles', '-nostdlib', '-T', ldscript, '-Wl,--gc-sections', '-Wl,--allow-multiple-definition' }
 addlib{ 'c','gcc','m' }
 

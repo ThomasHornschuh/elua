@@ -1,13 +1,14 @@
 .section .init
 .global _start
+.global _fini
 .global delay_loop
 
 .extern main
 .extern _stacktop
 .extern trap_handler
 
-.extern __libc_fini_array
-.extern __libc_init_array
+//.extern __libc_fini_array
+//.extern __libc_init_array
 .extern atexit
 .extern memset
 .extern platform_ll_init
@@ -122,9 +123,9 @@ csrw mtvec,a1
   li      a1, 0
   call    memset
 
-  //la      a0, __libc_fini_array   # Register global termination functions
-  //call    atexit                  #  to be called upon exit
-  //call    __libc_init_array       # Run global initialization functions
+//  la      a0, __libc_fini_array   # Register global termination functions
+//  call    atexit                  #  to be called upon exit
+//  call    __libc_init_array       # Run global initialization functions
 
    call platform_ll_init
    call main
@@ -196,3 +197,5 @@ csrw mstatus,t1
 
 sret
 
+_fini:
+ ret
