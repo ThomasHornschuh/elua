@@ -9,6 +9,23 @@ local utils = require "utils"
 -------------------------------------------------------------------------------
 -- Build data
 
+local function riscv_get_prefix()
+
+
+   local function check(s)
+     if utils.check_command(s.."-gcc -dumpversion")==0 then
+       return s
+     else
+       return nil
+     end   
+   end 
+
+ 
+   return  check(os.getenv("TARGET_PREFIX")) or 
+            check("riscv64-unknown-elf-gcc") or
+            check("riscv32-unknown-elf-gcc")      
+end  
+
 -- List of toolchains
 local toolchain_list =
 {
@@ -23,17 +40,17 @@ local toolchain_list =
     cross_lualong = 'int 32',
     version = '--version'
   },
-  [ 'riscv32-gcc' ] = {
-    compile = 'riscv32-unknown-elf-gcc',
-    link = 'riscv32-unknown-elf-ld',
-    asm = 'riscv32-unknown-elf-gcc',
-    bin = 'riscv32-unknown-elf-objcopy',
-    size = 'riscv32-unknown-elf-size',
-    cross_cpumode = 'little',
-    cross_lua = 'float 64',
-    cross_lualong = 'int 32',
-    version = '--version'
-  },
+  -- [ 'riscv32-gcc' ] = {
+  --   compile = 'riscv32-unknown-elf-gcc',
+  --   link = 'riscv32-unknown-elf-ld',
+  --   asm = 'riscv32-unknown-elf-gcc',
+  --   bin = 'riscv32-unknown-elf-objcopy',
+  --   size = 'riscv32-unknown-elf-size',
+  --   cross_cpumode = 'little',
+  --   cross_lua = 'float 64',
+  --   cross_lualong = 'int 32',
+  --   version = '--version'
+  -- },
   [ 'arm-eabi-gcc' ] = {
     compile = 'arm-eabi-gcc',
     link = 'arm-eabi-ld',
@@ -91,6 +108,26 @@ local toolchain_list =
   }
 }
 
+local riscv_prefix=riscv_get_prefix()
+
+if riscv_prefix then
+  print("Found RISCV Toolchain prefixed with"..riscv_prefix)
+  toolchain_list['riscv-gcc']= {
+    
+    compile = riscv_prefix..'-gcc',
+    link = riscv_prefix .. '-ld',
+    asm =  riscv_prefix ..'-gcc',
+    bin = riscv_prefix .. '-objcopy',
+    size = riscv_prefix .. '-size',
+    cross_cpumode = 'little',
+    cross_lua = 'float 64',
+    cross_lualong = 'int 32',
+    version = '--version'
+  }
+  
+end
+
+
 -- Toolchain Aliases
 toolchain_list[ 'devkitarm' ] = toolchain_list[ 'arm-eabi-gcc' ]
 
@@ -100,7 +137,7 @@ local arch_data = {
   cortexm = 'little',
   avr32 = 'big',
   i386 = 'little',
-  rv32im= 'little' 
+  riscv= 'little'
 }
 
 -- Toolchain to arch mapping
@@ -109,7 +146,7 @@ local toolchain_map = {
   cortexm = { 'arm-gcc', 'codesourcery', 'devkitarm', 'arm-eabi-gcc' },
   avr32 = { 'avr32-gcc', 'avr32-unknown-none-gcc' },
   i386 =  { 'i686-gcc' },
-  rv32im =  { 'riscv32-gcc' }
+  riscv =  { 'riscv-gcc' }
 }
 
 -- List of platform/CPU combinations
@@ -128,11 +165,13 @@ local platform_list =
   avr32 = { cpus = { 'AT32UC3A0128', 'AT32UC3A0256', 'AT32UC3A0512', 'AT32UC3B0256' }, arch = 'avr32' },
   lpc23xx = { cpus = { 'LPC2368' }, arch = 'arm' },
   lpc24xx = { cpus = { 'LPC2468' }, arch = 'arm' },
+  lpc17xx = { cpus = { 'LPC1768' }, arch = 'cortexm' },
+  xmc4000 = { cpus = { 'XMC4500F144K1024', 'XMC4500E144K1024', 'XMC4700F144K2048' }, arch = 'cortexm' },
   lpc17xx = { cpus = { 'LPC1768', 'LPC1769' }, arch = 'cortexm' },
   xmc4000 = { cpus = { 'XMC4400F100X512', 'XMC4500F144K1024', 'XMC4500E144K1024', 'XMC4700F144K2048' }, arch = 'cortexm' },
   lpc17xx = { cpus = { 'LPC1768' }, arch = 'cortexm' },
-  riscv32spike   = {  cpus = { 'RV32IMSPIKE' }, arch = 'rv32im' },
-  bonfire   = {  cpus = { 'BONFIRE10','BONFIRE_ARTY_10' }, arch = 'rv32im' }
+  riscv32spike   = {  cpus = { 'RV32IMSPIKE' }, arch = 'riscv' },
+  bonfire   = {  cpus = { 'BONFIRE10','BONFIRE_ARTY_10' }, arch = 'riscv' }
   
 }
 
