@@ -34,7 +34,6 @@ end
 -- Add specific configuration to the 'configs' table
 function add_platform_configs( t, board, cpu )
 
-    print(board,cpu)
 
   --if board:lower()=="bonfire_papilio_pro" then
     t.i2c = {
@@ -44,7 +43,7 @@ function add_platform_configs( t, board, cpu )
       }
     }
 --  end
-   pt(t)
+  -- pt(t)
 
 
 end

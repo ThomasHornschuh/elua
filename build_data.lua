@@ -13,18 +13,19 @@ local function riscv_get_prefix()
 
 
    local function check(s)
-     if utils.check_command(s.."-gcc -dumpversion")==0 then
+
+     if s and #s>0 and utils.check_command(s.."-gcc -dumpversion")==0 then
        return s
      else
        return nil
-     end   
-   end 
+     end
+   end
 
- 
-   return  check(os.getenv("TARGET_PREFIX")) or 
-            check("riscv64-unknown-elf-gcc") or
-            check("riscv32-unknown-elf-gcc")      
-end  
+
+   return  check(os.getenv("TARGET_PREFIX")) or
+            check("riscv64-unknown-elf") or
+            check("riscv32-unknown-elf")
+end
 
 -- List of toolchains
 local toolchain_list =
@@ -111,9 +112,9 @@ local toolchain_list =
 local riscv_prefix=riscv_get_prefix()
 
 if riscv_prefix then
-  print("Found RISCV Toolchain prefixed with"..riscv_prefix)
+  print("Found RISCV Toolchain prefixed with: "..riscv_prefix)
   toolchain_list['riscv-gcc']= {
-    
+
     compile = riscv_prefix..'-gcc',
     link = riscv_prefix .. '-ld',
     asm =  riscv_prefix ..'-gcc',
@@ -124,7 +125,7 @@ if riscv_prefix then
     cross_lualong = 'int 32',
     version = '--version'
   }
-  
+
 end
 
 
