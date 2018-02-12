@@ -22,12 +22,21 @@ return {
     generic = { 'pd', 'all_lua', 'term','uart','tmr','elua',"cpu","bit","net","pack" },
     platform = { 'riscv' }
   },
+
+  macros = {
+     'ZPUINO_UART',
+     {'UART_FIFO_THRESHOLD', 48 }
+  },
+
   cpu_constants = {
     'INT_TMR_MATCH',
+    'INT_UART_RX_FIFO',
     'GPIO_BASE',
     'MTIME_BASE',
     'SPIFLASH_BASE',
-    'UART_BASE'
+    'UART_BASE',
+    'UART0_BASE',
+    'UART1_BASE'
   }
 }
 
