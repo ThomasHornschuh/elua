@@ -6,7 +6,14 @@
 #define WISHBONE_IO_SPACE 0x40000000
 #define AXI_IO_SPACE 0x80000000
 
-#define UART_BASE (WISHBONE_IO_SPACE)
+
+//#define UART_BASE (WISHBONE_IO_SPACE)
+// New:  2* ZPUINO_UART in AXI4 Space
+#define UART0_BASE 0x80020000
+#define UART1_BASE 0x80030000
+#define UART_BASE UART0_BASE
+
+
 #define SPIFLASH_BASE (WISHBONE_IO_SPACE+0x100)
 #define SYSIO_BASE (WISHBONE_IO_SPACE+0x200)
 #define GPIO_BASE (AXI_IO_SPACE)
@@ -18,6 +25,11 @@
 
 #define ARTY_LEDS4TO7 (AXI_IO_SPACE)
 
+// Interrupts
+
+#define UART0_INTNUM (16+6) // Assume UART0 is assigned to LI6
+#define UART1_INTNUM (16+5) // Assume UART1 is assigned to LI5
+
 
 
 #define DRAM_BASE 0x0
@@ -27,7 +39,7 @@
 #define SRAM_SIZE (32*1024)
 #define SRAM_TOP  (SRAM_BASE+SRAM_SIZE-1)
 
-#define SYSCLK 83333333
+#define SYSCLK 80000000    // 83333333
 
 #define CLK_PERIOD (1e+9 / SYSCLK)  // in ns...
 
