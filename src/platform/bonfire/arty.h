@@ -39,7 +39,7 @@
 #define SRAM_SIZE (32*1024)
 #define SRAM_TOP  (SRAM_BASE+SRAM_SIZE-1)
 
-#define SYSCLK 80000000    // 83333333
+#define SYSCLK  83333333
 
 #define CLK_PERIOD (1e+9 / SYSCLK)  // in ns...
 

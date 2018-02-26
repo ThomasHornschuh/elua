@@ -21,9 +21,9 @@ if comp.cpu:lower()=="bonfire_arty_10" then
 end
 
 -- Debug support
-if comp.board:lower()=="bonfire_papilio_pro" then
+--if comp.board:lower()=="bonfire_papilio_pro" then
   specific_files = specific_files .. " gdb_interface.c riscv-gdb-stub.c mod_gdbserver.c"
-end
+--end
 
 local ldscript = sf( "src/platform/%s/%s", platform, "riscv_local.ld" )
 

@@ -24,7 +24,8 @@ local function riscv_get_prefix()
 
    return  check(os.getenv("TARGET_PREFIX")) or
             check("riscv64-unknown-elf") or
-            check("riscv32-unknown-elf")
+            check("riscv32-unknown-elf") or
+            check("riscv-none-embed")
 end
 
 -- List of toolchains

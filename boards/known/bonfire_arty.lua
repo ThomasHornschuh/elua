@@ -3,7 +3,7 @@
 return {
   cpu = 'BONFIRE_ARTY_10',
   components = {
-    sercon = { uart = 0, speed = 500000 },
+    sercon = { uart = 0, speed = 500000,  buf_size=4096 },
     romfs = true,
     shell = true,
     term = { lines = 25, cols = 80 },
@@ -20,7 +20,7 @@ return {
   },
   modules = {
     generic = { 'pd', 'all_lua', 'term','uart','tmr','elua',"cpu","bit","net","pack" },
-    platform = { 'riscv' }
+    platform = { 'riscv','gdbserver' }
   },
 
   macros = {

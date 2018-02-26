@@ -36,8 +36,7 @@ static void setDivisor(uint32_t divisor){
 }
 
 void gdb_setup_interface(int baudrate) {
-// sample_clk = (f_clk / (baudrate * 16)) - 1
-// (96.000.000 / (115200*16))-1 = 51,08
+
 
    setDivisor(SYSCLK / (baudrate*16) -1);
 }
