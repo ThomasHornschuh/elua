@@ -92,7 +92,7 @@ uint32_t* get_uart_base(unsigned id) {
 #endif
 
 // Extended Control register:
-// Bit [15:0] - UARTPRES UART prescaler (16 bits)   (f_clk / (baudrate * 16)) - 1
+// Bit [15:0] - UARTPRES UART prescaler (16 bits)   (f_clk / baudrate ) - 1
 // Bit 16 - UARTEN UARTEN bit controls whether UART is enabled or not
 // Bit 17 - EXT_EN: Enable extended mode - when set one the extended mode is activated
 // Bit [31..18] - FIFO "Nearly Full" Threshold. The number of bits actual used depends on the confirued FIFO size
@@ -115,7 +115,7 @@ volatile uint32_t *uartadr=get_uart_base(id);
        ft=0;
      #endif
      // Set Baudrate divisor, enable port, extended mode and set FIFO Threshold
-     uartadr[UART_EXT_CONTROL]= 0x030000L | ft | (uint16_t)(SYSCLK / (baud*16) -1);
+     uartadr[UART_EXT_CONTROL]= 0x030000L | ft | (uint16_t)(SYSCLK / baud -1);
 
   }
 #endif
