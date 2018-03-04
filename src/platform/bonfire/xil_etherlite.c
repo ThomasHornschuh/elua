@@ -24,18 +24,6 @@
 static volatile int in_ethernet_irq = 0;
 
 
-//inline void _write_word(void* address,uint32_t value)
-//{
-  //*(( volatile uint32_t* )( address ))=value;
-//}
-
-
-//inline uint32_t _read_word(void* address)
-//{
-  //return  *((volatile uint32_t* )( address ));
-
-//}
-
 
 inline void _write_leds(uint8_t value)
 {

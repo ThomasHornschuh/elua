@@ -25,6 +25,8 @@
 
 #define ARTY_LEDS4TO7 (AXI_IO_SPACE)
 
+#define AXI_QPSI0 0x80040000
+
 // Interrupts
 
 #define UART0_INTNUM (16+6) // Assume UART0 is assigned to LI6
@@ -38,6 +40,8 @@
 #define SRAM_BASE 0xC0000000
 #define SRAM_SIZE (32*1024)
 #define SRAM_TOP  (SRAM_BASE+SRAM_SIZE-1)
+
+#define DCACHE_SIZE (32768)
 
 #define SYSCLK  83333333
 
