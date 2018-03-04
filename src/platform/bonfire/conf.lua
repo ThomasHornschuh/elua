@@ -17,7 +17,7 @@ else
 end
 
 if comp.cpu:lower()=="bonfire_arty_10" then
-  specific_files = specific_files .. " xil_etherlite.c"
+  specific_files = specific_files .. " xil_etherlite.c xil_spi.c"
 end
 
 -- Debug support
@@ -29,7 +29,7 @@ local ldscript = sf( "src/platform/%s/%s", platform, "riscv_local.ld" )
 
 -- Override default optimize settings
 delcf{ "-Os", "-fomit-frame-pointer" }
-addcf{"-g", "-O2" ,"-fomit-frame-pointer"}
+addcf{"-g", "-Og" ,"-fomit-frame-pointer"}
 
 -- Prepend with path
 specific_files = utils.prepend_path( specific_files, sf( "src/platform/%s", platform ) )

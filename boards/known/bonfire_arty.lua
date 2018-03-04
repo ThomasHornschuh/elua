@@ -13,13 +13,14 @@ return {
     luaints=true,
     tcpip = { ip = "192.168.26.200", netmask = "255.255.255.0", gw = "192.168.26.2", dns = "192.168.26.2" },
     dns=true,
-    dhcp=true
+    dhcp=true,
+    mmcfs= { spi=0, cs_port=0, cs_pin=0 }
   },
   config = {
     vtmr= { num=4, freq=50 }
   },
   modules = {
-    generic = { 'pd', 'all_lua', 'term','uart','tmr','elua',"cpu","bit","net","pack" },
+    generic = { 'pd', 'all_lua', 'term','uart','tmr','elua',"cpu","bit","net","pack","spi" },
     platform = { 'riscv','gdbserver' }
   },
 

@@ -4,7 +4,7 @@
 
 // This file was modified from a sample available from the FatFs
 // web site by Jesus Alvarez & James Snyder for eLua.
- 
+
 #include "platform_conf.h"
 #if defined( BUILD_MMCFS ) && !defined( ELUA_SIMULATOR ) && !defined( XMC4500_F144x1024 ) && !defined( XMC4500_E144x1024 ) && !defined( XMC4700_F144x2048 )
 #include "platform.h"
@@ -52,14 +52,22 @@ static const u8 mmcfs_spi_nums[ NUM_CARDS ] = MMCFS_SPI_NUM_ARRAY;
 static
 void SELECT (BYTE id)
 {
-    platform_pio_op( mmcfs_cs_ports[ id ] , ( ( u32 ) 1 << mmcfs_cs_pins[ id ] ), PLATFORM_IO_PIN_CLEAR );    
+#if defined ( BONFIRE_ARTY_10 )
+    platform_spi_select( mmcfs_spi_nums[ id ], 1 );
+#else
+    platform_pio_op( mmcfs_cs_ports[ id ] , ( ( u32 ) 1 << mmcfs_cs_pins[ id ] ), PLATFORM_IO_PIN_CLEAR );
+#endif
 }
 
 // de-asserts the CS pin to the card
 static
 void DESELECT (BYTE id)
 {
+#if defined ( BONFIRE_ARTY_10 )
+    platform_spi_select( mmcfs_spi_nums[ id ], 0 );
+#else
     platform_pio_op( mmcfs_cs_ports[ id ], ( ( u32 ) 1 << mmcfs_cs_pins[ id ] ), PLATFORM_IO_PIN_SET );
+#endif
 }
 
 
@@ -123,7 +131,7 @@ BYTE wait_ready (BYTE id)
 
     Timer2 = platform_timer_read( PLATFORM_TIMER_SYS_ID );
     rcvr_spi( id );
-    do  
+    do
         res = rcvr_spi( id ); /* Wait for ready in timeout of 500ms. */
     while ( ( res != 0xFF ) && ( platform_timer_get_diff_crt( PLATFORM_TIMER_SYS_ID, Timer2 ) < 500000 ) );
 
@@ -140,7 +148,7 @@ void send_initial_clock_train(BYTE id)
     unsigned int i;
     /* Ensure CS is held high. */
     DESELECT(id);
-    
+
     /* Send 10 bytes over the SSI. This causes the clock to wiggle the */
     /* required number of times. */
     for(i = 0 ; i < 10 ; i++)
@@ -160,12 +168,14 @@ void power_on (BYTE id)
      * This doesn't really turn the power on, but initializes the
      * SSI port and pins needed to talk to the card.
      */
-    
+
     // Setup CS pin & deselect
+#if !defined(BONFIRE_ARTY_10)
     platform_pio_op( mmcfs_cs_ports[ id ], ( ( u32 ) 1 << mmcfs_cs_pins[ id ] ), PLATFORM_IO_PIN_DIR_OUTPUT );
+#endif
     //platform_pio_op( MMCFS_CS_PORT, ( ( u32 ) 1 << MMCFS_CS_PIN ), PLATFORM_IO_PIN_PULLUP );
     DESELECT( id );
-    
+
     // Setup SPI
     platform_spi_setup( mmcfs_spi_nums[ id ], PLATFORM_SPI_MASTER, 400000, 0, 0, 8 );
 
@@ -221,7 +231,7 @@ BOOL rcvr_datablock (
     Timer1 = platform_timer_read( PLATFORM_TIMER_SYS_ID );
     do {                            /* Wait for data packet in timeout of 100ms */
         token = rcvr_spi(id);
-    } while ( ( token == 0xFF ) && 
+    } while ( ( token == 0xFF ) &&
               platform_timer_get_diff_crt( PLATFORM_TIMER_SYS_ID, Timer1 ) < 100000 );
     if(token != 0xFE) return FALSE;    /* If not valid data token, retutn with error */
 
@@ -342,7 +352,7 @@ DSTATUS disk_initialize (
     timer_data_type Timer1;
 
     if (Stat[drv] & STA_NODISK) return Stat[drv];    /* No card in the socket */
-    
+
     do
     {
       power_on(drv);                           /* Force socket power on */
@@ -357,7 +367,7 @@ DSTATUS disk_initialize (
             do {
               if (send_cmd(drv,CMD55, 0) <= 1 && send_cmd(drv,CMD41, 1UL << 30) == 0)    break;    /* ACMD41 with HCS bit */
             } while ( platform_timer_get_diff_crt( PLATFORM_TIMER_SYS_ID, Timer1 ) < 1000000 );
-            if ( ( platform_timer_get_diff_crt( PLATFORM_TIMER_SYS_ID, Timer1 ) < 1000000 ) 
+            if ( ( platform_timer_get_diff_crt( PLATFORM_TIMER_SYS_ID, Timer1 ) < 1000000 )
                  && send_cmd(drv,CMD58, 0) == 0) {    /* Check CCS bit (it seems pointless to check the timer here*/
               for (n = 0; n < 4; n++) ocr[n] = rcvr_spi(drv);
               ty = (ocr[0] & 0x40) ? 6 : 2;
@@ -372,7 +382,7 @@ DSTATUS disk_initialize (
               if (send_cmd(drv,CMD1, 0) == 0) break;                                /* CMD1 */
             }
           } while ( platform_timer_get_diff_crt( PLATFORM_TIMER_SYS_ID, Timer1 ) < 1000000 );
-          if ( (  platform_timer_get_diff_crt( PLATFORM_TIMER_SYS_ID, Timer1 ) >= 1000000 ) 
+          if ( (  platform_timer_get_diff_crt( PLATFORM_TIMER_SYS_ID, Timer1 ) >= 1000000 )
                || send_cmd(drv,CMD16, 512) != 0 )    /* Select R/W block length */
             ty = 0;
         }

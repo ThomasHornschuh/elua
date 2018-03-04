@@ -3,6 +3,8 @@
 #ifndef __CPU_BONFIRE_ARTY_10_H__
 #define __CPU_BONFIRE_ARTY_10_H__
 
+#define BONFIRE_ARTY_10
+
 #include "arty.h"
 #include "stacks.h"
 
@@ -16,7 +18,7 @@
 
 // Number of resources (0 if not available/not implemented)
 #define NUM_PIO               0
-#define NUM_SPI               0
+#define NUM_SPI               1
 #define NUM_UART              1
 #define NUM_TIMER             1
 #define NUM_PWM               0
