@@ -200,6 +200,8 @@ timer_data_type platform_timer_read_sys( void )
 
 #if NUM_PIO>0
 
+#pragma message "compiling PIO functions"
+
 static int port_shift[] = PORT_SHIFT; // Bit offsets of the ports in the GPIO module
 
 // return a mask with bits for a given port set to 1
@@ -222,7 +224,7 @@ pio_type platform_pio_op( unsigned port, pio_type pinmask, int op )
 
 pio_type shifted_pinmask = pinmask << port_shift[port];
 
-pio_type temp;
+pio_type temp,pmask;
 
   switch(op) {
      case PLATFORM_IO_PIN_SET:
@@ -240,7 +242,10 @@ pio_type temp;
        _mem_or((void*)GPIO_BASE+GPIO_OUTPUT_EN,shifted_pinmask);
        break;
      case  PLATFORM_IO_PORT_SET_VALUE:
-       _mem_or((void*)GPIO_BASE+GPIO_OUTPUT_VAL,shifted_pinmask & gen_port_mask(port));
+       pmask=gen_port_mask(port);
+       temp=_read_word((void*)GPIO_BASE+GPIO_OUTPUT_VAL);
+       temp = (temp & ~pmask) | shifted_pinmask;
+       _write_word((void*)GPIO_BASE+GPIO_OUTPUT_VAL,temp);
        break;
      case  PLATFORM_IO_PORT_GET_VALUE:
        return (_read_word((void*)GPIO_BASE+GPIO_INPUT_VAL) & gen_port_mask(port)) >> port_shift[port];
