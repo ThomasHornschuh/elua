@@ -6,6 +6,7 @@ return {
     sercon = { uart = 0, speed = 500000,  buf_size=4096 },
     romfs = true,
     shell = true,
+    advanced_shell=true,
     term = { lines = 25, cols = 80 },
     xmodem= true,
     linenoise = { shell_lines=20, lua_lines=20 },
