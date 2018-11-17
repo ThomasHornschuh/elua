@@ -1,0 +1,20 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/inc",
+                "${workspaceFolder}/inc/newlib",
+                "${workspaceFolder}/inc",
+                "${workspaceFolder}/src/platform/bonfire"
+
+            ],
+            "defines": [],
+            "compilerPath": "/home/thomas/opt/riscv/bin/riscv-none-embed-gcc",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "gcc-x64"
+        }
+    ],
+    "version": 4
+}
