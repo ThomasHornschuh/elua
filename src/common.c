@@ -48,7 +48,7 @@ static int xmodem_recv( timer_data_type timeout )
 
 #ifdef BUILD_TERM
 
-#define TERM_TIMEOUT    100000 
+#define TERM_TIMEOUT    100000
 
 static void term_out( u8 data )
 {
@@ -70,7 +70,7 @@ static int term_in( int mode )
       if( c == 0x0A )
         continue;
     }
-    
+
     break;
   }while( TRUE );
   return c;
@@ -79,7 +79,7 @@ static int term_in( int mode )
 static int term_translate( int data )
 {
   int c;
-  
+
   if( isprint( data ) )
     return data;
   else if( data == 0x1B ) // escape sequence
@@ -100,7 +100,7 @@ static int term_translate( int data )
         case 0x43:
           return KC_RIGHT;
         case 0x44:
-          return KC_LEFT;               
+          return KC_LEFT;
       }
     else if( c > 48 && c < 55 )
     {
@@ -116,7 +116,7 @@ static int term_translate( int data )
         case 53:
           return KC_PAGEUP;
         case 54:
-          return KC_PAGEDOWN;  
+          return KC_PAGEDOWN;
       }
     }
   }
@@ -136,7 +136,7 @@ static int term_translate( int data )
       case 0x09:
         return KC_TAB;
       case 0x7F:
-//        return KC_DEL; // bogdanm: some terminal emulators (for example screen) return 0x7F for BACKSPACE :(
+        return KC_DEL; // bogdanm: some terminal emulators (for example screen) return 0x7F for BACKSPACE :(
       case 0x08:
         return KC_BACKSPACE;
       case 26:
@@ -152,7 +152,17 @@ static int term_translate( int data )
       case 21:
         return KC_CTRL_U;
       case 11:
-        return KC_CTRL_K; 
+        return KC_CTRL_K;
+      case 4:
+        return KC_CTRL_D;
+      case 6:
+        return KC_CTRL_F;
+      case 19:
+        return KC_CTRL_S;
+      case 17:
+        return KC_CTRL_Q;
+      case 12:
+        return KC_CTRL_L;          
     }
   }
   return KC_UNKNOWN;
@@ -184,14 +194,14 @@ void cmn_platform_init(void)
 #ifdef BUILD_SERMUX
 #pragma message "Build SERMUX"
   unsigned i;
-  unsigned bufsizes[] = SERMUX_BUFFER_SIZES;  
+  unsigned bufsizes[] = SERMUX_BUFFER_SIZES;
 
   // Setup the serial multiplexer
   platform_uart_setup( SERMUX_PHYS_ID, SERMUX_PHYS_SPEED, 8, PLATFORM_UART_PARITY_NONE, PLATFORM_UART_STOPBITS_1 );
   platform_uart_set_flow_control( SERMUX_PHYS_ID, SERMUX_FLOW_TYPE );
   cmn_uart_setup_sermux();
 
-  // Set buffers for all virtual UARTs 
+  // Set buffers for all virtual UARTs
   for( i = 0; i < sizeof( bufsizes ) / sizeof( unsigned ); i ++ )
     platform_uart_set_buffer( i + SERMUX_SERVICE_ID_FIRST, bufsizes[ i ] );
 #endif // #ifdef BUILD_SERMUX
@@ -199,7 +209,7 @@ void cmn_platform_init(void)
 #if defined( CON_UART_ID ) && ( CON_UART_ID < SERMUX_SERVICE_ID_FIRST ) && ( CON_UART_ID != CDC_UART_ID )
 #pragma message "Init Console UART"
   // Setup console UART
-  platform_uart_setup( CON_UART_ID, CON_UART_SPEED, 8, PLATFORM_UART_PARITY_NONE, PLATFORM_UART_STOPBITS_1 );  
+  platform_uart_setup( CON_UART_ID, CON_UART_SPEED, 8, PLATFORM_UART_PARITY_NONE, PLATFORM_UART_STOPBITS_1 );
   platform_uart_set_flow_control( CON_UART_ID, CON_FLOW_TYPE );
   platform_uart_set_buffer( CON_UART_ID, CON_BUF_SIZE );
 #endif // #if defined( CON_UART_ID ) && CON_UART_ID < SERMUX_SERVICE_ID_FIRST
@@ -208,16 +218,16 @@ void cmn_platform_init(void)
   platform_uart_set_buffer( CDC_UART_ID, CDC_BUF_SIZE );
 #endif
 
-  // Set the send/recv functions                          
+  // Set the send/recv functions
   std_set_send_func( uart_send );
   std_set_get_func( uart_recv );
 
-#ifdef BUILD_XMODEM  
+#ifdef BUILD_XMODEM
   // Initialize XMODEM
-  xmodem_init( xmodem_send, xmodem_recv );    
+  xmodem_init( xmodem_send, xmodem_recv );
 #endif
 
-#ifdef BUILD_TERM  
+#ifdef BUILD_TERM
   // Initialize terminal
   term_init( TERM_LINES, TERM_COLS, term_out, term_in, term_translate );
 #endif
@@ -241,7 +251,7 @@ int platform_pio_has_port( unsigned port )
 const char* platform_pio_get_prefix( unsigned port )
 {
   static char c[ 3 ];
-  
+
   sprintf( c, "P%c", ( char )( port + PIO_PREFIX ) );
   return c;
 }
@@ -467,7 +477,7 @@ void cmn_int_handler( elua_int_id id, elua_int_resnum resnum )
 // This symbol must be exported by the linker command file and must reflect the
 // TOTAL size of flash used by the eLua image (not only the code and constants,
 // but also .data and whatever else ends up in the eLua image). WOFS will start
-// at the next usable (aligned to a flash sector boundary) address after 
+// at the next usable (aligned to a flash sector boundary) address after
 // flash_used_size.
 extern char flash_used_size[];
 
@@ -629,7 +639,7 @@ const char* cmn_str64( u64 x )
 }
 
 // Read a timeout spec from the user and return it
-// The timeout spec has the format [timer_id, timeout]. Both arguments are optional: 
+// The timeout spec has the format [timer_id, timeout]. Both arguments are optional:
 // If none is specified -> defaults to infinite timeout
 // If timer_id is specified, but timeout is not specified -> defaults to infinite timeout
 // If timeout is PLATFORM_TIMER_INF_TIMEOUT -> also infinite timeout (independent of timer_id)
@@ -639,7 +649,7 @@ void cmn_get_timeout_data( lua_State *L, int pidx, unsigned *pid, timer_data_typ
 {
   lua_Number tempn;
 
-  *ptimeout = PLATFORM_TIMER_INF_TIMEOUT; 
+  *ptimeout = PLATFORM_TIMER_INF_TIMEOUT;
   *pid = ( unsigned )luaL_optinteger( L, pidx, PLATFORM_TIMER_SYS_ID );
   if( lua_type( L, pidx + 1 ) == LUA_TNUMBER )
   {
@@ -651,4 +661,3 @@ void cmn_get_timeout_data( lua_State *L, int pidx, unsigned *pid, timer_data_typ
   if( *pid == PLATFORM_TIMER_SYS_ID && !platform_timer_sys_available() )
     luaL_error( L, "the system timer is not implemented on this platform" );
 }
-

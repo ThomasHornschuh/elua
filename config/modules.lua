@@ -15,7 +15,8 @@ local lua_modules = {
   lua_table = { lib = "LUA_TABLIBNAME", open = "luaopen_table", map = "tab_funcs" },
   lua_debug = { lib = "LUA_DBLIBNAME", open = "luaopen_debug", map = "dblib" },
   lua_package = { lib = "LUA_LOADLIBNAME", open = "luaopen_package", map = "<none>" },
-  lua_co = { lib = "LUA_COLIBNAME", open = false, map = "co_funcs" }
+  lua_co = { lib = "LUA_COLIBNAME", open = false, map = "co_funcs" },
+  lua_os = { lib = "LUA_OSLIBNAME", open = "luaopen_os", map = "syslib" },
 }
 
 -- List of all eLua generic modules, in the same format as above
