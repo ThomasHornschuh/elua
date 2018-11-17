@@ -169,6 +169,24 @@ int term_getch( int mode )
     return term_translate( ch );
 }
 
+// TH: 
+// Return a char read from the terminal without translating key cpdes 
+// If "mode" is TERM_INPUT_DONT_WAIT, return the char only if it is available,
+// otherwise return -1
+
+
+int term_rawgetch( int mode )
+{
+  int ch;
+  
+  if( ( ch = term_in( mode ) ) == -1 )
+    return -1;
+  else
+    return ch;
+}
+
+
+
 void term_init( unsigned lines, unsigned cols, p_term_out term_out_func, 
                 p_term_in term_in_func, p_term_translate term_translate_func )
 {

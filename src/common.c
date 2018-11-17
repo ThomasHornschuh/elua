@@ -48,7 +48,7 @@ static int xmodem_recv( timer_data_type timeout )
 
 #ifdef BUILD_TERM
 
-#define TERM_TIMEOUT    100000 
+#define TERM_TIMEOUT    100000
 
 static void term_out( u8 data )
 {
@@ -70,7 +70,7 @@ static int term_in( int mode )
       if( c == 0x0A )
         continue;
     }
-    
+
     break;
   }while( TRUE );
   return c;
@@ -136,7 +136,7 @@ static int term_translate( int data )
       case 0x09:
         return KC_TAB;
       case 0x7F:
-//        return KC_DEL; // bogdanm: some terminal emulators (for example screen) return 0x7F for BACKSPACE :(
+        return KC_DEL; // bogdanm: some terminal emulators (for example screen) return 0x7F for BACKSPACE :(
       case 0x08:
         return KC_BACKSPACE;
       case 26:
@@ -153,6 +153,16 @@ static int term_translate( int data )
         return KC_CTRL_U;
       case 11:
         return KC_CTRL_K;
+      case 4:
+        return KC_CTRL_D;
+      case 6:
+        return KC_CTRL_F;
+      case 19:
+        return KC_CTRL_S;
+      case 17:
+        return KC_CTRL_Q;
+      case 12:
+        return KC_CTRL_L;          
     }
   }
   return KC_UNKNOWN;
@@ -651,4 +661,3 @@ void cmn_get_timeout_data( lua_State *L, int pidx, unsigned *pid, timer_data_typ
   if( *pid == PLATFORM_TIMER_SYS_ID && !platform_timer_sys_available() )
     luaL_error( L, "the system timer is not implemented on this platform" );
 }
-

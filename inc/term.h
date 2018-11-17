@@ -26,7 +26,7 @@ typedef int ( *p_term_translate )( int );
 // Exported functions
 
 // Terminal initialization
-void term_init( unsigned lines, unsigned cols, p_term_out term_out_func, 
+void term_init( unsigned lines, unsigned cols, p_term_out term_out_func,
                 p_term_in term_in_func, p_term_translate term_translate_func );
 
 // Terminal output functions
@@ -68,8 +68,13 @@ void term_setscroll( unsigned start, unsigned end );
   _D( KC_CTRL_U ),\
   _D( KC_CTRL_K ),\
   _D( KC_DEL ),\
+  _D( KC_CTRL_D ),\
+  _D( KC_CTRL_F ),\
+  _D( KC_CTRL_S ),\
+  _D( KC_CTRL_Q ),\
+  _D( KC_CTRL_L ),\
   _D( KC_UNKNOWN )
-  
+
 // Terminal input functions
 // Keyboard codes
 #define _D( x ) x
@@ -83,5 +88,8 @@ enum
 };
 
 int term_getch( int mode );
+
+//added TH:
+int term_rawgetch( int mode );
 
 #endif // #ifndef __TERM_H__
