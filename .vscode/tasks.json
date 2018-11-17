@@ -1,0 +1,36 @@
+{
+    "version": "2.0.0",
+    "command": "make",
+    "type":"shell",
+    "tasks": [
+        {
+            "label": "Makefile",
+
+            // Make this the default build command.
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+
+            // Show the output window only if unrecognized errors occur.
+            "showOutput": "always",
+
+            // Pass 'all' as the build target
+            "args": ["all", "BOARD=bonfire_arty"],
+
+            // Use the standard less compilation problem matcher.
+            "problemMatcher": {
+                "owner": "cpp",
+                "fileLocation": ["relative", "${workspaceRoot}"],
+                "pattern": {
+                    "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
+                    "file": 1,
+                    "line": 2,
+                    "column": 3,
+                    "severity": 4,
+                    "message": 5
+                }
+            }
+        }
+    ]
+}

@@ -69,8 +69,8 @@ struct editorSyntax {
     char **filematch;
     char **keywords;
     char singleline_comment_start[2];
-    char multiline_comment_start[3];
-    char multiline_comment_end[3];
+    char multiline_comment_start[6];
+    char multiline_comment_end[6];
     int flags;
 };
 
@@ -86,9 +86,6 @@ typedef struct erow {
                            check. */
 } erow;
 
-typedef struct hlcolor {
-    int r,g,b;
-} hlcolor;
 
 struct editorConfig {
     int cx,cy;  /* Cursor x and y position in characters */
@@ -176,6 +173,24 @@ static char *C_HL_keywords[] = {
         "void|",NULL
 };
 
+static char *Lua_HL_extensions[] = {".lua",NULL};
+static char *Lua_HL_keywords[] = {
+        /* Lua reserved words */
+        "and","break","do","else","elseif","end",
+        "false","for","function","if","in","local",
+        "nil","not","or","repeat","return","then",
+        "true","until","while",
+        /* Lua standard libs */
+        "string|","table|","math|","coroutine|","io|","debug|","os|",
+        // eLua libs
+        "uart|","term|","tmr|","cpu|","adc|","bit|","elua|","i2c|",
+        "pack|","rpc|","net|","pd|","pio|","pwm|","spi|","bonfire|",
+        // global names
+        "print|","require|","_G|","loadstring|","loadfile|",
+        NULL
+};
+
+
 /* Here we define an array of syntax highlights by extensions, keywords,
  * comments delimiters and flags. */
 static struct editorSyntax HLDB[] = {
@@ -185,8 +200,19 @@ static struct editorSyntax HLDB[] = {
         C_HL_keywords,
         "//","/*","*/",
         HL_HIGHLIGHT_STRINGS | HL_HIGHLIGHT_NUMBERS
+    },
+    {
+       // Lua
+        Lua_HL_extensions,
+        Lua_HL_keywords,
+        "--","--[[","--]]",
+        HL_HIGHLIGHT_STRINGS | HL_HIGHLIGHT_NUMBERS
     }
+
 };
+
+
+
 
 #define HLDB_ENTRIES (sizeof(HLDB)/sizeof(HLDB[0]))
 
@@ -194,18 +220,14 @@ static struct editorSyntax HLDB[] = {
 
 //static struct termios orig_termios; /* In order to restore at exit.*/
 
-static void disableRawMode(int fd) {
-    /* Don't even check the return value as it's too late. */
-    if (E.rawmode) {
- //       tcsetattr(fd,TCSAFLUSH,&orig_termios);
-        E.rawmode = 0;
-    }
-}
+// static void disableRawMode(int fd) {
+//     /* Don't even check the return value as it's too late. */
+//     if (E.rawmode) {
+//  //       tcsetattr(fd,TCSAFLUSH,&orig_termios);
+//         E.rawmode = 0;
+//     }
+// }
 
-/* Called at exit to avoid remaining in raw mode. */
-static void editorAtExit(void) {
-    disableRawMode(STDIN_FILENO);
-}
 
 /* Raw mode: 1960 magic shit. */
 static int enableRawMode(int fd) {
@@ -527,7 +549,7 @@ static int editorSyntaxToColor(int hl) {
     case HL_KEYWORD2: return 32;    /* green */
     case HL_STRING: return 35;      /* magenta */
     case HL_NUMBER: return 31;      /* red */
-    case HL_MATCH: return 34;      /* blu */
+    case HL_MATCH: return 34;      /* blue */
     default: return 37;             /* white */
     }
 }
@@ -1256,11 +1278,9 @@ static void editorProcessKeypress(int fd) {
     quit_times = KILO_QUIT_TIMES; /* Reset it to the original value. */
 }
 
-static int editorFileWasModified(void) {
-    return E.dirty;
-}
 
-static void initEditor(void) {
+
+static int   initEditor(void) {
     E.cx = 0;
     E.cy = 0;
     E.rowoff = 0;
@@ -1270,23 +1290,42 @@ static void initEditor(void) {
     E.dirty = 0;
     E.filename = NULL;
     E.syntax = NULL;
+    
     if (getWindowSize(STDIN_FILENO,STDOUT_FILENO,
                       &E.screenrows,&E.screencols) == -1)
     {
         perror("Unable to query the screen for size (columns / rows)");
-       global_quit=1;
+        return -1;
     }
     E.screenrows -= 2; /* Get room for status bar. */
+    term_clrscr();
+    return 0;
 }
+
+/* Called at exit  */
+static void editorAtExit(void) {
+   // disableRawMode(STDIN_FILENO);
+int I;
+
+  for(I=0;I<E.numrows;I++) {
+    editorFreeRow(&E.row[I]);
+  }
+term_clrscr();
+
+}
+
 
 int kilo_main(int argc, char **argv) {
     if (argc != 2) {
         fprintf(stderr,"Usage: kilo <filename>\n");
-        exit(1);
+       return -1;
     }
+    
+    if (initEditor()==-1) return -1;
+    
     global_quit=0;
-    term_clrscr();
-    initEditor();
+   
+    
     editorSelectSyntaxHighlight(argv[1]);
     editorOpen(argv[1]);
     enableRawMode(STDIN_FILENO);
@@ -1296,6 +1335,7 @@ int kilo_main(int argc, char **argv) {
         editorRefreshScreen();
         editorProcessKeypress(STDIN_FILENO);
     }
-    term_clrscr();
+    editorAtExit();
+   
     return 0;
 }
