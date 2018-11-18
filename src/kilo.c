@@ -46,10 +46,11 @@
 #include <ctype.h>
 #include <sys/types.h>
 #include <ioctl.h>
-#include <sys/time.h>
 #include <unistd.h>
 #include <stdarg.h>
 #include <fcntl.h>
+
+#include "common.h" 
 
 /* Syntax highlight types */
 #define HL_NORMAL 0
@@ -99,6 +100,7 @@ struct editorConfig {
     int dirty;      /* File modified but not saved. */
     char *filename; /* Currently open filename */
     char statusmsg[80];
+    char display_filename[21];
     time_t statusmsg_time;
     struct editorSyntax *syntax;    /* Current syntax highlight, or NULL. */
 };
@@ -212,6 +214,10 @@ static struct editorSyntax HLDB[] = {
 };
 
 
+static time_t __time(time_t *dummy)
+{
+   return cmn_systimer_get() / 1000000L;
+}
 
 
 #define HLDB_ENTRIES (sizeof(HLDB)/sizeof(HLDB[0]))
@@ -230,7 +236,7 @@ static struct editorSyntax HLDB[] = {
 
 
 /* Raw mode: 1960 magic shit. */
-static int enableRawMode(int fd) {
+//static int enableRawMode(int fd) {
     //struct termios raw;
 
     //if (E.rawmode) return 0; /* Already enabled. */
@@ -256,12 +262,12 @@ static int enableRawMode(int fd) {
     ///* put terminal in raw mode after flushing */
     //if (tcsetattr(fd,TCSAFLUSH,&raw) < 0) goto fatal;
     //E.rawmode = 1;
-    return 0;
+ //   return 0;
 
 //fatal:
     //errno = ENOTTY;
     //return -1;
-}
+//}
 
 /* Read a key from the terminal put in raw mode, trying to handle
  * escape sequences. */
@@ -850,7 +856,7 @@ static int editorOpen(char *filename) {
 static int editorSave(void) {
     int len;
     char *buf = editorRowsToString(&len);
-    int fd = open(E.filename,O_RDWR|O_CREAT,0644);
+    int fd = open(E.filename,O_RDWR|O_CREAT|O_TRUNC,0644);
     if (fd == -1) goto writeerr;
 
     /* Use truncate + a single write(2) call in order to make saving
@@ -895,6 +901,36 @@ static void abAppend(struct abuf *ab, const char *s, int len) {
 
 static void abFree(struct abuf *ab) {
     free(ab->b);
+}
+
+
+static void editorSetDisplayFileName()
+{
+    int len;
+   
+    if ((len=strlen(E.filename))>sizeof(E.display_filename)-1) {
+       char buffer[255];
+       char *token[5];
+       int tcnt=0;
+     
+       strncpy(buffer,E.filename,sizeof(buffer));
+       // Separate Path into segments, maximum 5
+       token[0]=strtok(buffer,"/");
+       while (tcnt<4 && token[tcnt]) {
+         token[++tcnt]=strtok(NULL,"/"); 
+       }
+       if (tcnt<2) { // no complete path
+         snprintf(E.display_filename,sizeof(E.display_filename),"%.17s...",E.filename);
+       } else {
+         // Right justify the filename if it is larger then 13 chars   
+         char *p=token[tcnt-1];
+         len=strlen(p);
+         if (len>13) p+=len-13;  
+         snprintf(E.display_filename,sizeof(E.display_filename),"/%.3s...%.13s",token[0],p);
+       }
+    } else {
+      strcpy(E.display_filename,E.filename);
+    }
 }
 
 /* This function writes the whole screen using VT100 escape characters
@@ -974,8 +1010,9 @@ static void editorRefreshScreen(void) {
     abAppend(&ab,"\x1b[0K",4);
     abAppend(&ab,"\x1b[7m",4);
     char status[80], rstatus[80];
+    
     int len = snprintf(status, sizeof(status), "%.20s - %d lines %s",
-        E.filename, E.numrows, E.dirty ? "(modified)" : "");
+        E.display_filename, E.numrows, E.dirty ? "(modified)" : "");
     int rlen = snprintf(rstatus, sizeof(rstatus),
         "%d/%d",E.rowoff+E.cy+1,E.numrows);
     if (len > E.screencols) len = E.screencols;
@@ -994,7 +1031,7 @@ static void editorRefreshScreen(void) {
     /* Second row depends on E.statusmsg and the status message update time. */
     abAppend(&ab,"\x1b[0K",4);
     int msglen = strlen(E.statusmsg);
-    if (msglen && time(NULL)-E.statusmsg_time < 5)
+    if (msglen && __time(NULL)-E.statusmsg_time < 5)
         abAppend(&ab,E.statusmsg,msglen <= E.screencols ? msglen : E.screencols);
 
     /* Put cursor at its current position. Note that the horizontal position
@@ -1024,7 +1061,7 @@ static void editorSetStatusMessage(const char *fmt, ...) {
     va_start(ap,fmt);
     vsnprintf(E.statusmsg,sizeof(E.statusmsg),fmt,ap);
     va_end(ap);
-    E.statusmsg_time = time(NULL);
+    E.statusmsg_time = __time(NULL);
 }
 
 /* =============================== Find mode ================================ */
@@ -1328,9 +1365,10 @@ int kilo_main(int argc, char **argv) {
     
     editorSelectSyntaxHighlight(argv[1]);
     editorOpen(argv[1]);
-    enableRawMode(STDIN_FILENO);
+    editorSetDisplayFileName();
+    //enableRawMode(STDIN_FILENO);
     editorSetStatusMessage(
-        "HELP: Ctrl-S = save | Ctrl-Q = quit | Ctrl-F = find");
+        "HELP: Ctrl-S = save | Ctrl-Q = quit | Ctrl-F = find | Ctrl-D = delete line");
     while(!global_quit) {
         editorRefreshScreen();
         editorProcessKeypress(STDIN_FILENO);
