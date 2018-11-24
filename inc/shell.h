@@ -4,6 +4,7 @@
 #define __SHELL_H__
 
 #include "type.h"
+#include <unistd.h> // TH added because of removal from devman.h
 
 #define SHELL_WELCOMEMSG                "\neLua %s  Copyright (C) 2007-2013 www.eluaproject.net\n"
 #define SHELL_PROMPT                    "eLua# "
