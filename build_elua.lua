@@ -28,6 +28,14 @@ builder = b.new_builder()
 utils = b.utils
 sf = string.format
 
+--- Debugger code for VS Code
+local json = require 'dkjson'
+local debuggee = require 'vscode-debuggee'
+local startResult, breakerType = debuggee.start(json,{redirectPrint=true})
+print('debuggee start ->', startResult, breakerType)
+
+----
+
 -------------------------------------------------------------------------------
 -- Build configuration 'shortcuts'
 

@@ -6,7 +6,8 @@
                 "${workspaceFolder}/inc",
                 "${workspaceFolder}/inc/newlib",
                 "${workspaceFolder}/inc",
-                "${workspaceFolder}/src/platform/bonfire"
+                "${workspaceFolder}/src/platform/bonfire",
+                "${workspaceFolder}/src/lua"
 
             ],
             "defines": [],
