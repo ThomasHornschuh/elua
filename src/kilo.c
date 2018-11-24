@@ -112,13 +112,17 @@ struct winsize {
     unsigned short ws_col;
 };
 
+
+#define TAB 9 // Tab Control char 
+
 enum KEY_ACTION{
         KEY_NULL = 0,       /* NULL */
         CTRL_C = KC_CTRL_C,         /* Ctrl-c */
         CTRL_D = KC_CTRL_D,         /* Ctrl-d */
         CTRL_F = KC_CTRL_F,         /* Ctrl-f */
         CTRL_H = KC_BACKSPACE,         /* Ctrl-h */
-        TAB = KC_TAB,            /* Tab */
+       
+        TAB_KEY = KC_TAB,   
         CTRL_L = KC_CTRL_L,        /* Ctrl+l */
         ENTER = KC_ENTER,         /* Enter */
         CTRL_Q = KC_CTRL_Q,        /* Ctrl-q */
@@ -1306,6 +1310,9 @@ static void editorProcessKeypress(int fd) {
         break;
     case ESC:
         /* Nothing to do for ESC in this mode. */
+        break;
+    case TAB_KEY:
+        editorInsertChar(9);
         break;
     default:
         editorInsertChar(c);

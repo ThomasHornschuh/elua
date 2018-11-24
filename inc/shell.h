@@ -14,11 +14,7 @@
 #endif
 #if !defined(SHELL_ERRMSG)
 #define SHELL_ERRMSG                    "Invalid command, type 'help' for help\n"
-#endif
-#if !defined(SHELL_MAXSIZE)
-#define SHELL_MAXSIZE                   50
-#endif
-#if !defined(SHELL_MAX_LUA_ARGS)
+#define SHELL_MAXSIZE                   128
 #define SHELL_MAX_LUA_ARGS              8
 #endif
 
