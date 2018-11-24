@@ -5,7 +5,7 @@
 
 #include "type.h"
 #include <reent.h>
-#include <unistd.h>
+//#include <unistd.h> // TH: Remove to avoid error with conflicting definitons for function sync in ff.c on RISC-V
 #include <sys/types.h>
 
 // Maximum number of devices in the system

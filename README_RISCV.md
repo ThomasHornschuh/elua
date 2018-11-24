@@ -14,11 +14,11 @@ This is some inital effort to port eLua to the RISCV architecture. There are cur
    
    
 ### Building eLua:   
-More information how to build eLua can be found here here: http://www.eluaproject.net/doc/master/en_building.html
-Unfortunately there is not much information about the prerequisites. 
+More information how to build eLua can be found here here: http://www.eluaproject.net/doc/master/en_building.html and http://www.eluaproject.net/doc/master/en_building_unix.html
 
 
-The build system is not using make, it uses Lua. So Lua must be installed on the system, but it works only with Lua5.1 ! I don't unfortunately don't remember all the steps to get the Build system running, basically you need to install "Luarocks" and then some Luarocks modules. The build system will fail and complain what it is missing. It was not to hard, I managed to get it running with a few google searches, etc in 1-2 hours :-)
+
+The build system is not using make, it uses Lua. So Lua must be installed on the system, but it works only with Lua5.1 ! 
 
 #### Other dependencies:
 Of course you need a RISC-V toolchain installed and in your path. Because I aim for RV32IM only, I have build the RISC-V toolchain with the options --with-arch=rv32i and --with-abi=ilp32. This leads to gcc binaries prefixed with "riscv-unknown-elf32*". If your toolchain is named differently you can adapt the build_data-lua file in the eLua root directory, I think the file is mainly self-explanatory.
