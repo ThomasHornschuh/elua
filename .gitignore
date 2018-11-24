@@ -39,3 +39,4 @@ wofs.img
 /eLuaRISCV
 *.img
 /.gdbinit
+/vsworkspace.code-workspace
