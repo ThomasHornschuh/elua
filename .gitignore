@@ -34,3 +34,4 @@ luarpc*
 /eLuaRISCV
 *.img
 /.gdbinit
+/vsworkspace.code-workspace
