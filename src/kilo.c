@@ -70,8 +70,8 @@ struct editorSyntax {
     char **filematch;
     char **keywords;
     char singleline_comment_start[2];
-    char multiline_comment_start[6];
-    char multiline_comment_end[6];
+    char multiline_comment_start[3];
+    char multiline_comment_end[3];
     int flags;
 };
 
@@ -211,7 +211,7 @@ static struct editorSyntax HLDB[] = {
        // Lua
         Lua_HL_extensions,
         Lua_HL_keywords,
-        "--","--[[","--]]",
+        "--","[[","]]",
         HL_HIGHLIGHT_STRINGS | HL_HIGHLIGHT_NUMBERS
     }
 
