@@ -217,7 +217,7 @@ static struct editorSyntax HLDB[] = {
         ID_LUA,
         Lua_HL_extensions,
         Lua_HL_keywords,
-        "--","[[","]]--",
+        "--","[[","--]]",
         HL_HIGHLIGHT_STRINGS | HL_HIGHLIGHT_NUMBERS
     }
 
@@ -402,8 +402,8 @@ static void editorUpdateSyntax(erow *row) {
 
     while(*p) {
 
-        /* Handle // comments. */
-        if (prev_sep &&  rem_size >= 2 && *p == scs[0] && *(p+1) == scs[1]) {
+        /* Handle single line comments. */
+        if (prev_sep &&  !in_comment &&  rem_size >= 2 && *p == scs[0] && *(p+1) == scs[1]) {
 
             if (syntaxId==ID_LUA && rem_size>=4 && *(p+2)==mcs[0] && *(p+3)==mcs[1]) {
                // Special handling for Lua multiline comments --[[ ]]--
