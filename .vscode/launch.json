@@ -27,14 +27,14 @@
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "logging": {
-                "trace": true
+                "trace": false
             },
             
             "environment": [],
             "externalConsole": true,
             "MIMode": "gdb",
-            "miDebuggerServerAddress":"/dev/ttyUSB0",
-            "miDebuggerPath": "/home/thomas/opt/riscv/bin/riscv-none-embed-gdb",
+            "miDebuggerServerAddress":"/dev/ttyUSB2",
+            "miDebuggerPath": "riscv64-unknown-elf-gdb",
             "setupCommands": [
                 {
                     "description": "Enable pretty-printing for gdb",
