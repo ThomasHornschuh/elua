@@ -29,10 +29,17 @@ utils = b.utils
 sf = string.format
 
 --- Debugger code for VS Code
-local json = require 'dkjson'
-local debuggee = require 'vscode-debuggee'
-local startResult, breakerType = debuggee.start(json,{redirectPrint=true})
-print('debuggee start ->', startResult, breakerType)
+if pcall(function()
+     local json = require 'dkjson'
+     local debuggee = require 'vscode-debuggee'
+     local startResult, breakerType = debuggee.start(json,{redirectPrint=true})
+     print('debuggee start ->', startResult, breakerType)
+   end) 
+then 
+     print "VSCode build script debug support enabled"
+else
+  print "Not able to load  VSCode build script debug support" 
+end   
 
 ----
 
