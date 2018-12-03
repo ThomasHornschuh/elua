@@ -77,6 +77,23 @@ int platform_init()
 
 
 #ifdef ZPUINO_UART
+
+
+#if defined(UART_BASE_ADDR) 
+#pragma message "Dynamic UART config active"
+
+static uint32_t uart_bases[] = UART_BASE_ADDR;
+
+uint32_t* get_uart_base(unsigned id) {
+   
+   if (id>NUM_UART-1) 
+     return 0;
+   else
+     return (uint32_t*)uart_bases[id];  
+}  
+
+#else
+
 uint32_t* get_uart_base(unsigned id) {
 
   if (id>NUM_UART-1) return 0;
@@ -89,7 +106,9 @@ uint32_t* get_uart_base(unsigned id) {
      return 0;
   }
 }
-#endif
+#endif 
+
+#endif // ZPUINO_UART
 
 // Extended Control register:
 // Bit [15:0] - UARTPRES UART prescaler (16 bits)   (f_clk / baudrate ) - 1
