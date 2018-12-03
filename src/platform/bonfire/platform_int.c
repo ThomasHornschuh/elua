@@ -50,9 +50,9 @@ uint32_t pending;
 
 #endif
 
-#ifdef INT_UART_RX_FIFO
+#if defined( INT_UART_RX_FIFO ) && defined (UART_INTS)
 
-static int uart_irq_table[1]= {UART0_INTNUM}; // LIRQ "Offsets" for UARTs
+static int uart_irq_table[]= UART_INTS; // LIRQ "Offsets" for UARTs
 
 static int pending[NUM_UART];
 static int enabled[NUM_UART];

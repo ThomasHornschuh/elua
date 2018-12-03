@@ -42,6 +42,16 @@ function add_platform_configs( t, board, cpu )
         sda_bit = at.int_attr('I2C_SDA_BIT', 0,31)
       }
     }
+    t.bonfire = {
+        
+             attrs= {
+               num_uarts=at.int_attr('NUM_UART',1,16),
+               uarts=at.array_of(at.string_attr('UART_BASE_ADDR',32),true),
+               uart_ints=at.array_of(at.string_attr('UART_INTS',32),true)
+           }
+          
+    }
+
 --  end
   -- pt(t)
 

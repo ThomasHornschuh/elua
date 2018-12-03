@@ -4,7 +4,7 @@ return {
   cpu = 'BONFIRE_ARTY_10',
   components = {
     sercon = { uart = 0, speed = 500000,  buf_size=4096 },
-    romfs = true,
+    romfs = false,
     shell = true,
     advanced_shell=true,
     term = { lines = 25, cols = 80 },
@@ -18,7 +18,13 @@ return {
     mmcfs= { spi=0, cs_port=0, cs_pin=0 }
   },
   config = {
-    vtmr= { num=4, freq=50 }
+    vtmr= { num=4, freq=50 },
+    bonfire= {
+        num_uarts=2,
+        uarts={"UART0_BASE","UART1_BASE"},
+        uart_ints={"UART0_INTNUM","UART1_INTNUM"}
+      
+    }
   },
   modules = {
     generic = { 'pd', 'all_lua', 'term','uart','tmr','elua',"cpu","bit","net","pack","spi","pio" },
