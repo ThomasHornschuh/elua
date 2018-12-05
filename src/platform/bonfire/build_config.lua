@@ -27,7 +27,16 @@ function add_platform_components( t, board, cpu )
 
 
   t.bonfire_riscv = { macro = 'ENABLE_BONFIRE_RISCV' }
-  t.bonfire_gdbserver = { macro= 'ENABLE_BONFIRE_GDBSERVER'}
+  t.bonfire_gdbserver = { 
+    macro= 'ENABLE_BONFIRE_GDBSERVER',
+   
+    attrs= {
+      uart = at.uart_attr('GDB_DEBUG_UART','1'),
+      speed= at.int_attr('GDB_DEBUG_BAUD',300,1000000,115200)
+    }
+
+    
+  }
 end
 
 
@@ -44,17 +53,12 @@ function add_platform_configs( t, board, cpu )
     }
     t.bonfire = {
         
-             attrs= {
-               num_uarts=at.int_attr('NUM_UART',1,16),
-               uarts=at.array_of(at.string_attr('UART_BASE_ADDR',32),true),
-               uart_ints=at.array_of(at.string_attr('UART_INTS',32),true)
-           }
-          
-    }
-
---  end
-  -- pt(t)
-
+      attrs= {
+        num_uarts=at.int_attr('NUM_UART',1,16),
+        uarts=at.array_of(at.string_attr('UART_BASE_ADDR',32),true),
+        uart_ints=at.array_of(at.string_attr('UART_INTS',32),true)
+      }
+    }    
 
 end
 

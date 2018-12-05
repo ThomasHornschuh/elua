@@ -123,6 +123,7 @@ u32 platform_uart_setup( unsigned id, u32 baud, int databits, int parity, int st
 #ifndef ZPUINO_UART
 
   uart_setBaudRate(baud);
+  return baud;
 #else
 volatile uint32_t *uartadr=get_uart_base(id);
 
@@ -135,10 +136,11 @@ volatile uint32_t *uartadr=get_uart_base(id);
      #endif
      // Set Baudrate divisor, enable port, extended mode and set FIFO Threshold
      uartadr[UART_EXT_CONTROL]= 0x030000L | ft | (uint16_t)(SYSCLK / baud -1);
-
-  }
+     return baud;
+  } else 
+    return 0;
 #endif
-  return baud;
+  
 }
 
 void platform_s_uart_send( unsigned id, u8 data )
