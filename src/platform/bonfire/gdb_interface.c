@@ -3,42 +3,35 @@
 
 #include <stdio.h>
 
+#include "platform.h"
+
 #include "console.h"
 
-#define UART_TX 0
-#define UART_RECV 0
-#define UART_STATUS 1
-#define UART_CONTROL 1
+
+#include "riscv-gdb-stub.h"
 
 
-
-
-static volatile uint32_t *uartadr=(uint32_t *)UART1_BASE;
+static  uint32_t uart_id=GDB_DEBUG_UART;
 
 
 int getDebugChar() {
 
- while (!(uartadr[UART_STATUS] & 0x01)); // Wait while receive buffer empty
- return uartadr[UART_RECV] & 0x0ff;
+  return platform_s_uart_recv(uart_id,PLATFORM_TIMER_INF_TIMEOUT);
 
 };
 
 void putDebugChar(int c) {
-  while (!(uartadr[UART_STATUS] & 0x2)); // Wait while transmit buffer full
-  uartadr[UART_TX]=(uint32_t)c;
+
+  platform_s_uart_send(uart_id,c);
 };
 
 
-static void setDivisor(uint32_t divisor){
 
+u32 gdb_setup_interface(u32 port, u32 baudrate) {
 
-   uartadr[UART_CONTROL]= 0x010000L | (uint16_t)divisor; // Set Baudrate divisor and enable port
-}
-
-void gdb_setup_interface(int baudrate) {
-
-
-   setDivisor(SYSCLK / (baudrate*16) -1);
+   uart_id=port;
+   platform_uart_set_buffer(port,0); // disable buffer 
+   return platform_uart_setup(port,baudrate,8,PLATFORM_UART_PARITY_NONE,PLATFORM_UART_STOPBITS_1);
 }
 
 

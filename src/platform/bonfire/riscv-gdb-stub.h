@@ -3,11 +3,18 @@
 
 #include "trapframe.h"
 
+#ifndef GDB_DEBUG_UART
+#define GDB_DEBUG_UART 1
+#endif
+
+#ifndef GDB_DEBUG_BAUD
+#define GDB_DEBUG_BAUD 115200
+#endif 
+
 
 t_ptrapfuntion gdb_initDebugger(int set_mtvec);
 
-
-void gdb_setup_interface(int baudrate);
+u32 gdb_setup_interface(u32 port, u32 baudrate);
 
 
 /* This function will generate a breakpoint exception.  It is used at the

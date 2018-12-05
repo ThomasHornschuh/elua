@@ -13,18 +13,27 @@
 extern t_ptrapfuntion gdb_debug_handler;
 
 
-#define DEBUG_BAUD 115200
+//#define DEBUG_BAUD 115200
 
 static int debug_initalized=0;
 
 int initgdbserver( lua_State* L )
 {
-  gdb_setup_interface(DEBUG_BAUD);
-  gdb_debug_handler=gdb_initDebugger(0);
-  printk("Connect with Debugger port with %d baud\n",DEBUG_BAUD);
-  debug_initalized=1;
-  gdb_breakpoint();
-  return 1;
+  unsigned debug_port= ( unsigned )luaL_optinteger( L, 1, GDB_DEBUG_UART );  
+  unsigned baudrate = ( unsigned )luaL_optinteger( L, 2, GDB_DEBUG_BAUD );  
+  MOD_CHECK_ID( uart, debug_port );
+  
+  unsigned res = gdb_setup_interface(debug_port,baudrate);
+  if (res) {
+    gdb_debug_handler=gdb_initDebugger(0);
+    printk("Connect with Debugger port with %d baud\n",baudrate);
+    debug_initalized=1;
+    gdb_breakpoint();
+    lua_pushinteger( L, res );
+    return 1;
+  } else {
+    return luaL_error( L, "gdbserver.init called with invalid parameters" );
+  }  
 }
 
 

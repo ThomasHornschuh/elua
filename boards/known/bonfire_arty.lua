@@ -15,7 +15,8 @@ return {
     tcpip = { ip = "192.168.26.200", netmask = "255.255.255.0", gw = "192.168.26.2", dns = "192.168.26.2" },
     dns=true,
     dhcp=true,
-    mmcfs= { spi=0, cs_port=0, cs_pin=0 }
+    mmcfs= { spi=0, cs_port=0, cs_pin=0 },
+    bonfire_gdbserver= { uart = 1,  speed=500000 }
   },
   config = {
     vtmr= { num=4, freq=50 },
