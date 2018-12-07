@@ -16,7 +16,7 @@
 #include "lauxlib.h"
 #include "kilo.h"
 
-#ifdef BUILD_XMODEM
+#ifdef BUILD_EDITOR
 
 const char shell_help_edit[] = "[<path>]\n"
   "  [<path>] - file to edit.\n";
@@ -29,15 +29,15 @@ void shell_edit( int argc, char **argv )
   kilo_main(argc,argv);
 }
 
-#else // #ifdef BUILD_XMODEM
+#else // #ifdef BUILD_EDITOR
 
-const char shell_help_recv[] = "";
-const char shell_help_summary_recv[] = "";
+const char shell_help_edit[] = "";
+const char shell_help_summary_edit[] = "";
 
 void shell_edit( int argc, char **argv )
 {
   shellh_not_implemented_handler( argc, argv );
 }
 
-#endif // #ifdef BUILD_XMODEM
+#endif // #ifdef BUILD_EDITOR
 

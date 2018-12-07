@@ -16,7 +16,8 @@ return {
     dns=true,
     dhcp=true,
     mmcfs= { spi=0, cs_port=0, cs_pin=0 },
-    bonfire_gdbserver= { uart = 1,  speed=500000 }
+    bonfire_gdbserver= { uart = 1,  speed=500000 },
+    editor=true
   },
   config = {
     vtmr= { num=4, freq=50 },
