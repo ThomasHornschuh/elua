@@ -5,8 +5,8 @@ return {
   components = {
     sercon = { uart = 0, speed = 500000,  buf_size=4096 },
     romfs = false,
-    shell = true,
-    advanced_shell=true,
+    shell = {advanced=true},
+    --advanced_shell=true,
     term = { lines = 25, cols = 80 },
     xmodem= true,
     linenoise = { shell_lines=20, lua_lines=20 },
@@ -16,7 +16,8 @@ return {
     dns=true,
     dhcp=true,
     mmcfs= { spi=0, cs_port=0, cs_pin=0 },
-    bonfire_gdbserver= { uart = 1,  speed=500000 }
+    bonfire_gdbserver= { uart = 1,  speed=500000 },
+    editor=true
   },
   config = {
     vtmr= { num=4, freq=50 },

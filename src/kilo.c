@@ -32,6 +32,9 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "platform_conf.h"
+#ifdef BUILD_EDITOR
+
 #define KILO_VERSION "0.0.1"
 
 #define _BSD_SOURCE
@@ -1370,3 +1373,4 @@ int kilo_main(int argc, char **argv) {
 
     return 0;
 }
+#endif 

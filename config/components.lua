@@ -236,6 +236,9 @@ function init()
     }
   }
 
+-- TH: Kilo Editor
+  components.editor = { macro = "BUILD_EDITOR"}
+
   -- All done
   return components
 end
