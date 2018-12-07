@@ -201,6 +201,10 @@ function init()
   components.romfs = { macro = 'BUILD_ROMFS' }
   -- WOFS
   components.wofs = { macro = "BUILD_WOFS" }
+
+-- TH: Kilo Editor
+  components.editor = { macro = "BUILD_EDITOR"}
+
   -- All done
   return components
 end
