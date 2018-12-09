@@ -117,6 +117,8 @@ static int term_translate( int data )
           return KC_PAGEUP;
         case 54:
           return KC_PAGEDOWN;
+        case 51:
+          return KC_DEL; // added TH, VT100 del coding as escape sequence  
       }
     }
   }

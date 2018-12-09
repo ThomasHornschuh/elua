@@ -35,3 +35,4 @@ luarpc*
 *.img
 /.gdbinit
 /vsworkspace.code-workspace
+/.vscode/settings.json

@@ -1,19 +1,15 @@
-#include "lualib.h"
-#include "lauxlib.h"
-#include "platform.h"
-#include "auxmods.h"
+
+
+
 #include "platform_conf.h"
+#include "lauxlib.h"
 #include "lrotable.h"
 #include <string.h>
 #include "encoding.h"
 
-#include "riscv-gdb-stub.h"
+#include "gdb_interface.h"
 #include "console.h"
 
-extern t_ptrapfuntion gdb_debug_handler;
-
-
-//#define DEBUG_BAUD 115200
 
 static int debug_initalized=0;
 
@@ -40,7 +36,7 @@ int initgdbserver( lua_State* L )
 static int debugenable( lua_State* L )
 {
    if (debug_initalized) {
-     gdb_debug_handler=gdb_initDebugger(0);
+     gdb_enable_debugger();
      return 1;
    } else
       return luaL_error( L, "gdbserver not initalized" );
@@ -50,7 +46,7 @@ static int debugenable( lua_State* L )
 static int debugdisable( lua_State* L )
 {
    if (debug_initalized) {
-     gdb_debug_handler=NULL;
+     gdb_disable_debugger();
      return 1;
    } else
       return luaL_error( L, "gdbserver not initalized" );

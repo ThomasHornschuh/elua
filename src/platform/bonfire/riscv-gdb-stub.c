@@ -67,6 +67,7 @@
  * Host:                  Reply:
  * $m0,10#2a               +$00010203040506070809101112131415#42
  *
+ * RISC-V Version (c)2017/2018 Thomas Hornschuh
  ****************************************************************************/
 
 #include <string.h>
@@ -639,16 +640,16 @@ trapframe_t* handle_exception (trapframe_t *ptf)
 }
 
 
-trapframe_t* trap_handler(trapframe_t *ptf)
-{
+// trapframe_t* trap_handler(trapframe_t *ptf)
+// {
 
-    if (ptf->cause & 0x80000000) {
-      // place interrupt handler here...
-      return ptf;
-    }  else {
-       return handle_exception(ptf);
-    }
-}
+//     if (ptf->cause & 0x80000000) {
+//       // place interrupt handler here...
+//       return ptf;
+//     }  else {
+//        return handle_exception(ptf);
+//     }
+// }
 
 
 
