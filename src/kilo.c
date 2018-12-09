@@ -52,6 +52,7 @@
 #include <unistd.h>
 #include <stdarg.h>
 #include <fcntl.h>
+#include <stdbool.h>
 
 #include "common.h"
 
@@ -772,9 +773,9 @@ fixcursor:
 }
 
 /* Delete the char at the current prompt position. */
-static void editorDelChar() {
+static void editorDelChar(bool bkspc) {
     int filerow = E.rowoff+E.cy;
-    int filecol = E.coloff+E.cx;
+    int filecol = E.coloff+E.cx+(!bkspc?1:0);
     erow *row = (filerow >= E.numrows) ? NULL : &E.row[filerow];
 
     if (!row || (filecol == 0 && filerow == 0)) return;
@@ -797,10 +798,12 @@ static void editorDelChar() {
         }
     } else {
         editorRowDelChar(row,filecol-1);
-        if (E.cx == 0 && E.coloff)
-            E.coloff--;
-        else
+        if (bkspc) {
+          if (E.cx == 0 && E.coloff)
+             E.coloff--;
+          else
             E.cx--;
+        }    
     }
     if (row) editorUpdateRow(row);
     E.dirty++;
@@ -1264,8 +1267,10 @@ static void editorProcessKeypress(int fd) {
         break;
     case BACKSPACE:     /* Backspace */
     case CTRL_H:        /* Ctrl-h */
+        editorDelChar(true);
+        break;
     case DEL_KEY:
-        editorDelChar();
+        editorDelChar(false);
         break;
     case PAGE_UP:
     case PAGE_DOWN:

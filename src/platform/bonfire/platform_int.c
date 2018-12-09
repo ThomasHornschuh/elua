@@ -24,7 +24,7 @@
 #endif
 
 #include "riscv-gdb-stub.h"
-t_ptrapfuntion gdb_debug_handler=NULL;
+
 
 volatile uint32_t *pmtime = (uint32_t*)MTIME_BASE; // Pointer to memory mapped RISC-V Timer registers
 
