@@ -29,10 +29,17 @@ void putDebugChar(int c) {
 
 
 u32 gdb_setup_interface(u32 port, u32 baudrate) {
+u32 res;
 
    uart_id=port;
    platform_uart_set_buffer(port,0); // disable buffer 
-   return platform_uart_setup(port,baudrate,8,PLATFORM_UART_PARITY_NONE,PLATFORM_UART_STOPBITS_1);
+   res=platform_uart_setup(port,baudrate,8,PLATFORM_UART_PARITY_NONE,PLATFORM_UART_STOPBITS_1);
+   // Clear recv FIFO
+   do {
+
+   }while (platform_s_uart_recv(port,0)!= -1);
+   return res;
+
 }
 
 void gdb_enable_debugger()
