@@ -1,9 +1,8 @@
 #include "platform.h"
 #include "platform_conf.h"
-#include "type.h"
-#include "devman.h"
+
+
 #include "genstd.h"
-#include <reent.h>
 #include <errno.h>
 #include <string.h>
 #include <ctype.h>
@@ -23,7 +22,7 @@
 #include "elua_uip.h"
 #endif
 
-#include "riscv-gdb-stub.h"
+#include "gdb_interface.h"
 
 
 volatile uint32_t *pmtime = (uint32_t*)MTIME_BASE; // Pointer to memory mapped RISC-V Timer registers
