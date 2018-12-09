@@ -1,10 +1,8 @@
 // Platform-dependent functions
 
 #include "platform_conf.h"
-#include "type.h"
-#include "devman.h"
+
 #include "genstd.h"
-#include <reent.h>
 #include <errno.h>
 #include <string.h>
 #include <ctype.h>
