@@ -40,3 +40,4 @@ wofs.img
 *.img
 /.gdbinit
 /vsworkspace.code-workspace
+/.vscode/settings.json

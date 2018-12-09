@@ -31,6 +31,8 @@
 #include "uart.h"
 #endif
 
+#include "gdb_interface.h"
+
 
 // ****************************************************************************
 // Platform initialization (low-level and full)
@@ -45,13 +47,16 @@ extern char end; // From linker script, end of data segment
 void platform_ll_init( void )
 {
   printk("Heap: %08lx .. %08lx\n",&INTERNAL_RAM1_FIRST_FREE,INTERNAL_RAM1_LAST_FREE);
+  // Uncomment to break into debugger on boot 
+  // gdb_setup_interface(GDB_DEBUG_UART,GDB_DEBUG_BAUD);
+  // gdb_enable_debugger();
 
-
+  // gdb_breakpoint();
+  // gdb_breakpoint();
 }
 
 int platform_init()
 {
-
   printk("eLua for Bonfire SoC 1.0a\n");
   printk("Build with GCC %s\n",__VERSION__);
   cmn_systimer_set_base_freq(SYSCLK);
@@ -75,9 +80,7 @@ int platform_init()
 // UART functions
 
 
-
 #ifdef ZPUINO_UART
-
 
 #if defined(UART_BASE_ADDR) 
 #pragma message "Dynamic UART config active"
