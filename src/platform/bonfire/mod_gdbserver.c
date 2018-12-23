@@ -21,7 +21,7 @@ int initgdbserver( lua_State* L )
   
   unsigned res = gdb_setup_interface(debug_port,baudrate);
   if (res) {
-    gdb_debug_handler=gdb_initDebugger(0);
+    gdb_enable_debugger();
     printk("Connect with Debugger port with %d baud\n",baudrate);
     debug_initalized=1;
     gdb_breakpoint();

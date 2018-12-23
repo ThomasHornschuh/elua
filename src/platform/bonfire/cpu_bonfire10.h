@@ -17,7 +17,7 @@
 // Number of resources (0 if not available/not implemented)
 #define NUM_PIO               3
 #define NUM_SPI               0
-#define NUM_UART              1
+//#define NUM_UART              1
 #define NUM_TIMER             1
 #define NUM_PWM               0
 #define NUM_ADC               0
