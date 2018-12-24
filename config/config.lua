@@ -111,6 +111,11 @@ local default_platform_conf = {
   pre_generate_section = function() return true end,
 }
 
+-- Default table for extra configuration (same as above)
+local default_extra_conf  = {
+  get_extra_modules = function() end,
+}
+
 -- Sanity code
 -- These are more checks added to the generated header file
 -- Some of these are the result of pure paranoia. Nevertheless, they seem to work.
@@ -196,6 +201,8 @@ function compile_board( fname, boardname )
 #ifndef __GENERATED_%s_H__
 #define __GENERATED_%s_H__
 
+#include <stddef.h>
+
 ]], cboardname, cboardname )
   local desc, err = dofile( fname )
   if not desc then return false, err end
@@ -222,6 +229,12 @@ function compile_board( fname, boardname )
   local plconf = default_platform_conf
   if utils.is_file( utils.concat_path{ 'src', 'platform', platform, 'build_config.lua' } ) then
     plconf = require( "src.platform." .. platform .. ".build_config" )
+  end
+
+  -- Find and require the extra build configuration if specified
+  local extraconf = default_extra_conf
+  if utils.is_file( utils.concat_path{ comp.extras, 'build_config.lua' } ) then
+    extraconf = require( comp.extras .. ".build_config" )
   end
 
   -- Read platform specific components/configs
@@ -275,6 +288,7 @@ function compile_board( fname, boardname )
   header = header .. sanity_code
 
   -- Generate module configuration
+  mgen.add_extra_modules( extraconf.get_extra_modules() )
   gen, err = mgen.gen_module_list( desc, plconf, platform, boardname )
   if not gen then return false, err end
   header = header .. gen

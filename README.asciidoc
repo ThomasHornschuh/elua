@@ -11,7 +11,6 @@ page].
 If you've just downloaded *eLua* and are looking to get started check
 out link:http://www.eluaproject.net/en_using.html[using eLua].
 
-
 General Features
 ----------------
 

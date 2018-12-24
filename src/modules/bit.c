@@ -5,6 +5,16 @@
 // Modified by BogdanM for eLua
 
 // TH: Fixed various places to do all conversions to/from lua numbers as unsigned
+// TH 08.08.2017: Changed the patch now in a way that the bit module behaves similar
+// to the bit32 module in lua 5.2: All numbers passed to the bit functions are
+// "downscaled" to the 2^32 range.
+// In this way the module accepts "unsigned" and "signed" numbers and handle
+// them in the right way.
+// So print(bit.tohex(2^32-1)), print(bit.tohex(0xffffffff) and
+// print(bit.tohex(-1)) will all return the same result "ffffffff"
+
+
+// In addtion I added the tohex and rotate functions from http://bitop.luajit.org/
 // This is also consitent with other parts of eLua  e.g. the cpu module
 // If have also considered using signed integers like in http://bitop.luajit.org/
 // This would have the advantage that the behaviour for lua "long" would be
@@ -53,41 +63,47 @@ void  bit_pushuinteger(lua_State *L, lua_UInteger n)
 
 #define MONADIC(name, op)                                       \
   static int bit_ ## name(lua_State *L) {                       \
-    bit_pushuinteger(L, op TOBIT(L, 1));                         \
+    bit_pushuinteger(L, op TOBIT(L, 1));                        \
     return 1;                                                   \
   }
 
 #define VARIADIC(name, op)                      \
   static int bit_ ## name(lua_State *L) {       \
     int n = lua_gettop(L), i;                   \
-    lua_UInteger w = TOBIT(L, 1);                \
+    lua_UInteger w = TOBIT(L, 1);               \
     for (i = 2; i <= n; i++)                    \
       w op TOBIT(L, i);                         \
-    bit_pushuinteger(L, w);                      \
+    bit_pushuinteger(L, w);                     \
     return 1;                                   \
   }
 
 #define LOGICAL_SHIFT(name, op)                                         \
   static int bit_ ## name(lua_State *L) {                               \
-    bit_pushuinteger(L, (lua_UInteger)TOBIT(L, 1) op                     \
+    bit_pushuinteger(L, (lua_UInteger)TOBIT(L, 1) op                    \
                           (unsigned)luaL_checknumber(L, 2));            \
     return 1;                                                           \
   }
 
 #define ARITHMETIC_SHIFT(name, op)                                      \
   static int bit_ ## name(lua_State *L) {                               \
-    bit_pushuinteger(L, (lua_UInteger)TOBIT(L, 1) op                      \
+    bit_pushuinteger(L, (lua_UInteger)TOBIT(L, 1) op                    \
                           (unsigned)luaL_checknumber(L, 2));            \
     return 1;                                                           \
   }
 
+
+
 // Added TH
-#define BIT_SH(name, fn)                                      \
-  static int bit_ ## name(lua_State *L) {   \
-    lua_UInteger b= (lua_UInteger)TOBIT(L, 1);                  \
-    unsigned sh = (unsigned)luaL_checknumber(L, 2); \
-    bit_pushuinteger(L, fn(b,sh));    \
-    return 1;                                                       \
+// TH:08.08.2017: The assignments to local vars in the
+// macro lead to better code with GCC when expanding brol and bror macros,
+// because the compiler cannot know if the function calls to Lua
+// have side effects and call them on every occurence
+#define BIT_SH(name, fn)                              \
+  static int bit_ ## name(lua_State *L) {             \
+    lua_UInteger b= (lua_UInteger)TOBIT(L, 1);        \
+    unsigned sh = (unsigned)luaL_checknumber(L, 2);   \
+    bit_pushuinteger(L, fn(b,sh));                    \
+    return 1;                                         \
   }
 
 #define brol(b, n)  ((b << n) | (b >> (32-n)))
@@ -156,6 +172,8 @@ static int bit_clear( lua_State* L )
   bit_pushuinteger( L, ( lua_UInteger )val );
   return 1;
 }
+
+
 
 //TH: "Borrowed" from luaBitop
 static int bit_tohex(lua_State *L)

@@ -99,5 +99,9 @@
   #error "BUILD_ADVANCED_SHELL needs BUILD_SHELL"
 #endif
 
+ #if defined( MEM_ERROR_CALLBACK ) && !defined( USE_MULTIPLE_ALLOCATOR ) && !defined( USE_SIMPLE_ALLOCATOR )
+   #error "A memory error callback can only be specified when using the multiple allocator or the simple allocator, but not the built-in allocator"
+ #endif
+
 #endif // #ifndef __VALIDATE_H__
 

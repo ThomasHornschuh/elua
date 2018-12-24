@@ -26,6 +26,11 @@ sdcard.img
 core
 luarpc*
 *.map
+wofs.img
+/elua.lst
+/elualong.lst
+/lualong.dmp
+/lualong.sym
 /exec.log
 /src/platform/bonfire/cpu_bonfire10.h.gch
 *.sym

@@ -40,12 +40,17 @@ local elua_generic_modules = {
   term = { guards = { "BUILD_TERM" } },
   tmr = { guards = { "NUM_TIMER > 0" } },
   uart = { guards = { "NUM_UART > 0" } },
+  fs = { guards = { "BUILD_NIFFS" } }
 }
 
 -- All generic modules (Lua and eLua) in a single table
 local all_generic_modules = {}
 utils.concat_tables( all_generic_modules, lua_modules )
 utils.concat_tables( all_generic_modules, elua_generic_modules )
+
+function add_extra_modules( exmodules )
+  utils.concat_tables( all_generic_modules, exmodules )
+end
 
 -- Return the auxlib name of a given module
 local function get_auxlib( m, t )

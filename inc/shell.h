@@ -6,11 +6,17 @@
 #include "type.h"
 #include <unistd.h> // TH added because of removal from devman.h
 
+#if !defined(SHELL_WELCOMEMSG)
 #define SHELL_WELCOMEMSG                "\neLua %s  Copyright (C) 2007-2013 www.eluaproject.net\n"
+#endif
+#if !defined(SHELL_PROMPT)
 #define SHELL_PROMPT                    "eLua# "
+#endif
+#if !defined(SHELL_ERRMSG)
 #define SHELL_ERRMSG                    "Invalid command, type 'help' for help\n"
 #define SHELL_MAXSIZE                   128
 #define SHELL_MAX_LUA_ARGS              8
+#endif
 
 // Shell command handler function
 typedef void( *p_shell_handler )( int argc, char **argv );
