@@ -234,7 +234,7 @@ function init()
     attrs = {
       linear_area = at.make_optional( at.bool_attr( 'NIFFS_LINEAR_AREA' ) )
     }
-  },
+  }
 
 -- TH: Kilo Editor
   components.editor = { macro = "BUILD_EDITOR"}
