@@ -47,8 +47,8 @@ void platform_ll_init( void )
   printk("Heap: %08lx .. %08lx\n",&INTERNAL_RAM1_FIRST_FREE,INTERNAL_RAM1_LAST_FREE);
   // Uncomment to break into debugger on boot 
   // gdb_setup_interface(GDB_DEBUG_UART,GDB_DEBUG_BAUD);
+  // printk("Connect debugger with %d baud\n",GDB_DEBUG_BAUD );
   // gdb_enable_debugger();
-
   // gdb_breakpoint();
   // gdb_breakpoint();
 }
