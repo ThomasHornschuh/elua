@@ -11,7 +11,7 @@
             "workingDirectory": "${workspaceRoot}",
             "sourceBasePath": "${workspaceRoot}",
             "executable": "lua5.1",
-            "arguments": "build_elua.lua BOARD=bonfire_arty",
+            "arguments": "build_elua.lua BOARD=bonfire_arty config_only=true",
             "listenPublicly": false,
             "listenPort": 56789,
             "encoding": "UTF-8",
