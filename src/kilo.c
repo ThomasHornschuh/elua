@@ -1341,7 +1341,9 @@ int I;
   for(I=0;I<E.numrows;I++) {
     editorFreeRow(&E.row[I]);
   }
-term_clrscr();
+  free(E.row);
+  free(E.filename);
+  term_clrscr();
 
 }
 
