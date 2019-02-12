@@ -11,12 +11,15 @@ return {
     linenoise = { shell_lines=20, lua_lines=20 },
     cints=true,
     luaints=true,
-    tcpip = { ip = "192.168.26.200", netmask = "255.255.255.0", gw = "192.168.26.2", dns = "192.168.26.2" },
-    dns=true,
-    dhcp=true,
+    tcpip = { 
+      stack="picotcp",
+      ip = "192.168.26.200", netmask = "255.255.255.0", 
+      gw = "192.168.26.2", dns = "192.168.26.2" },
+    dns=false,
+    dhcp=false,
     mmcfs= { spi=0, codepage=850, 
              use_utf8_api=false, tiny=false, use_locking=true,
-             files=8, lfn_length=255 },
+             files=32, lfn_length=255 },
     bonfire_gdbserver= { uart = 1,  speed=500000 },
     editor=true
   },
@@ -30,7 +33,7 @@ return {
     }
   },
   modules = {
-    generic = { 'pd', 'all_lua', 'term','uart','tmr','elua',"cpu","bit","net","pack","spi","pio" },
+    generic = { 'pd', 'all_lua', 'term','uart','tmr','elua',"cpu","bit","pack","spi","pio" }, --"net"
     platform = { 'riscv','gdbserver' }
   },
 

@@ -28,9 +28,10 @@ end
 local ldscript = sf( "src/platform/%s/%s", platform, "riscv_local.ld" )
 
 -- Override default optimize settings
-delcf{ "-Os", "-fomit-frame-pointer" }
-addcf{"-g", "-Og" ,"-fomit-frame-pointer"}
-
+if not comp.debug then
+ delcf{ "-Os" }
+ addcf{"-g", "-O2" }
+end 
 -- Prepend with path
 specific_files = utils.prepend_path( specific_files, sf( "src/platform/%s", platform ) )
 

@@ -11,8 +11,16 @@
 #include "console.h"
 #include "xil_etherlite.h"
 #include "irq_handler.h"
-#include "uip.h"
-#include "elua_uip.h"
+
+#ifdef BUILD_UIP
+  #include "uip.h"
+  #include "elua_uip.h"
+#elif defined( BUILD_PICOTCP )
+  #include "elua_picotcp.h"
+#endif 
+
+
+
 
 #include "encoding.h"
 #include <string.h>
@@ -50,19 +58,20 @@ inline uint32_t _read_leds()
 
 void platform_eth_init()
 {
-// {0,0,0x5E,0,0xFA,0xCE}
-static struct uip_eth_addr sTempAddr = {
-    .addr[0] = 0,
-    .addr[1] = 0,
-    .addr[2] = 0x5e,
-    .addr[3] = 0,
-    .addr[4] = 0x0fa,
-    .addr[5] = 0x0ce
-  };
+static const uint8_t c_mac[] =  {0,0, 0x5e,0,0x0fa,0x0ce };
+
+// static struct uip_eth_addr sTempAddr = {
+//     .addr[0] = 0,
+//     .addr[1] = 0,
+//     .addr[2] = 0x5e,
+//     .addr[3] = 0,
+//     .addr[4] = 0x0fa,
+//     .addr[5] = 0x0ce
+//   };
 
   printk("Initalizing Ethernet core\n");
 
-  set_csr(mie,MIP_MEIP); // Enable External Interrupt
+  
 
   // clear pending packets, enable receive interrupts
   _write_word(ETHL_RX_PING_CTRL,0x8);
@@ -70,8 +79,16 @@ static struct uip_eth_addr sTempAddr = {
   _write_word(ETHL_TX_PING_CTRL,0);
   _write_word(ETHL_GIE,0x80000000); // Enable Ethernet Interrupts
 
+#ifdef BUILD_UIP
+   set_csr(mie,MIP_MEIP); // Enable External Interrupt 
+   struct uip_eth_addr tempAddr;
+   tempAddr.addr=c_mac;
+   elua_uip_init( &tempAddr );
+   
+#elif defined( BUILD_PICOTCP )
+   elua_pico_init(c_mac);
+#endif 
 
-   elua_uip_init( &sTempAddr );
 
 
 }
@@ -177,7 +194,9 @@ void platform_eth_force_interrupt(void)
 int oldstate=platform_cpu_set_global_interrupts(PLATFORM_CPU_DISABLE);
 
   _write_leds(0x02); // light LED5
+ #ifdef BUILD_UIP 
   elua_uip_mainloop();
+ #endif  
    _write_leds(0x0);
   platform_cpu_set_global_interrupts(oldstate);
 }

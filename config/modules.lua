@@ -32,7 +32,7 @@ local elua_generic_modules = {
   i2c = { guards = { "NUM_I2C > 0" } },
   pack = {}, 
   rpc = { guards = { "BUILD_RPC" } },
-  net = { guards = { "BUILD_UIP" } },
+  net = { guards = { "BUILD_TCPIP" } },
   pd = {}, 
   pio = { guards = { "NUM_PIO > 0" } },
   pwm = { guards = {"NUM_PWM > 0" } }, 

@@ -379,14 +379,20 @@ local source_files = utils.get_files( "src", function( fname )
   return include
 end )
 -- Add uIP files manually because not all of them are included in the build ([TODO] why?)
-local uip_files = " " .. utils.prepend_path( "uip_arp.c uip.c uiplib.c dhcpc.c psock.c resolv.c uip-neighbor.c", "src/uip" )
-
+ uip_files = ''
+if bdata.ipstack=="uip" then 
+  uip_files = " " .. utils.prepend_path( "uip_arp.c uip.c uiplib.c dhcpc.c psock.c resolv.c uip-neighbor.c", "src/uip" )
+elseif bdata.ipstack=="picotcp" then
+  dofile('config/picotcp.lua')  
+end
 addi{ { 'inc', 'inc/newlib',  'inc/remotefs', 'src/platform', 'src/lua' }, { 'src/modules', 'src/platform/' .. platform, 'src/platform/' .. platform .. '/cpus' }, "src/uip", "src/fatfs", "inc/niffs" }
 addm( "LUA_OPTIMIZE_MEMORY=" .. ( comp.optram and "2" or "0" ) )
-addcf( { '-Os','-fomit-frame-pointer' } )
+addcf( { '-fomit-frame-pointer' } )
 
 if comp.debug == true then
-   addcf( { '-g' } )
+   addcf( { '-g', '-Og', } )
+else 
+   addcf( {  '-Os' } )   
 end
 
 -- Toolset data (filled by each platform in part)
@@ -408,7 +414,7 @@ if comp.extras ~= '' then
 end
 
 -- Complete file list
-source_files = source_files .. uip_files .. specific_files .. extras_files
+source_files = source_files ..' ' .. uip_files .. ' ' .. specific_files ..' ' .. extras_files
 
 -------------------------------------------------------------------------------
 -- Create compiler/linker/assembler command lines and build

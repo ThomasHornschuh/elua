@@ -1,5 +1,9 @@
 {
     "files.associations": {
-        "platform_conf.h": "c"
+        "platform_conf.h": "c",
+        "pico_dhcp_client.h": "c",
+        "elua_picotcp.h": "c",
+        "pico_stack.h": "c",
+        "pico_config.h": "c"
     }
 }

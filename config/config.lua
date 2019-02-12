@@ -264,7 +264,7 @@ function compile_board( fname, boardname )
   end
 
   -- Generate components first
-  local gen, err = generate_components( desc, plconf )
+  local gen, err, generated  = generate_components( desc, plconf )
   if not gen then return false, err end
   header = header .. gen
   -- Keep generated data for later use
@@ -278,6 +278,8 @@ function compile_board( fname, boardname )
   -- Accumulate generated data into 'glconf' and 'glen'
   utils.concat_tables( glconf, sects.conf )
   utils.concat_tables( glen, sects.enabled )
+  
+  
 
   -- Now we have all components and the configuration generated
   -- It's a good time for some sanity checks
@@ -305,8 +307,13 @@ function compile_board( fname, boardname )
   gen, err = bargs.validate( desc, platform )
   if not gen then return false, err end
 
+  -- TH:
+  local ipstack= glconf.ELUA_CONF_IP_STACK.value or ''
+
   -- Return the contents of the header, as well as the name of the CPU used by this
   -- board (this information is needed by the builder) and the build information
-  return { header = header, cpu = desc.cpu, multi_alloc = multi_alloc, build = desc.build }
+  -- TH: Added configured IP stack
+  return { header = header, cpu = desc.cpu, multi_alloc = multi_alloc, build = desc.build,
+           ipstack= ipstack  }
 end
 

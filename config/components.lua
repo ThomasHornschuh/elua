@@ -39,6 +39,29 @@ local function mmcfs_auxcheck( eldesc, data, enabled )
   return true
 end
 
+local function tcpip_gen(eldesc, data, generated)
+local out=''
+
+ local stack=data.ELUA_CONF_IP_STACK.value
+
+ if stack=="uip" then
+    out= out .. gen.print_define('BUILD_UIP')
+    generated.BUILD_UIP=true 
+ elseif stack=="picotcp" then
+   out= out .. gen.print_define('BUILD_PICOTCP')
+   generated.BUILD_PICOTCP=true 
+ end 
+
+ out = out ..
+      gen.simple_gen('ELUA_CONF_IPADDR',data,generated)..
+      gen.simple_gen('ELUA_CONF_NETMASK',data,generated)..
+      gen.simple_gen('ELUA_CONF_DEFGW',data,generated)..
+      gen.simple_gen('ELUA_CONF_DNS',data,generated)
+     
+ return out 
+end
+
+
 local function mmcfs_gen( eldesc, data, generated )
 
   local function get_boolean(v)
@@ -242,8 +265,10 @@ function init()
   }
   -- TCP/IP
   components.tcpip = {
-    macro = 'BUILD_UIP',
+    macro = 'BUILD_TCPIP',
+    gen=tcpip_gen,
     attrs = {
+      stack=at.choice_attr('ELUA_CONF_IP_STACK',{'uip','picotcp'},'uip'),
       ip = at.ip_attr( 'ELUA_CONF_IPADDR' ),
       netmask = at.ip_attr( 'ELUA_CONF_NETMASK' ),
       gw = at.ip_attr( 'ELUA_CONF_DEFGW' ),

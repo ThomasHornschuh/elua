@@ -1,6 +1,7 @@
 TARGETDIR ?= ~/upload
 BOARD ?=  bonfire_papilio_pro
 TARGET ?= lua
+DEBUG ?= false 
 
 TARGET_PREFIX ?= riscv32-unknown-elf
 
@@ -10,7 +11,7 @@ build:
 	$(TARGET_PREFIX)-objdump -S -d elua_$(TARGET)_$(BOARD).elf  >$(TARGET)_$(BOARD).lst
 
 clean:
-	lua5.1 build_elua.lua -c board=$(BOARD) target=$(TARGET)
+	lua5.1 build_elua.lua -c board=$(BOARD) target=$(TARGET) debug=$(DEBUG)
 
 
 %.img:%.bin

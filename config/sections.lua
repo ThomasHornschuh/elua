@@ -180,6 +180,8 @@ function generate_section( section, sectname, data )
   end
 
   -- All done
-  return genstr
+  -- TH: Add return of generated table
+  -- Because second return position is used for error messages, keep this order 
+  return genstr, nil, generated
 end
 

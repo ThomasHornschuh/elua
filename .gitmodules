@@ -1,0 +1,3 @@
+[submodule "picotcp"]
+	path = picotcp
+	url = git@github.com:ThomasHornschuh/picotcp.git

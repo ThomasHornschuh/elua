@@ -278,6 +278,37 @@ static int cmn_recv_helper( unsigned id, timer_data_type timeout )
   return -1;
 }
 
+#ifdef BUILD_PICOTCP
+
+#include "elua_picotcp.h"
+
+int platform_uart_recv( unsigned id, unsigned timer_id, timer_data_type timeout )
+{
+  timer_data_type tmr_start;
+  int res;
+
+  if( timeout == 0 )
+    return cmn_recv_helper( id, timeout );
+
+  else
+  {
+    // Receive char with the specified timeout
+    tmr_start = platform_timer_start( timer_id );
+    while( 1 )
+    {
+      if( ( res = cmn_recv_helper( id, 0 ) ) >= 0 )
+        break;
+
+      if( timeout != PLATFORM_TIMER_INF_TIMEOUT && platform_timer_get_diff_crt( timer_id, tmr_start ) >= timeout )
+        break;
+      elua_pico_tick();  
+    }
+    return res;
+  }
+}
+
+#else
+
 int platform_uart_recv( unsigned id, unsigned timer_id, timer_data_type timeout )
 {
   timer_data_type tmr_start;
@@ -302,3 +333,4 @@ int platform_uart_recv( unsigned id, unsigned timer_id, timer_data_type timeout 
   }
 }
 
+#endif 
