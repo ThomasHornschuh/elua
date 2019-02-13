@@ -4,6 +4,7 @@
 #pragma message "Compiling elua_picotcp.c"
 
 #include "platform.h"
+#include "elua_net.h"
 
 
 #include "pico_stack.h"
@@ -20,10 +21,34 @@
 
 static struct pico_device* dev;
 
-volatile bool  dhcp_succes =false;
+static volatile int  dhcp_state = ELUA_DHCP_UNCONFIGURED;
 
-#include "console.h"
-#define dbg printk 
+
+static volatile bool debug_enabled = true; 
+
+
+void platform_debug_printk(const char* s, ...)
+{
+va_list args;
+
+  if (debug_enabled) {
+    va_start (args, s);
+    vprintf (s, args);
+    va_end (args);    
+  }
+}
+
+
+void elua_net_set_debug_log(int enable)
+{
+  debug_enabled= enable;
+}
+
+int elua_net_dhcp_state()
+{
+    return dhcp_state;
+}
+
 
 void cb_dhcp(void *cli,int code)
 {
@@ -46,23 +71,26 @@ char adr_b[16],gw_b[16],netmask_b[16],dns_b[16];
         pico_ipv4_to_string(netmask_b,netmask.addr);
         pico_ipv4_to_string(dns_b,dns.addr);
 
-        dbg("DHCP assigned  ip: %s mask: %s gw: %s dns: %s \n",
-                adr_b,netmask_b,gw_b,dns_b); 
+        platform_debug_printk("DHCP assigned  ip: %s mask: %s gw: %s dns: %s  Hostname: %s\n",
+                               adr_b,netmask_b,gw_b,dns_b,pico_dhcp_get_hostname()); 
 
-        dhcp_succes=true;
+        dhcp_state=ELUA_DHCP_SUCCESS;
 
         break;
-     case PICO_DHCP_ERROR: printf("DHCP Error\n"); break;
+     case PICO_DHCP_ERROR: 
+        dhcp_state=ELUA_DCHP_FAILURE;
+        platform_debug_printk("DHCP Error\n"); 
+        break;
 
    }
 
 }
 
-extern struct pico_device *pico_eth_create(const char *name, const uint8_t *mac);
+extern struct pico_device *pico_eth_create(const char *name);
 
 static bool initComplete  =false; 
 
-void elua_pico_init( const uint8_t* paddr  )
+void elua_pico_init()
 {
 
 struct pico_ip4 ipaddr, netmask;
@@ -70,19 +98,19 @@ struct pico_ip4 ipaddr, netmask;
 uint32_t cid;
 
   pico_stack_init();
-  dev = pico_eth_create( "eth0",paddr );
+  dev = pico_eth_create( "eth0");
   /* assign the IP address to the  interface */
   pico_string_to_ipv4( "0.0.0.0", &ipaddr.addr );
   pico_string_to_ipv4( "255.255.255.0", &netmask.addr );
   pico_ipv4_link_add( dev, ipaddr, netmask );
   
   initComplete= true; 
-  
+ 
   pico_dhcp_initiate_negotiation(dev,cb_dhcp,&cid);
-  // Only for Debug purposes: Wait until DHCP success 
-  while ( !dhcp_succes ){
-       pico_stack_tick();
-    };
+  while ( dhcp_state==ELUA_DHCP_UNCONFIGURED ) {
+    pico_stack_tick();
+  };
+  debug_enabled = false; // Disable debug log after inital sequence to avoid screen clobbering 
 
 }
 void elua_pico_tick()

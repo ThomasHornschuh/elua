@@ -46,11 +46,11 @@ void platform_ll_init( void )
 {
   printk("Heap: %08lx .. %08lx\n",&INTERNAL_RAM1_FIRST_FREE,INTERNAL_RAM1_LAST_FREE);
   // Uncomment to break into debugger on boot 
-  gdb_setup_interface(GDB_DEBUG_UART,GDB_DEBUG_BAUD);
-  printk("Connect debugger with %d baud\n",GDB_DEBUG_BAUD );
-  gdb_enable_debugger();
-  gdb_breakpoint();
-  gdb_breakpoint();
+  // gdb_setup_interface(GDB_DEBUG_UART,GDB_DEBUG_BAUD);
+  // printk("Connect debugger with %d baud\n",GDB_DEBUG_BAUD );
+  // gdb_enable_debugger();
+  // gdb_breakpoint();
+  // gdb_breakpoint();
 }
 
 int platform_init()
@@ -59,7 +59,7 @@ int platform_init()
   printk("Build with GCC %s\n",__VERSION__);
   cmn_systimer_set_base_freq(SYSCLK);
 
-#ifdef  BUILD_TCPIP
+#ifdef  BUILD_UIP
   platform_eth_init();
 #endif
 
@@ -159,7 +159,7 @@ volatile uint32_t *uartadr=get_uart_base(id);
 
   if (uartadr) {
     while (!(uartadr[UART_STATUS] & 0x2)); // Wait until transmitter ready
-    uartadr[UART_TXRX]=(uint32_t)data;
+    uartadr[UART_TXRX]=(uint32_t)(data & 0x0ff);
   }
 #endif
 }

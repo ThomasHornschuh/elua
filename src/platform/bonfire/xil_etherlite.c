@@ -56,7 +56,7 @@ inline uint32_t _read_leds()
 }
 
 
-void platform_eth_init()
+const u8 *platform_eth_init()
 {
 static const uint8_t c_mac[] =  {0,0, 0x5e,0,0x0fa,0x0ce };
 
@@ -85,11 +85,11 @@ static const uint8_t c_mac[] =  {0,0, 0x5e,0,0x0fa,0x0ce };
    tempAddr.addr=c_mac;
    elua_uip_init( &tempAddr );
    
-#elif defined( BUILD_PICOTCP )
-   elua_pico_init(c_mac);
+//#elif defined( BUILD_PICOTCP )
+//   elua_pico_init(c_mac);
 #endif 
 
-
+  return c_mac;
 
 }
 

@@ -6,7 +6,7 @@
 
 #include "elua_net.h"
 
-void elua_pico_init( const uint8_t* paddr );
+void elua_pico_init();
 void elua_pico_tick();
 
 #endif 

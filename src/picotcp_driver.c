@@ -41,7 +41,7 @@ static int driver_eth_poll(struct pico_device *dev, int loop_score)
 }
 
 
-struct pico_device *pico_eth_create(const char *name, const uint8_t *mac)
+struct pico_device *pico_eth_create(const char *name)
 {
     /* Create device struct */
     struct pico_device* eth_dev = PICO_ZALLOC(sizeof(struct pico_device));
@@ -52,7 +52,7 @@ struct pico_device *pico_eth_create(const char *name, const uint8_t *mac)
 
     dbg("Initalize driver\n");
     /* Initialize hardware */
-    //platform_eth_init();
+    const uint8_t *mac= platform_eth_init();
 
     /* Attach function pointers */
     eth_dev->send = driver_eth_send;

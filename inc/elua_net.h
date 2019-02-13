@@ -22,6 +22,14 @@ enum
   ELUA_NET_ERR_WAIT_TIMEDOUT // New TH
 };
 
+enum 
+{
+  ELUA_DHCP_UNCONFIGURED= 0,
+  ELUA_DHCP_SUCCESS,
+  ELUA_DCHP_FAILURE,
+  ELUA_DCHP_DISABLED
+};
+
 // eLua IP address type
 typedef union
 {

@@ -22,9 +22,4 @@
 
 #define MAX_FRAME 1522
 
-void platform_eth_init();
-
-
-
-
 #endif

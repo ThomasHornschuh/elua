@@ -102,6 +102,13 @@ int main( void )
   // Register NIFFS
   nffs_init();
 
+ #ifdef BUILD_PICOTCP
+    #include "elua_picotcp.h"
+   
+    elua_pico_init();
+  
+ #endif  
+
   // Search for autorun files in the defined order and execute the 1st if found
   for( i = 0; i < sizeof( boot_order ) / sizeof( *boot_order ); i++ )
   {
