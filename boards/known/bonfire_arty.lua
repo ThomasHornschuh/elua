@@ -33,7 +33,7 @@ return {
     }
   },
   modules = {
-    generic = { 'pd', 'all_lua', 'term','uart','tmr','elua',"cpu","bit","pack","spi","pio" }, --"net"
+    generic = { 'pd', 'all_lua', 'term','uart','tmr','elua',"cpu","bit","pack","spi","pio","net"}, 
     platform = { 'riscv','gdbserver' }
   },
 
