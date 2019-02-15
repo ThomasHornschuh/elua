@@ -159,14 +159,8 @@ struct pico_socket * ps = pico_socket_open(PICO_PROTO_IPV4,
 
 }
 int elua_net_close( int s )
-{
-   if ( s  ) {
-     
-     return  pico_socket_close((struct pico_socket*)s );
-     
-   }
-   return 0;
-  
+{   
+  return  pico_socket_close((struct pico_socket*)s )==0?ELUA_NET_ERR_OK:ELUA_NET_ERR_INVALID_SOCKET; 
 }
 
 #define BSIZE 1460
