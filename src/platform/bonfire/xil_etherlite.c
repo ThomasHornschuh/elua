@@ -77,9 +77,10 @@ static const uint8_t c_mac[] =  {0,0, 0x5e,0,0x0fa,0x0ce };
   _write_word(ETHL_RX_PING_CTRL,0x8);
   _write_word(ETHL_RX_PONG_CTRL,0x0);
   _write_word(ETHL_TX_PING_CTRL,0);
-  _write_word(ETHL_GIE,0x80000000); // Enable Ethernet Interrupts
+  
 
 #ifdef BUILD_UIP
+   _write_word(ETHL_GIE,0x80000000); // Enable Ethernet Interrupts
    set_csr(mie,MIP_MEIP); // Enable External Interrupt 
    struct uip_eth_addr tempAddr;
    tempAddr.addr=c_mac;

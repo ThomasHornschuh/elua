@@ -13,7 +13,7 @@
 #include "lrotable.h"
 
 #include "platform_conf.h"
-#ifdef BUILD_UIP
+#ifdef BUILD_TCPIP
 
 
 /*
@@ -21,10 +21,16 @@
  */
 
 //Lua: err=listen(port)
+// PICOTCP: socket=listen(port)
 static int net_listen( lua_State *L )
 {
   u16 port = ( u16 )luaL_checkinteger( L, 1 );
+  #ifdef BUILD_PICOTCP
+  // return socket 
+  lua_pushinteger (L, elua_listen( port,TRUE ) );
+  #else
   lua_pushinteger (L,( elua_listen( port,TRUE )==0) ?ELUA_NET_ERR_OK:ELUA_NET_ERR_LIMIT_EXCEEDED );
+  #endif 
   return 1;
 }
 
@@ -34,10 +40,16 @@ static int net_listen( lua_State *L )
 // if the was active listening in the port.
 static int net_unlisten(lua_State *L)
 {
+#ifdef BUILD_PICOTCP
+  //return luaL_error( L, "not implemented with picoTCP" );
+  lua_pushinteger(L,ELUA_NET_ERR_OK);
+  return 1;
+#else
   u16 port = ( u16 )luaL_checkinteger( L, 1 );
   elua_listen( port,FALSE );
   lua_pushinteger(L,ELUA_NET_ERR_OK);
   return 1;
+#endif  
 }
 
 
@@ -49,7 +61,10 @@ static int net_accept( lua_State *L )
   // to be compatible with orginal net we just start listening to the port
   // here. The recommended usage is to use listen/unlisten to specifiy
   // listening and use the accept call to take incomming connections the port
+#ifndef BUILD_PICOTCP 
+    
   int lres=elua_listen(port,TRUE);
+   
   if ( lres!=0 )
   { // check if listen was succesfull
     // Remark: With uIP listen is always successfull, even if there are
@@ -61,7 +76,7 @@ static int net_accept( lua_State *L )
     lua_pushinteger(L,ELUA_NET_ERR_LIMIT_EXCEEDED);
     return 3;
   }
-
+#endif
 
   unsigned timer_id = PLATFORM_TIMER_SYS_ID;
   timer_data_type timeout = PLATFORM_TIMER_INF_TIMEOUT;
