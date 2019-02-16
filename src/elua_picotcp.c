@@ -13,6 +13,7 @@
 #include "pico_dhcp_client.h"
 #include "pico_ethernet.h"
 #include "pico_socket.h"
+#include "pico_dns_client.h"
 
 
 
@@ -195,7 +196,10 @@ timer_data_type tmrstart = 0;
                 luaL_addlstring(buf,recvbuf,read);
             }    
         } while (read > 0);
-        if (len>0) return len;
+        if (read<0) 
+           return -1;
+        if (len>0) 
+            return len;
       //}
       if( to_us == 0 || platform_timer_get_diff_crt( timer_id, tmrstart ) >= to_us )
       {
@@ -238,7 +242,7 @@ timer_data_type tmrstart = 0;
 
     if( to_us == 0 || platform_timer_get_diff_crt( timer_id, tmrstart ) >= to_us )
     {
-      return -1;
+      return 0;
     }
   }
 }
@@ -249,11 +253,41 @@ int elua_net_connect( int s, elua_net_ip addr, u16 port )
 {
   return -1;
 }
+
+
+typedef struct {
+  uint32_t ipaddr;
+  bool success;
+} dns_result_t;
+
+static void cb_dns_getaddr(char *ip, void *arg)
+{
+   
+
+   dns_result_t * r = (dns_result_t * ) arg  ;
+   if(ip) {
+      pico_string_to_ipv4(ip, &r->ipaddr);
+   }
+  
+   r->success=true; 
+
+}
+
+
 elua_net_ip elua_net_lookup( const char* hostname )
 {
-elua_net_ip ip;
+dns_result_t r = { 0,false };
 
-  memset(&ip,0,sizeof(ip));
+elua_net_ip ip = {0};
+
+  
+
+  if( pico_dns_client_getaddr(hostname,&cb_dns_getaddr,(void*)&r) ==0 ) {
+    while (!r.success) {
+      pico_stack_tick();
+    }
+    ip.ipaddr=r.ipaddr;
+  }
   return ip;
 }
 
@@ -301,7 +335,7 @@ int elua_net_get_telnet_socket( void )
 
 
 
-void cb_dhcp(void *cli,int code)
+static void cb_dhcp(void *cli,int code)
 {
 struct pico_ip4 address, gw, netmask, dns;
 

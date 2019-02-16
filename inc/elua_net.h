@@ -63,4 +63,8 @@ int elua_listen( u16 port,BOOL flisten ); // Added TH
 int elua_net_get_last_err( int s );
 int elua_net_get_telnet_socket( void );
 
+#ifdef BUILD_PICOTCP
+#include "elua_picotcp.h"
+#endif 
+
 #endif

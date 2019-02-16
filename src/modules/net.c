@@ -111,14 +111,14 @@ static int net_accept( lua_State *L )
   unsigned timer_id = PLATFORM_TIMER_SYS_ID;
   timer_data_type timeout = PLATFORM_TIMER_INF_TIMEOUT;
   elua_net_ip remip;
-  uintptr_t sock;
+ 
 
   cmn_get_timeout_data( L, 2, &timer_id, &timeout );
  
-  sock = elua_accept( port, timer_id, timeout, &remip );
-  push_socket(L,sock);
-  lua_pushinteger( L, ( sock>=0 ) ? remip.ipaddr:0 );
-  lua_pushinteger( L, ( sock>=0 )? ELUA_NET_ERR_OK:ELUA_NET_ERR_WAIT_TIMEDOUT );
+  sock_t *sock  = push_socket(L, elua_accept( port, timer_id, timeout, &remip ));
+
+  lua_pushinteger( L, ( sock ) ? remip.ipaddr:0 );
+  lua_pushinteger( L, ( sock )? ELUA_NET_ERR_OK:ELUA_NET_ERR_WAIT_TIMEDOUT );
   return 3;
 }
 
@@ -272,9 +272,9 @@ static int net_recv( lua_State *L )
   cmn_get_timeout_data( L, 3, &timer_id, &timeout );
   // Initialize buffer
   luaL_buffinit( L, &net_recv_buff );
-  elua_net_recvbuf( s->sock, &net_recv_buff, maxsize, lastchar, timer_id, timeout );
+  int size=elua_net_recvbuf( s->sock, &net_recv_buff, maxsize, lastchar, timer_id, timeout );
   luaL_pushresult( &net_recv_buff );
-  lua_pushinteger( L, elua_net_get_last_err( s->sock ) );
+  lua_pushinteger( L, size>=0?ELUA_NET_ERR_OK:ELUA_NET_ERR_TIMEDOUT );
   return 2;
 }
 
@@ -289,6 +289,19 @@ static int net_lookup( lua_State* L )
   return 1;
 }
 
+
+
+
+static int net_stack_tick( lua_State* L )
+{
+#ifdef BUILD_PICOTCP  
+  elua_pico_tick();
+#endif   
+  return 0; 
+
+}
+#endif 
+
 static int socket_gc( lua_State *L )
 {
   sock_t *s = sock_check( L );
@@ -301,8 +314,15 @@ static int socket_gc( lua_State *L )
   return 0; 
 }
 
+//#define NO_ROMTABLE
+
 // Module function map
+#ifdef NO_ROMTABLE
+#define MIN_OPT_LEVEL 3
+#else
 #define MIN_OPT_LEVEL 2
+#endif 
+
 #include "lrodefs.h"
 const LUA_REG_TYPE net_map[] =
 {
@@ -317,7 +337,11 @@ const LUA_REG_TYPE net_map[] =
   { LSTRKEY( "lookup" ), LFUNCVAL( net_lookup ) },
   { LSTRKEY( "listen" ), LFUNCVAL( net_listen ) }, // TH
   { LSTRKEY( "unlisten" ), LFUNCVAL( net_unlisten ) }, // TH
-#if LUA_OPTIMIZE_MEMORY > 0
+  #ifdef BUILD_PICOTCP 
+  { LSTRKEY( "tick" ), LFUNCVAL( net_stack_tick ) }, // TH
+  #ifdef BUILD_PICOTCP 
+  #endif 
+#if LUA_OPTIMIZE_MEMORY > 0 && !defined(NO_ROMTABLE) 
   { LSTRKEY( "SOCK_STREAM" ), LNUMVAL( ELUA_NET_SOCK_STREAM ) },
   { LSTRKEY( "SOCK_DGRAM" ), LNUMVAL( ELUA_NET_SOCK_DGRAM ) },
   { LSTRKEY( "ERR_OK" ), LNUMVAL( ELUA_NET_ERR_OK ) },
@@ -327,7 +351,7 @@ const LUA_REG_TYPE net_map[] =
   { LSTRKEY( "ERR_OVERFLOW" ), LNUMVAL( ELUA_NET_ERR_OVERFLOW ) },
   { LSTRKEY( "ERR_LIMIT_EXCEEDED" ), LNUMVAL( ELUA_NET_ERR_LIMIT_EXCEEDED ) }, //TH
   { LSTRKEY( "ERR_WAIT_TIMEDOUT" ), LNUMVAL( ELUA_NET_ERR_WAIT_TIMEDOUT ) }, //TH
-  { LSTRKEY( "ELUA_NET_ERR_INVALID_SOCKET" ), LNUMVAL( ELUA_NET_ERR_INVALID_SOCKET ) }, //TH
+  { LSTRKEY( "ERR_INVALID_SOCKET" ), LNUMVAL( ELUA_NET_ERR_INVALID_SOCKET ) }, //TH
 
   { LSTRKEY( "NO_TIMEOUT" ), LNUMVAL( 0 ) },
   { LSTRKEY( "INF_TIMEOUT" ), LNUMVAL( PLATFORM_TIMER_INF_TIMEOUT ) },
@@ -344,11 +368,15 @@ static const LUA_REG_TYPE socket_mt_map[] =
 
 LUALIB_API int luaopen_net( lua_State *L )
 {
-#if LUA_OPTIMIZE_MEMORY > 0
+
+
+  LREGISTER( L, AUXLIB_NET, net_map );
+
+#if LUA_OPTIMIZE_MEMORY > 0 && !defined(NO_ROMTABLE) 
   luaL_rometatable( L, NET_META_NAME, ( void* )socket_mt_map );
   return 0;
 #else // #if LUA_OPTIMIZE_MEMORY > 0
-  luaL_register( L, AUXLIB_NET, net_map );
+  
 
   // Module constants
   MOD_REG_NUMBER( L, "SOCK_STREAM", ELUA_NET_SOCK_STREAM );
