@@ -16,9 +16,19 @@
 #include "platform_conf.h"
 #ifdef BUILD_TCPIP
 
-
+#ifdef BUILD_PICOTCP 
+#include "elua_picotcp.h"
+#endif
 
 #define NET_META_NAME           "eLua.net"
+
+
+// Macros for checking if a socket returned from the stack is a valid socket
+#ifdef BUILD_PICOTCP
+#define stack_s_valid(s) ((intptr_t)s!=0)
+#else // UIP....
+#define stack_s_valid(s) ((int)s!= -1)
+#endif 
 
 
 typedef struct
@@ -33,12 +43,12 @@ typedef struct
 
 static sock_t *push_socket( lua_State *L, uintptr_t sock )
 {
-    if (sock) {
+    if (stack_s_valid(sock)) {
       sock_t  *s = ( sock_t* )lua_newuserdata( L, sizeof( sock_t ) );
       s->sock = sock;
       luaL_getmetatable( L, NET_META_NAME );
       lua_setmetatable( L, -2 );  
-       return s;
+      return s;
     } else {
       lua_pushnil( L );
       return NULL;
@@ -300,7 +310,7 @@ static int net_stack_tick( lua_State* L )
   return 0; 
 
 }
-#endif 
+
 
 static int socket_gc( lua_State *L )
 {
@@ -314,15 +324,12 @@ static int socket_gc( lua_State *L )
   return 0; 
 }
 
-//#define NO_ROMTABLE
+
 
 // Module function map
-#ifdef NO_ROMTABLE
-#define MIN_OPT_LEVEL 3
-#else
-#define MIN_OPT_LEVEL 2
-#endif 
 
+
+#define MIN_OPT_LEVEL 2
 #include "lrodefs.h"
 const LUA_REG_TYPE net_map[] =
 {
@@ -337,11 +344,10 @@ const LUA_REG_TYPE net_map[] =
   { LSTRKEY( "lookup" ), LFUNCVAL( net_lookup ) },
   { LSTRKEY( "listen" ), LFUNCVAL( net_listen ) }, // TH
   { LSTRKEY( "unlisten" ), LFUNCVAL( net_unlisten ) }, // TH
-  #ifdef BUILD_PICOTCP 
+#ifdef BUILD_PICOTCP 
   { LSTRKEY( "tick" ), LFUNCVAL( net_stack_tick ) }, // TH
-  #ifdef BUILD_PICOTCP 
-  #endif 
-#if LUA_OPTIMIZE_MEMORY > 0 && !defined(NO_ROMTABLE) 
+#endif 
+#if LUA_OPTIMIZE_MEMORY > 0 
   { LSTRKEY( "SOCK_STREAM" ), LNUMVAL( ELUA_NET_SOCK_STREAM ) },
   { LSTRKEY( "SOCK_DGRAM" ), LNUMVAL( ELUA_NET_SOCK_DGRAM ) },
   { LSTRKEY( "ERR_OK" ), LNUMVAL( ELUA_NET_ERR_OK ) },
@@ -369,14 +375,12 @@ static const LUA_REG_TYPE socket_mt_map[] =
 LUALIB_API int luaopen_net( lua_State *L )
 {
 
-
-  LREGISTER( L, AUXLIB_NET, net_map );
-
-#if LUA_OPTIMIZE_MEMORY > 0 && !defined(NO_ROMTABLE) 
+#if LUA_OPTIMIZE_MEMORY > 0 
+  
   luaL_rometatable( L, NET_META_NAME, ( void* )socket_mt_map );
   return 0;
 #else // #if LUA_OPTIMIZE_MEMORY > 0
-  
+  luaL_register( L, AUXLIB_NET, net_map );  
 
   // Module constants
   MOD_REG_NUMBER( L, "SOCK_STREAM", ELUA_NET_SOCK_STREAM );
