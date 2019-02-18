@@ -48,9 +48,9 @@ typedef struct {
 
 #define MAX_PENDING 8 // TODO...
 
-volatile static elua_uip_accept_pending_t elua_uip_accept_pending[MAX_PENDING];
+static elua_uip_accept_pending_t elua_uip_accept_pending[MAX_PENDING];
 
-
+static t_socketcallback  socket_cb = NULL;
 
 void platform_debug_printk(const char* s, ...)
 {
@@ -63,6 +63,12 @@ va_list args;
   }
 }
 
+
+
+void elua_pico_set_socketcallback(t_socketcallback cb)
+{
+  socket_cb=cb;
+}
 
 void elua_net_set_debug_log(int enable)
 {
@@ -88,6 +94,11 @@ int i;
   return -1;
 }
 
+static inline void  __cb(t_socket_event ev, struct pico_socket *s)
+{
+  if (socket_cb) socket_cb(ev,(uintptr_t)s); 
+}
+
 void cb_socket(uint16_t ev, struct pico_socket *s)
 {
    if (ev & PICO_SOCK_EV_CONN) {
@@ -108,22 +119,29 @@ void cb_socket(uint16_t ev, struct pico_socket *s)
      if ( !found ) { // no free slot
        platform_debug_printk("Accept event without free pending slots\n");
        //TODO: How to deal with this situation? 
+     } else {
+       __cb(ELUA_NET_CONNECT,s);
      }
    }
 
    if (ev & PICO_SOCK_EV_RD) {
-      platform_debug_printk("PICO_SOCK_EV_RD on socket %x\n",s);
+      __cb(ELUA_NET_READ,s);
+   }
+    if (ev & PICO_SOCK_EV_WR) {
+      __cb(ELUA_NET_WRITE,s);
    }
 
    /* process fin event, receiving socket closed */
     if (ev & PICO_SOCK_EV_FIN)
     {
         platform_debug_printk("Socket closed. Exit normally. \n");
+        __cb(ELUA_NET_FIN,s);
     }
     /* process error event, socket error occured */
     if (ev & PICO_SOCK_EV_ERR)
     {
         platform_debug_printk("Socket Error received: %s. Bailing out.\n", strerror(pico_err));
+        __cb(ELUA_NET_EVENT_ERR,s);
        
     }
     /* process close event, receiving socket received close from peer */
@@ -132,6 +150,7 @@ void cb_socket(uint16_t ev, struct pico_socket *s)
         platform_debug_printk("Socket received close from peer.\n");
         /* shutdown write side of socket */
         pico_socket_shutdown(s, PICO_SHUT_WR);
+        __cb(ELUA_NET_CLOSE,s);
     }
 }
 

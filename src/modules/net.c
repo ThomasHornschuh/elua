@@ -22,8 +22,9 @@
 #include "elua_picotcp.h"
 #endif
 
-#define NET_META_NAME           "eLua.net"
-#define NET_SOCK_T_NAME              "eLua.net.socketTable"
+#define NET_META_NAME      "eLua.net"
+#define NET_SOCK_T_NAME    "eLua.net.socketTable"
+#define NET_WEAK_META_NAME "eLua.net.weakTable"
 
 
 // Macros for checking if a socket returned from the stack is a valid socket
@@ -41,17 +42,29 @@ typedef struct
 } sock_t;
 
 
-#define sock_check( L ) ( sock_t* )luaL_checkudata( L, 1, NET_META_NAME )
+#define sock_check( L, idx ) ( sock_t* )luaL_checkudata( L, idx, NET_META_NAME )
 #define lua_puship( L, ip )   lua_pushnumber( L, ( lua_Number )ip )
 
+static lua_State *G_state =NULL; 
 
-static init_socket_table(lua_State *L) 
+static void  init_socket_table(lua_State *L) 
 {
    // Create an empty table and store in the registry 
-   lua_pushstring(L, NET_SOCK_T_NAME ); // Key
+   lua_pushstring(L, NET_SOCK_T_NAME ); // Registy key 
    lua_newtable(L); // Value
+   // Add Metatable
+   lua_newtable(L);
+   lua_pushstring( L,"__mode" );
+   lua_pushstring( L,"v" );
+   lua_settable(L,-3); // metatbale is now on TOS
+
+   lua_setmetatable( L, -2 );  
+   
    lua_settable(L, LUA_REGISTRYINDEX); 
+   G_state = L; 
+
 }
+
 
 
 static sock_t *push_socket( lua_State *L, uintptr_t sock )
@@ -81,21 +94,36 @@ static sock_t *push_socket( lua_State *L, uintptr_t sock )
 }
 
 
-static net_get_sockettable(lua_State *L)
+static int net_get_sockettable(lua_State *L)
 {
    lua_getfield(L,LUA_REGISTRYINDEX,NET_SOCK_T_NAME); // registry[NET_SOCK_T_NAME]
    return 1; 
 }
 
-static sock_t  *get_socket( lua_State *L )
+static sock_t  *get_socket( lua_State *L, int idx )
 {
-  sock_t *s = sock_check( L );
+  sock_t *s = sock_check( L, idx );
   if (s && s->sock== 0 ) {
      luaL_error( L, "elua.net: Socket %p already closed",s );
      return NULL; 
   }
   return s;     
 
+}
+
+
+// maps socket pointer to the userdata socket object
+// Attention: leaves userdata on stack to avoid being collected
+static sock_t *map_socket(lua_State *L,uintptr_t s)
+{
+   net_get_sockettable(L);
+   lua_pushlightuserdata( L,(void*)s );
+   lua_gettable(L,-2);
+   lua_remove(L,-2); // remove table from stack
+   if ( lua_isuserdata(L,-1) )
+     return sock_check(L,-1);
+   else
+     return NULL;
 }
 
 /*
@@ -189,7 +217,7 @@ static int net_socket( lua_State *L )
 // Lua: res = close( socket )
 static int net_close( lua_State* L )
 {
-  sock_t *s = get_socket(L);
+  sock_t *s = get_socket(L,1);
   if ( s  ) {
     lua_pushinteger( L, elua_net_close( s->sock ) );
     s->sock=0;
@@ -202,7 +230,7 @@ static int net_close( lua_State* L )
 static int net_send( lua_State* L )
 {
   
-  sock_t *s = get_socket(L);
+  sock_t *s = get_socket(L,1);
   if ( s==NULL  ) return 0;
   
   const char *buf;
@@ -220,7 +248,7 @@ static int net_send( lua_State* L )
 static int net_connect( lua_State *L )
 {
   elua_net_ip ip;
-  sock_t *s = get_socket(L);
+  sock_t *s = get_socket(L,1);
   if (s==NULL) return 0; 
 
   u16 port = ( int )luaL_checkinteger( L, 3 );
@@ -295,7 +323,7 @@ static int net_unpackip( lua_State *L )
 //      res, err = recv( sock, "*l", [timer_id, timeout] )
 static int net_recv( lua_State *L )
 {
-  sock_t *s = get_socket(L);
+  sock_t *s = get_socket(L,1);
   if ( s==NULL ) return 0;
 
   elua_net_size maxsize;
@@ -348,7 +376,7 @@ static int net_stack_tick( lua_State* L )
 
 static int socket_gc( lua_State *L )
 {
-  sock_t *s = sock_check( L );
+  sock_t *s = sock_check( L, 1 );
   
   if( s && s->sock != 0 )
   {
@@ -358,6 +386,32 @@ static int socket_gc( lua_State *L )
   return 0; 
 }
 
+
+#ifdef BUILD_PICOTCP
+
+static void socket_callback(t_socket_event ev, uintptr_t socket)
+{
+  
+  if (!G_state) return;
+
+  sock_t *s = map_socket(G_state,socket);
+  
+  if (s) {
+    switch (ev) {
+      case ELUA_NET_FIN:
+        printk("Socket FIN event\n");
+        s->sock=0;
+        break; 
+
+      default: 
+        ;// nothing
+    }
+  }
+
+  lua_pop(G_state,1); // clean Lua stack 
+}
+
+#endif 
 
 
 // Module function map
@@ -408,17 +462,25 @@ static const LUA_REG_TYPE socket_mt_map[] =
   { LNILKEY, LNILVAL }
 };
 
+
+
 LUALIB_API int luaopen_net( lua_State *L )
 {
 
-  init_socket_table(L);
+ 
 #if LUA_OPTIMIZE_MEMORY > 0 
   
   luaL_rometatable( L, NET_META_NAME, ( void* )socket_mt_map );
+  
+  init_socket_table(L);
+#ifdef BUILD_PICOTCP
+  elua_pico_set_socketcallback(&socket_callback);
+#endif 
+
   return 0;
 #else // #if LUA_OPTIMIZE_MEMORY > 0
   luaL_register( L, AUXLIB_NET, net_map );  
-
+  init_socket_table(L);
   // Module constants
   MOD_REG_NUMBER( L, "SOCK_STREAM", ELUA_NET_SOCK_STREAM );
   MOD_REG_NUMBER( L, "SOCK_DGRAM", ELUA_NET_SOCK_DGRAM );
