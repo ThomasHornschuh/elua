@@ -31,6 +31,11 @@
 // BogdanM: linenoise clenaup
 #include "linenoise.h"
 
+// Net cleanup
+#ifdef BUILD_TCPIP
+void elua_net_cleanup();
+#endif 
+
 #define state_size(x)	(sizeof(x) + LUAI_EXTRASPACE)
 #define fromstate(l)	(cast(lu_byte *, (l)) - LUAI_EXTRASPACE)
 #define tostate(l)   (cast(lua_State *, cast(lu_byte *, l) + LUAI_EXTRASPACE))
@@ -240,6 +245,9 @@ LUA_API void lua_close (lua_State *L) {
   elua_int_cleanup();
   platform_cpu_set_global_interrupts( oldstate );
   linenoise_cleanup( LINENOISE_ID_LUA );
+#ifdef BUILD_TCPIP
+  elua_net_cleanup();
+#endif   
 #endif  
   L = G(L)->mainthread;  /* only the main thread can be closed */
   lua_lock(L);

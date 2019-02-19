@@ -25,6 +25,7 @@
 #define NET_META_NAME      "eLua.net"
 #define NET_SOCK_T_NAME    "eLua.net.socketTable"
 #define NET_WEAK_META_NAME "eLua.net.weakTable"
+#define THREAD_KEY "eLua.net.thread"
 
 
 // Macros for checking if a socket returned from the stack is a valid socket
@@ -47,23 +48,30 @@ typedef struct
 
 static lua_State *G_state =NULL; 
 
+
 static void  init_socket_table(lua_State *L) 
 {
+ 
+   // Create Thread for callbacks 
+   lua_pushstring(L, THREAD_KEY);
+   G_state = lua_newthread(L);
+   lua_settable(L,LUA_REGISTRYINDEX); 
+   lua_pop(L,1); // Pop thread from stack
+
+
    // Create an empty table and store in the registry 
    lua_pushstring(L, NET_SOCK_T_NAME ); // Registy key 
-   lua_newtable(L); // Value
-   // Add Metatable
+   lua_newtable(L); 
+   // Add metatable
    lua_newtable(L);
    lua_pushstring( L,"__mode" );
    lua_pushstring( L,"v" );
-   lua_settable(L,-3); // metatbale is now on TOS
-
+   lua_settable(L,-3); 
    lua_setmetatable( L, -2 );  
    
    lua_settable(L, LUA_REGISTRYINDEX); 
-   G_state = L; 
-
 }
+
 
 
 
@@ -78,8 +86,13 @@ static sock_t *push_socket( lua_State *L, uintptr_t sock )
       lua_setmetatable( L, -2 );  
       // userdata is now on TOS
 
+      // Construct: 
+      // registry[NET_SOCK_T_NAME] = {
+      //    <lightuserdata socket adr> =  <elua.net obj> 
+      // }
+
       // Add to socket_table
-      lua_getfield(L,LUA_REGISTRYINDEX,NET_SOCK_T_NAME); // registry[NET_SOCK_T_NAME]
+      lua_getfield(L,LUA_REGISTRYINDEX,NET_SOCK_T_NAME); // registry[NET_SOCK_T_NAME]  
       lua_pushlightuserdata(L,(void*)sock); // the socket handle is the key 
       lua_pushvalue(L, -3 ); // Dup our user data
       lua_settable(L,-3);
@@ -399,7 +412,7 @@ static void socket_callback(t_socket_event ev, uintptr_t socket)
   if (s) {
     switch (ev) {
       case ELUA_NET_FIN:
-        printk("Socket FIN event\n");
+        //printk("Socket FIN event\n");
         s->sock=0;
         break; 
 
@@ -497,11 +510,21 @@ LUALIB_API int luaopen_net( lua_State *L )
 #endif // #if LUA_OPTIMIZE_MEMORY > 0
 }
 
+void elua_net_cleanup()
+{
+   G_state=NULL; 
+}
+
 #else // #ifdef BUILD_UIP
 
 LUALIB_API int luaopen_net( lua_State *L )
 {
   return 0;
+}
+
+void elua_net_cleanup()
+{
+   
 }
 
 #endif // #ifdef BUILD_UIP
