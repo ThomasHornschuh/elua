@@ -24,7 +24,8 @@
 
 #define NET_META_NAME      "eLua.net"
 #define NET_SOCK_T_NAME    "eLua.net.socketTable"
-#define NET_WEAK_META_NAME "eLua.net.weakTable"
+#define NET_CALLBACK_T_NAME "eLua.net.callbackTable"
+#define NET_WEAK_META_NAME  "eLua.net.weakmetaTable"
 #define THREAD_KEY "eLua.net.thread"
 
 
@@ -49,6 +50,30 @@ typedef struct
 static lua_State *G_state =NULL; 
 
 
+static void create_table(lua_State *L, const char* registryKey, bool fWeak)
+{
+   lua_pushstring(L, registryKey  ); 
+   lua_newtable(L); 
+   // Add metatable
+   if (fWeak) {
+     lua_getfield(L,LUA_REGISTRYINDEX,NET_WEAK_META_NAME);
+     if (lua_isnil(L,-1)) { // No Metatable yet, construct it
+       lua_pop(L,1); // clean stack
+       lua_pushstring(L, NET_WEAK_META_NAME ); // Registy key 
+       lua_newtable(L);
+       lua_pushstring( L,"__mode" );
+       lua_pushstring( L,"v" );
+       lua_settable(L,-3); 
+       lua_settable(L, LUA_REGISTRYINDEX);  // Store Metatable in registry for sharing
+       lua_getfield(L,LUA_REGISTRYINDEX,NET_WEAK_META_NAME); // Read it again
+     }
+     lua_setmetatable( L, -2 ); 
+   }
+   
+   lua_settable(L, LUA_REGISTRYINDEX); 
+}
+
+
 static void  init_socket_table(lua_State *L) 
 {
  
@@ -60,16 +85,20 @@ static void  init_socket_table(lua_State *L)
 
 
    // Create an empty table and store in the registry 
-   lua_pushstring(L, NET_SOCK_T_NAME ); // Registy key 
-   lua_newtable(L); 
-   // Add metatable
-   lua_newtable(L);
-   lua_pushstring( L,"__mode" );
-   lua_pushstring( L,"v" );
-   lua_settable(L,-3); 
-   lua_setmetatable( L, -2 );  
-   
-   lua_settable(L, LUA_REGISTRYINDEX); 
+   create_table(L,NET_SOCK_T_NAME,true);
+   create_table(L,NET_CALLBACK_T_NAME,false); 
+}
+
+
+static void register_socket_callback(lua_State *L,uintptr_t socket,int idx)
+{
+   if (!lua_isfunction(L,idx)) {
+     luaL_error(L,"function expected at index %d",idx);
+   }
+   lua_getfield(L,LUA_REGISTRYINDEX,NET_CALLBACK_T_NAME);
+   lua_pushlightuserdata(L,(void*)socket);
+   lua_pushvalue(L,idx); 
+   lua_settable(L,-3);
 }
 
 
@@ -139,6 +168,7 @@ static sock_t *map_socket(lua_State *L,uintptr_t s)
      return NULL;
 }
 
+
 /*
  * TH: Added listen/unlisten functions
  */
@@ -149,9 +179,13 @@ static int net_listen( lua_State *L )
 {
   u16 port = ( u16 )luaL_checkinteger( L, 1 );
   #ifdef BUILD_PICOTCP
-  // return socket 
+ 
+  
   uintptr_t s =  elua_listen( port,TRUE );
-  push_socket(L,s);  
+   if (lua_isfunction(L,2) && s ) {
+      register_socket_callback(L,s,2);
+   }
+  push_socket(L,s);  // return socket 
   #else
   lua_pushinteger (L,( elua_listen( port,TRUE )==0) ?ELUA_NET_ERR_OK:ELUA_NET_ERR_LIMIT_EXCEEDED );
   #endif 
@@ -405,15 +439,27 @@ static int socket_gc( lua_State *L )
 static void socket_callback(t_socket_event ev, uintptr_t socket)
 {
   
-  if (!G_state) return;
+  if ( !G_state ) return;
 
-  sock_t *s = map_socket(G_state,socket);
-  
-  if (s) {
-    switch (ev) {
+  sock_t *s = map_socket( G_state,socket );
+ 
+  if ( s ) {
+    lua_getfield( s->L,LUA_REGISTRYINDEX,NET_CALLBACK_T_NAME );
+    lua_pushlightuserdata( s->L,(void*)socket );
+    lua_gettable( s->L,-2 ); // Try to find callback
+    lua_remove( s->L,-2 );  // remove callback table from stack
+    if ( lua_isfunction(s->L,-1) ) {
+      lua_pushinteger( s->L,(int)ev );
+      lua_pushvalue( G_state,-1 ); // Dup socket object
+      lua_xmove( G_state,s->L,1 ); 
+      if ( lua_pcall( s->L,2,0,0 ) != 0 ) {
+        lua_error( s->L );
+      };
+   }
+   switch ( ev ) {
       case ELUA_NET_FIN:
         //printk("Socket FIN event\n");
-        s->sock=0;
+        if ( s ) s->sock=0;
         break; 
 
       default: 
@@ -421,7 +467,7 @@ static void socket_callback(t_socket_event ev, uintptr_t socket)
     }
   }
 
-  lua_pop(G_state,1); // clean Lua stack 
+  lua_pop( G_state,1 ); // clean Lua stack 
 }
 
 #endif 
