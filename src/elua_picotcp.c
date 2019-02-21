@@ -434,9 +434,18 @@ uint32_t cid;
   debug_enabled = false; // Disable debug log after inital sequence to avoid screen clobbering 
 
 }
+
+static volatile tick_semaphore = 0; 
+
 void elua_pico_tick()
 {   
-  if (initComplete) pico_stack_tick();
+  if (initComplete) {
+    if (tick_semaphore) return; // avoid recursive pico tick calls
+    tick_semaphore++; 
+    pico_stack_tick();
+    tick_semaphore--;
+    
+  }  
 }
 
 #endif 

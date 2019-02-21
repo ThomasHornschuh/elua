@@ -139,7 +139,8 @@ static sock_t *push_socket( lua_State *L, uintptr_t sock )
 static int net_get_sockettable(lua_State *L)
 {
    lua_getfield(L,LUA_REGISTRYINDEX,NET_SOCK_T_NAME); // registry[NET_SOCK_T_NAME]
-   return 1; 
+   lua_getfield(L,LUA_REGISTRYINDEX,NET_CALLBACK_T_NAME); //  // registry[NET_CALLBACK_T_NAME]
+   return 2; 
 }
 
 static sock_t  *get_socket( lua_State *L, int idx )
@@ -436,6 +437,15 @@ static int socket_gc( lua_State *L )
 
 #ifdef BUILD_PICOTCP
 
+static const char * sock_events[] = {
+  "connect", 
+  "read",
+  "write",
+  "close",
+  "fin",
+  "error"
+};
+
 static void socket_callback(t_socket_event ev, uintptr_t socket)
 {
   
@@ -449,7 +459,7 @@ static void socket_callback(t_socket_event ev, uintptr_t socket)
     lua_gettable( s->L,-2 ); // Try to find callback
     lua_remove( s->L,-2 );  // remove callback table from stack
     if ( lua_isfunction(s->L,-1) ) {
-      lua_pushinteger( s->L,(int)ev );
+      lua_pushstring( s->L,sock_events[(int)ev] );
       lua_pushvalue( G_state,-1 ); // Dup socket object
       lua_xmove( G_state,s->L,1 ); 
       if ( lua_pcall( s->L,2,0,0 ) != 0 ) {
@@ -468,6 +478,21 @@ static void socket_callback(t_socket_event ev, uintptr_t socket)
   }
 
   lua_pop( G_state,1 ); // clean Lua stack 
+}
+
+
+static int net_socket_callback(lua_State *L )
+{
+  sock_t *s = sock_check( L, 1 );
+
+ 
+  if ( lua_isfunction(s->L,2)  ) {
+     register_socket_callback(L,s->sock,2);
+   } else
+   {
+     luaL_typerror(L,2,"function type");
+   }
+   return 0;
 }
 
 #endif 
@@ -494,6 +519,7 @@ const LUA_REG_TYPE net_map[] =
 #ifdef BUILD_PICOTCP 
   { LSTRKEY( "tick" ), LFUNCVAL( net_stack_tick ) }, // TH
   { LSTRKEY( "socket_table" ), LFUNCVAL( net_get_sockettable ) }, // TH
+  { LSTRKEY( "callback" ), LFUNCVAL( net_socket_callback ) }, // TH
   
 #endif 
 #if LUA_OPTIMIZE_MEMORY > 0 
@@ -518,6 +544,12 @@ const LUA_REG_TYPE net_map[] =
 static const LUA_REG_TYPE socket_mt_map[] = 
 {
   { LSTRKEY( "__gc" ), LFUNCVAL( socket_gc ) },
+  { LSTRKEY( "__index" ), LRO_ROVAL( socket_mt_map ) },
+  { LSTRKEY( "connect" ), LFUNCVAL( net_connect ) },
+  { LSTRKEY( "close" ), LFUNCVAL( net_close ) },
+  { LSTRKEY( "send" ), LFUNCVAL( net_send ) },
+  { LSTRKEY( "recv" ), LFUNCVAL( net_recv ) },
+  { LSTRKEY( "callback" ), LFUNCVAL( net_socket_callback ) }, // TH
   { LNILKEY, LNILVAL }
 };
 
