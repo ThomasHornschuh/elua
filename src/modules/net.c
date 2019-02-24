@@ -159,7 +159,7 @@ static sock_t  *get_socket( lua_State *L, int idx )
 // Attention: leaves userdata on stack to avoid being collected
 static sock_t *map_socket(lua_State *L,uintptr_t s)
 {
-   net_get_sockettable(L);
+   lua_getfield(L,LUA_REGISTRYINDEX,NET_SOCK_T_NAME); // registry[NET_SOCK_T_NAME]
    lua_pushlightuserdata( L,(void*)s );
    lua_gettable(L,-2);
    lua_remove(L,-2); // remove table from stack
@@ -463,8 +463,11 @@ static void socket_callback(t_socket_event ev, uintptr_t socket)
       lua_pushvalue( G_state,-1 ); // Dup socket object
       lua_xmove( G_state,s->L,1 ); 
       if ( lua_pcall( s->L,2,0,0 ) != 0 ) {
+        elua_pico_unwind(); 
         lua_error( s->L );
       };
+   } else {
+     lua_pop(s->L,1); // clean stack 
    }
    switch ( ev ) {
       case ELUA_NET_FIN:

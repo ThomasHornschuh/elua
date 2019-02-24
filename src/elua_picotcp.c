@@ -30,6 +30,8 @@ static volatile bool debug_enabled = true;
 
 static volatile int last_error = ELUA_NET_ERR_OK;
 
+static volatile int tick_semaphore = 0; 
+
 
 // typedef struct {
 //   struct pico_socket* s;
@@ -193,6 +195,7 @@ static inline int  _min(int a,int b)
 elua_net_size elua_net_recvbuf( int s, luaL_Buffer *buf, elua_net_size maxsize, s16 readto, unsigned timer_id, timer_data_type to_us )
 {
 timer_data_type tmrstart = 0;
+bool cb_mode= tick_semaphore != 0; // recv called a pico_tick callback?
 
 
     if (s==0 || s== -1 ) return 0;
@@ -202,7 +205,7 @@ timer_data_type tmrstart = 0;
       tmrstart = platform_timer_start( timer_id );
 
     while (1) {
-      pico_stack_tick();
+      if (!cb_mode) pico_stack_tick();
       //if (ps->ev_pending & PICO_SOCK_EV_RD) {
          char recvbuf[BSIZE];
          int read = 0;
@@ -219,7 +222,7 @@ timer_data_type tmrstart = 0;
            last_error = ELUA_NET_ERR_ABORTED;
            return -1;
         }   
-        if (len>0) {
+        if (len>0 || cb_mode) {
             last_error = ELUA_NET_ERR_OK;
             return len;
         }    
@@ -256,7 +259,7 @@ int r;
 int elua_accept( u16 port, unsigned timer_id, timer_data_type to_us, elua_net_ip* pfrom )
 {
 timer_data_type tmrstart = 0;
-
+bool cb_mode= tick_semaphore != 0; // recv called a pico_tick callback?
 
   int i;
 
@@ -265,7 +268,7 @@ timer_data_type tmrstart = 0;
     tmrstart = platform_timer_start( timer_id );
   while( 1 )
   {
-    pico_stack_tick();
+    if (!cb_mode) pico_stack_tick();
     i=elua_net_find_pending( port );
     if( i >= 0 ) {
       pfrom->ipaddr = elua_uip_accept_pending[i].remote.addr;
@@ -273,8 +276,10 @@ timer_data_type tmrstart = 0;
       last_error = ELUA_NET_ERR_OK;
       return (int)elua_uip_accept_pending[i].sock;
     } 
-
-    if( to_us == 0 || platform_timer_get_diff_crt( timer_id, tmrstart ) >= to_us )
+    if (cb_mode) {
+      last_error = ELUA_NET_ERR_OK;
+      return 0;
+    } else if( to_us == 0 || platform_timer_get_diff_crt( timer_id, tmrstart ) >= to_us )
     {
       last_error = ELUA_NET_ERR_WAIT_TIMEDOUT;
       pfrom->ipaddr=0;
@@ -287,7 +292,11 @@ timer_data_type tmrstart = 0;
 
 int elua_net_connect( int s, elua_net_ip addr, u16 port )
 {
-  return -1;
+  int res= pico_socket_connect((struct pico_socket *)s,(void*)&addr.ipaddr,short_be(port) ) ;
+  last_error = (res<0)?ELUA_NET_ERR_ABORTED:ELUA_NET_ERR_OK;
+
+  return res; 
+  
 }
 
 
@@ -435,7 +444,7 @@ uint32_t cid;
 
 }
 
-static volatile tick_semaphore = 0; 
+
 
 void elua_pico_tick()
 {   
@@ -446,6 +455,11 @@ void elua_pico_tick()
     tick_semaphore--;
     
   }  
+}
+
+void elua_pico_unwind()
+{
+  tick_semaphore--;
 }
 
 #endif 

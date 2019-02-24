@@ -20,6 +20,7 @@ typedef void (*t_socketcallback)(t_socket_event ev, uintptr_t socket);
 
 void elua_pico_init();
 void elua_pico_tick();
+void elua_pico_unwind();
 
 void elua_pico_set_socketcallback(t_socketcallback cb);
 
