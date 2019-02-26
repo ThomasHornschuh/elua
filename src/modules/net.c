@@ -498,6 +498,16 @@ static int net_socket_callback(lua_State *L )
    return 0;
 }
 
+static int get_socket_option(lua_State *L)
+{
+sock_t *s = sock_check( L, 1 );
+int option = luaL_checkinteger( L, 2 ); 
+
+
+  lua_pushinteger( L, elua_pico_getsocketoption( s->sock,option ));
+  return 1;
+}
+
 #endif 
 
 
@@ -552,7 +562,8 @@ static const LUA_REG_TYPE socket_mt_map[] =
   { LSTRKEY( "close" ), LFUNCVAL( net_close ) },
   { LSTRKEY( "send" ), LFUNCVAL( net_send ) },
   { LSTRKEY( "recv" ), LFUNCVAL( net_recv ) },
-  { LSTRKEY( "callback" ), LFUNCVAL( net_socket_callback ) }, // TH
+  { LSTRKEY( "callback" ), LFUNCVAL( net_socket_callback ) }, 
+  { LSTRKEY( "getoption" ), LFUNCVAL( get_socket_option ) },
   { LNILKEY, LNILVAL }
 };
 

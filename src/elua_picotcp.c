@@ -377,7 +377,15 @@ int elua_net_get_telnet_socket( void )
 
 }
 
+uintptr_t elua_pico_getsocketoption(uintptr_t socket, int option)
+{
+uintptr_t optvalue;
 
+  if (pico_socket_getoption((struct pico_socket*)socket,option,&optvalue)==0)
+    return optvalue;
+  else
+    return -1;    
+}
 
 
 static void cb_dhcp(void *cli,int code)

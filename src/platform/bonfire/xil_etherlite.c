@@ -46,11 +46,10 @@ static volatile int in_ethernet_irq = 0;
 
 inline void _write_leds(uint8_t value)
 {
-   _write_word(( void* )( ARTY_LEDS4TO7+4 ),0); // Set Output Mode
    _write_word(( void* )ARTY_LEDS4TO7,value);
 }
 
-inline uint32_t _read_leds()
+inline uint8_t _read_leds()
 {
    return _read_word(( void* )ARTY_LEDS4TO7);
 }
@@ -60,17 +59,10 @@ const u8 *platform_eth_init()
 {
 static const uint8_t c_mac[] =  {0,0, 0x5e,0,0x0fa,0x0ce };
 
-// static struct uip_eth_addr sTempAddr = {
-//     .addr[0] = 0,
-//     .addr[1] = 0,
-//     .addr[2] = 0x5e,
-//     .addr[3] = 0,
-//     .addr[4] = 0x0fa,
-//     .addr[5] = 0x0ce
-//   };
+
 
   printk("Initalizing Ethernet core\n");
-
+  _write_word(( void* )( ARTY_LEDS4TO7+4 ),0); // Set Output Mode
   
 
   // clear pending packets, enable receive interrupts
@@ -155,10 +147,11 @@ int length;
 
   if (isFull(currentBuff)) {
      //dbg("Ethernet Buffer %d used\n",(currentBuff & PONG_BUFF_OFFSET)?1:0);
+     uint8_t led = _read_leds() & 0x3; // Read leds and clear upper two (bit 3,bit 2) 
      if (currentBuff & PONG_BUFF_OFFSET)
-      _write_leds( (0x01<<3) | _read_leds() ); // light LED7
+       _write_leds( (0x01<<3) | led ); // light LED7
      else
-       _write_leds( (0x01<<2) | _read_leds() ); // light LED6
+       _write_leds( (0x01<<2) | led ); // light LED6
 
     // Caclucate frame size
     uint16_t ethertype = get_nbo_word(currentBuff,O_ETHERTYPE);
@@ -187,6 +180,8 @@ int length;
       return 0;
   }
 }
+
+
 void platform_eth_force_interrupt(void)
 {
 // force_interrupt is called from non-interrupt code
@@ -222,12 +217,12 @@ void ethernet_irq_handler()
    if (_read_word((void*)BONFIRE_SYSIO) & 0x01) { // Pending IRQ
 
 #ifdef  BUILD_UIP
-      _write_leds(0x01); // light LED4
+      _set_bit(ARTY_LEDS4TO7,1); // light LED4
       in_ethernet_irq=1;
       elua_uip_mainloop();
       in_ethernet_irq=0;
       _write_word((void*)BONFIRE_SYSIO,0x01); // clear IRQ
-      _write_leds(0x0);
+      _clear_bit(ARTY_LEDS4TO7,1); 
 
 #endif
    } else
