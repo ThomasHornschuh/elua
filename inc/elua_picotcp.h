@@ -23,6 +23,7 @@ void elua_pico_tick();
 void elua_pico_unwind();
 
 uintptr_t elua_pico_getsocketoption(uintptr_t socket, int option);
+int  elua_pico_setsocketoption(uintptr_t socket, int option, int value);
 
 void elua_pico_set_socketcallback(t_socketcallback cb);
 

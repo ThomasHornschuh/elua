@@ -19,6 +19,7 @@
 #ifdef BUILD_TCPIP
 
 #ifdef BUILD_PICOTCP 
+#include "pico_socket.h"
 #include "elua_picotcp.h"
 #endif
 
@@ -508,6 +509,15 @@ int option = luaL_checkinteger( L, 2 );
   return 1;
 }
 
+static int set_socket_option(lua_State *L)
+{
+sock_t *s = sock_check( L, 1 );
+int option = luaL_checkinteger( L, 2 ); 
+int optvalue =   luaL_checkinteger( L, 3 ); 
+
+  lua_pushinteger( L , elua_pico_setsocketoption( s->sock, option, optvalue ));
+  return 1;
+}
 #endif 
 
 
@@ -549,6 +559,16 @@ const LUA_REG_TYPE net_map[] =
 
   { LSTRKEY( "NO_TIMEOUT" ), LNUMVAL( 0 ) },
   { LSTRKEY( "INF_TIMEOUT" ), LNUMVAL( PLATFORM_TIMER_INF_TIMEOUT ) },
+
+#ifdef BUILD_PICOTCP
+   { LSTRKEY( "TCP_NODELAY" ), LNUMVAL( PICO_TCP_NODELAY ) },
+   { LSTRKEY( "OPT_KEEPIDLE" ), LNUMVAL( PICO_SOCKET_OPT_KEEPIDLE ) },
+   { LSTRKEY( "OPT_KEEPINTVL" ), LNUMVAL( PICO_SOCKET_OPT_KEEPINTVL ) },
+   { LSTRKEY( "OPT_RCVBUF" ), LNUMVAL( PICO_SOCKET_OPT_RCVBUF ) },
+   { LSTRKEY( "OPT_SNDBUF" ), LNUMVAL( PICO_SOCKET_OPT_SNDBUF ) },
+
+#endif 
+
 #endif
   { LNILKEY, LNILVAL }
 };
@@ -562,8 +582,11 @@ static const LUA_REG_TYPE socket_mt_map[] =
   { LSTRKEY( "close" ), LFUNCVAL( net_close ) },
   { LSTRKEY( "send" ), LFUNCVAL( net_send ) },
   { LSTRKEY( "recv" ), LFUNCVAL( net_recv ) },
+#ifdef BUILD_PICOTCP
   { LSTRKEY( "callback" ), LFUNCVAL( net_socket_callback ) }, 
   { LSTRKEY( "getoption" ), LFUNCVAL( get_socket_option ) },
+  { LSTRKEY( "setoption" ), LFUNCVAL( set_socket_option ) },
+#endif   
   { LNILKEY, LNILVAL }
 };
 

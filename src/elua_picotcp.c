@@ -388,6 +388,24 @@ uintptr_t optvalue;
 }
 
 
+int  elua_pico_setsocketoption(uintptr_t socket, int option, int value)
+{
+uintptr_t optvalue=value;
+
+   switch(option) {
+     case PICO_TCP_NODELAY:
+     case PICO_SOCKET_OPT_KEEPIDLE:
+     case PICO_SOCKET_OPT_KEEPINTVL:
+     case PICO_SOCKET_OPT_RCVBUF:
+     case PICO_SOCKET_OPT_SNDBUF:
+       return pico_socket_setoption((struct pico_socket*)socket,option,&optvalue);
+     default:
+       return -1;
+   } 
+
+}
+
+
 static void cb_dhcp(void *cli,int code)
 {
 struct pico_ip4 address, gw, netmask, dns;
