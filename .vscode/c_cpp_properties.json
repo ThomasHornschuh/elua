@@ -7,7 +7,9 @@
                 "${workspaceFolder}/inc/newlib",
                 "${workspaceFolder}/inc",
                 "${workspaceFolder}/src/platform/bonfire",
-                "${workspaceFolder}/src/lua"
+                "${workspaceFolder}/src/lua",
+                "${workspaceFolder}/picotcp/build_rv32/include",
+                "${workspaceFolder}/picotcp/build_rv32/include/arch"
 
             ],
             "defines": [],

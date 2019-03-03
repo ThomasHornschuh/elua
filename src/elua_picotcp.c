@@ -26,11 +26,11 @@ static struct pico_device* dev;
 static volatile int  dhcp_state = ELUA_DHCP_UNCONFIGURED;
 
 
-static volatile bool debug_enabled = true; 
+static volatile bool debug_enabled = true;
 
 static volatile int last_error = ELUA_NET_ERR_OK;
 
-static volatile int tick_semaphore = 0; 
+static volatile int tick_semaphore = 0;
 
 
 // typedef struct {
@@ -61,7 +61,7 @@ va_list args;
   if (debug_enabled) {
     va_start (args, s);
     vprintf (s, args);
-    va_end (args);    
+    va_end (args);
   }
 }
 
@@ -98,13 +98,13 @@ int i;
 
 static inline void  __cb(t_socket_event ev, struct pico_socket *s)
 {
-  if (socket_cb) socket_cb(ev,(uintptr_t)s); 
+  if (socket_cb) socket_cb(ev,(uintptr_t)s);
 }
 
 void cb_socket(uint16_t ev, struct pico_socket *s)
 {
    if (ev & PICO_SOCK_EV_CONN) {
-     // Add to list of pending connections 
+     // Add to list of pending connections
      int i;
      BOOL found=FALSE;
      uint16_t port;
@@ -113,14 +113,14 @@ void cb_socket(uint16_t ev, struct pico_socket *s)
         if ( elua_uip_accept_pending[i].accept_request!=1 ) {// free slot
           elua_uip_accept_pending[i].sock=pico_socket_accept(s, &elua_uip_accept_pending[i].remote, &port);
           elua_uip_accept_pending[i].port=short_be(port);
-          
+
           elua_uip_accept_pending[i].accept_request=1;
           found=TRUE;
         }
      }
      if ( !found ) { // no free slot
        platform_debug_printk("Accept event without free pending slots\n");
-       //TODO: How to deal with this situation? 
+       //TODO: How to deal with this situation?
      } else {
        __cb(ELUA_NET_CONNECT,s);
      }
@@ -144,7 +144,7 @@ void cb_socket(uint16_t ev, struct pico_socket *s)
     {
         platform_debug_printk("Socket Error received: %s. Bailing out.\n", strerror(pico_err));
         __cb(ELUA_NET_EVENT_ERR,s);
-       
+
     }
     /* process close event, receiving socket received close from peer */
     if (ev & PICO_SOCK_EV_CLOSE)
@@ -162,27 +162,27 @@ void cb_socket(uint16_t ev, struct pico_socket *s)
 // t_socket * s=malloc( sizeof(t_socket) );
 
 //      s->s = ps;
-//      s->event=0; 
-//      return s; 
+//      s->event=0;
+//      return s;
 // }
 
 int elua_net_socket( int type )
 {
 struct pico_socket * ps = pico_socket_open(PICO_PROTO_IPV4,
                                           (type==ELUA_NET_SOCK_STREAM?PICO_PROTO_TCP:PICO_PROTO_UDP),
-                                          &cb_socket);  
-   if ( ps ) {   
+                                          &cb_socket);
+   if ( ps ) {
      return (int) ps;
    } else
    {
      return 0;
    }
-                                    
+
 
 }
 int elua_net_close( int s )
-{   
-  return  pico_socket_close((struct pico_socket*)s )==0?ELUA_NET_ERR_OK:ELUA_NET_ERR_INVALID_SOCKET; 
+{
+  return  pico_socket_close((struct pico_socket*)s )==0?ELUA_NET_ERR_OK:ELUA_NET_ERR_INVALID_SOCKET;
 }
 
 #define BSIZE 1460
@@ -200,7 +200,7 @@ bool cb_mode= tick_semaphore != 0; // recv called a pico_tick callback?
 
     if (s==0 || s== -1 ) return 0;
     struct pico_socket* ps =  (struct pico_socket*)s;
-    
+
     if( to_us > 0 )
       tmrstart = platform_timer_start( timer_id );
 
@@ -211,21 +211,21 @@ bool cb_mode= tick_semaphore != 0; // recv called a pico_tick callback?
          int read = 0;
          int len = 0;
          do  {
-            
+
             read = pico_socket_read(ps, recvbuf, _min(BSIZE,maxsize-len));
             if (read > 0) {
                 len += read;
                 luaL_addlstring(buf,recvbuf,read);
-            }    
+            }
         } while (read > 0);
         if (read<0) {
            last_error = ELUA_NET_ERR_ABORTED;
            return -1;
-        }   
+        }
         if (len>0 || cb_mode) {
             last_error = ELUA_NET_ERR_OK;
             return len;
-        }    
+        }
       //}
       if( to_us == 0 || platform_timer_get_diff_crt( timer_id, tmrstart ) >= to_us )
       {
@@ -244,14 +244,14 @@ elua_net_size elua_net_recv( int s, void *buf, elua_net_size maxsize, s16 readto
 
 elua_net_size elua_net_send( int s, const void* buf, elua_net_size len )
 {
-int r;  
+int r;
    if (s==0 || s== -1 ) return -1;
 
    r = pico_socket_send((struct pico_socket*)s,buf,len);
    if ( r== -1 ) {
      last_error = ELUA_NET_ERR_ABORTED;
      return r;
-   } else { 
+   } else {
      last_error = ELUA_NET_ERR_OK;
      return len;
    }
@@ -263,7 +263,7 @@ bool cb_mode= tick_semaphore != 0; // recv called a pico_tick callback?
 
   int i;
 
- 
+
   if( to_us > 0 )
     tmrstart = platform_timer_start( timer_id );
   while( 1 )
@@ -275,7 +275,7 @@ bool cb_mode= tick_semaphore != 0; // recv called a pico_tick callback?
       elua_uip_accept_pending[i].accept_request=0;
       last_error = ELUA_NET_ERR_OK;
       return (int)elua_uip_accept_pending[i].sock;
-    } 
+    }
     if (cb_mode) {
       last_error = ELUA_NET_ERR_OK;
       return 0;
@@ -295,43 +295,65 @@ int elua_net_connect( int s, elua_net_ip addr, u16 port )
   int res= pico_socket_connect((struct pico_socket *)s,(void*)&addr.ipaddr,short_be(port) ) ;
   last_error = (res<0)?ELUA_NET_ERR_ABORTED:ELUA_NET_ERR_OK;
 
-  return res; 
-  
+  return res;
+
 }
 
 
-typedef struct {
-  uint32_t ipaddr;
-  bool success;
-} dns_result_t;
+
 
 static void cb_dns_getaddr(char *ip, void *arg)
 {
-   
+
 
    dns_result_t * r = (dns_result_t * ) arg  ;
    if(ip) {
       pico_string_to_ipv4(ip, &r->ipaddr);
    }
-  
-   r->success=true; 
 
+   r->success=true;
+   if (r-> cb  ) r->cb(r);
+
+}
+
+// Async DNS call. Returns a pointer to a result struct allocated on the heap
+// The address of this struct will also be passed also the the callback to later
+// identify the call
+dns_result_t  * elua_net_lookup_async( const char* hostname, t_dnscallback cb  )
+{
+
+dns_result_t * r= malloc(sizeof ( dns_result_t ));
+
+  if (!r) return NULL;
+
+  r->success=false;
+  r->cb = cb;
+  r->ipaddr = 0;
+
+  int res = pico_dns_client_getaddr(hostname,&cb_dns_getaddr, (void*)r );
+  if (res == -1 ) {
+     free( r );
+     r = NULL;
+  }
+  return r;
 }
 
 
 elua_net_ip elua_net_lookup( const char* hostname )
 {
-dns_result_t r = { 0,false };
+dns_result_t  *r ;
 
 elua_net_ip ip = {0};
 
-  
 
-  if( pico_dns_client_getaddr(hostname,&cb_dns_getaddr,(void*)&r) ==0 ) {
-    while (!r.success) {
+  r = elua_net_lookup_async( hostname, NULL );
+
+  if( r ) {
+    while ( !r->success ) {
       pico_stack_tick();
     }
-    ip.ipaddr=r.ipaddr;
+    ip.ipaddr=r->ipaddr;
+    free( r );
   }
   return ip;
 }
@@ -346,7 +368,7 @@ int ret;
 
     if (!flisten || port==0 ) return -1;
     /* set the source port for the socket */
-   
+
     port_be = short_be(port);
     /* open a TCP socket with the appropriate callback */
     s = pico_socket_open(PICO_PROTO_IPV4, PICO_PROTO_TCP, &cb_socket);
@@ -357,10 +379,10 @@ int ret;
     ret = pico_socket_bind(s, &inaddr_any, &port_be);
     // TODO: Avoid Memory leak - how to delete s?
     if (ret != 0) return 0;
-        
+
     /* start listening on socket */
     ret = pico_socket_listen(s, backlog);
-  
+
     return ret!=0?0:(int)s;
 
 }
@@ -384,7 +406,7 @@ uintptr_t optvalue;
   if (pico_socket_getoption((struct pico_socket*)socket,option,&optvalue)==0)
     return optvalue;
   else
-    return -1;    
+    return -1;
 }
 
 
@@ -401,22 +423,26 @@ uintptr_t optvalue=value;
        return pico_socket_setoption((struct pico_socket*)socket,option,&optvalue);
      default:
        return -1;
-   } 
+   }
 
 }
 
+int elua_pico_change_nameserver( elua_net_ip addr, uint8_t flag )
+{
+   return pico_dns_client_nameserver((struct pico_ip4*)&addr.ipaddr,flag?PICO_DNS_NS_ADD:PICO_DNS_NS_DEL );
+}
 
 static void cb_dhcp(void *cli,int code)
 {
 struct pico_ip4 address, gw, netmask, dns;
 
-char adr_b[16],gw_b[16],netmask_b[16],dns_b[16]; 
+char adr_b[16],gw_b[16],netmask_b[16],dns_b[16];
 
    dbg("DHCP callback %d\n",code);
 
    switch(code) {
-     
-     case PICO_DHCP_SUCCESS: 
+
+     case PICO_DHCP_SUCCESS:
         address=pico_dhcp_get_address(cli);
         gw=pico_dhcp_get_gateway(cli);
         netmask=pico_dhcp_get_netmask(cli);
@@ -428,14 +454,14 @@ char adr_b[16],gw_b[16],netmask_b[16],dns_b[16];
         pico_ipv4_to_string(dns_b,dns.addr);
 
         platform_debug_printk("DHCP assigned  ip: %s mask: %s gw: %s dns: %s  Hostname: %s\n",
-                               adr_b,netmask_b,gw_b,dns_b,pico_dhcp_get_hostname()); 
+                               adr_b,netmask_b,gw_b,dns_b,pico_dhcp_get_hostname());
 
         dhcp_state=ELUA_DHCP_SUCCESS;
 
         break;
-     case PICO_DHCP_ERROR: 
+     case PICO_DHCP_ERROR:
         dhcp_state=ELUA_DCHP_FAILURE;
-        platform_debug_printk("DHCP Error\n"); 
+        platform_debug_printk("DHCP Error\n");
         break;
 
    }
@@ -444,7 +470,7 @@ char adr_b[16],gw_b[16],netmask_b[16],dns_b[16];
 
 extern struct pico_device *pico_eth_create(const char *name);
 
-static bool initComplete  =false; 
+static bool initComplete  =false;
 
 void elua_pico_init()
 {
@@ -459,28 +485,28 @@ uint32_t cid;
   pico_string_to_ipv4( "0.0.0.0", &ipaddr.addr );
   pico_string_to_ipv4( "255.255.255.0", &netmask.addr );
   pico_ipv4_link_add( dev, ipaddr, netmask );
-  
-  initComplete= true; 
- 
+
+  initComplete= true;
+
   pico_dhcp_initiate_negotiation(dev,cb_dhcp,&cid);
   while ( dhcp_state==ELUA_DHCP_UNCONFIGURED ) {
     pico_stack_tick();
   };
-  debug_enabled = false; // Disable debug log after inital sequence to avoid screen clobbering 
+  debug_enabled = false; // Disable debug log after inital sequence to avoid screen clobbering
 
 }
 
 
 
 void elua_pico_tick()
-{   
+{
   if (initComplete) {
     if (tick_semaphore) return; // avoid recursive pico tick calls
-    tick_semaphore++; 
+    tick_semaphore++;
     pico_stack_tick();
     tick_semaphore--;
-    
-  }  
+
+  }
 }
 
 void elua_pico_unwind()
@@ -488,4 +514,10 @@ void elua_pico_unwind()
   tick_semaphore--;
 }
 
-#endif 
+void elua_pico_setdebug( bool d )
+{
+  debug_enabled=d;
+}
+
+
+#endif

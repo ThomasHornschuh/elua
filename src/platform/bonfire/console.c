@@ -63,7 +63,7 @@ void do_panic(const char* s, ...)
   va_start(vl, s);
 
   vprintk(s, vl);
-  while(1); // endless loop
+  asm("sbreak"); // Break into debugger
 
 }
 

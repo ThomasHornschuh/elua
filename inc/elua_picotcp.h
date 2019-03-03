@@ -4,7 +4,12 @@
 #ifndef __ELUA_PICOTCP_H__
 #define __ELUA_PICOTCP_H__
 
-typedef enum 
+
+
+#include <stdint.h>
+#include <stdbool.h>
+
+typedef enum
 {
   ELUA_NET_CONNECT =0,
   ELUA_NET_READ,
@@ -16,15 +21,34 @@ typedef enum
 } t_socket_event;
 
 
+typedef struct _dns_result dns_result_t; // forward
+
+typedef void (*t_dnscallback)( dns_result_t *dns_result );
+
+typedef struct  _dns_result {
+  uint32_t ipaddr;
+  bool success;
+  t_dnscallback cb;
+  void * user_state;
+} dns_result_t;
+
+
+
 typedef void (*t_socketcallback)(t_socket_event ev, uintptr_t socket);
+
 
 void elua_pico_init();
 void elua_pico_tick();
 void elua_pico_unwind();
+void elua_pico_setdebug(bool d);
 
-uintptr_t elua_pico_getsocketoption(uintptr_t socket, int option);
-int  elua_pico_setsocketoption(uintptr_t socket, int option, int value);
+uintptr_t elua_pico_getsocketoption( uintptr_t socket, int option );
+int  elua_pico_setsocketoption( uintptr_t socket, int option, int value );
 
-void elua_pico_set_socketcallback(t_socketcallback cb);
+void elua_pico_set_socketcallback( t_socketcallback cb );
 
-#endif 
+dns_result_t  * elua_net_lookup_async( const char* hostname, t_dnscallback cb  );
+
+int elua_pico_change_nameserver( elua_net_ip addr, uint8_t flag );
+
+#endif

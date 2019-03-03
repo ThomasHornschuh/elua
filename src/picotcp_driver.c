@@ -4,16 +4,17 @@
 #pragma message "Compiling picotcp_driver.c"
 
 #include "platform.h"
+
 #include "pico_stack.h"
 #include "pico_device.h"
 
 #define MAX_FRAME 1522
 
-#define dbg(...) 
+#define dbg_drv(...)
 
 static int driver_eth_send(struct pico_device *dev, void *buf, int len)
 {
-    dbg("Send Packet %d bytes\n",len); 
+    dbg_drv("Send Packet %d bytes\n",len);
     platform_eth_send_packet(buf, len);
     /* send function must return amount of bytes put on the network - no negative values! */
     return len;
@@ -25,13 +26,13 @@ static int driver_eth_poll(struct pico_device *dev, int loop_score)
     uint32_t len = 0;
 
     while (loop_score > 0) {
-     
-       
+
+
         len = platform_eth_get_packet_nb( buf,sizeof(buf));
         if (len == 0) {
             break;
         }
-        dbg("Received %lu bytes, buffer address %lx\n",len,buf);
+        dbg_drv("Received %lu bytes, buffer address %lx\n",len,buf);
         pico_stack_recv(dev, buf, len); /* this will copy the frame into the stack */
         loop_score--;
     }
@@ -45,7 +46,7 @@ struct pico_device *pico_eth_create(const char *name)
 {
     /* Create device struct */
     struct pico_device* eth_dev = PICO_ZALLOC(sizeof(struct pico_device));
-    dbg("Device Address %lx\n",eth_dev); 
+    dbg_drv("Device Address %lx\n",eth_dev);
     if(!eth_dev) {
         return NULL;
     }
@@ -60,13 +61,13 @@ struct pico_device *pico_eth_create(const char *name)
 
     /* Register the device in picoTCP */
     if( 0 != pico_device_init(eth_dev, name, mac)) {
-        dbg("Device init failed.\n");
+        dbg("Device %s init failed.\n",name);
         PICO_FREE(eth_dev);
         return NULL;
     }
-    dbg("Device Init Succesfull\n");
+    dbg("Device %s init succesfull\n",name);
 
-    /* Return a pointer to the device struct */ 
+    /* Return a pointer to the device struct */
     return eth_dev;
 }
 

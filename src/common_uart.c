@@ -280,7 +280,7 @@ static int cmn_recv_helper( unsigned id, timer_data_type timeout )
 
 #ifdef BUILD_PICOTCP
 
-#include "elua_picotcp.h"
+#include "elua_net.h"
 
 int platform_uart_recv( unsigned id, unsigned timer_id, timer_data_type timeout )
 {
@@ -301,7 +301,7 @@ int platform_uart_recv( unsigned id, unsigned timer_id, timer_data_type timeout 
 
       if( timeout != PLATFORM_TIMER_INF_TIMEOUT && platform_timer_get_diff_crt( timer_id, tmr_start ) >= timeout )
         break;
-      elua_pico_tick();  
+      elua_pico_tick();
     }
     return res;
   }
@@ -333,4 +333,4 @@ int platform_uart_recv( unsigned id, unsigned timer_id, timer_data_type timeout 
   }
 }
 
-#endif 
+#endif

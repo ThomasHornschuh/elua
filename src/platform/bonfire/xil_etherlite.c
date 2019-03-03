@@ -15,9 +15,8 @@
 #ifdef BUILD_UIP
   #include "uip.h"
   #include "elua_uip.h"
-#elif defined( BUILD_PICOTCP )
-  #include "elua_picotcp.h"
-#endif 
+
+#endif
 
 
 
@@ -32,16 +31,16 @@
 static volatile int in_ethernet_irq = 0;
 
 // Buffer Offsets
-#define O_ETHERTYPE 12 
+#define O_ETHERTYPE 12
 #define O_PAYLOAD 14 // Begin if Payload
 #define O_IP_LENGTH (O_PAYLOAD+2)
 
 // IP Constants
-#define ARP_LENGTH 26 // Size of ARP packet 
+#define ARP_LENGTH 26 // Size of ARP packet
 #define ETYPE_IP 0x800
 #define ETYPE_ARP 0x806
 
-#define dbg(...) 
+#define dbg(...)
 
 
 inline void _write_leds(uint8_t value)
@@ -63,24 +62,22 @@ static const uint8_t c_mac[] =  {0,0, 0x5e,0,0x0fa,0x0ce };
 
   printk("Initalizing Ethernet core\n");
   _write_word(( void* )( ARTY_LEDS4TO7+4 ),0); // Set Output Mode
-  
+
 
   // clear pending packets, enable receive interrupts
   _write_word(ETHL_RX_PING_CTRL,0x8);
   _write_word(ETHL_RX_PONG_CTRL,0x0);
   _write_word(ETHL_TX_PING_CTRL,0);
-  
+
 
 #ifdef BUILD_UIP
    _write_word(ETHL_GIE,0x80000000); // Enable Ethernet Interrupts
-   set_csr(mie,MIP_MEIP); // Enable External Interrupt 
+   set_csr(mie,MIP_MEIP); // Enable External Interrupt
    struct uip_eth_addr tempAddr;
    tempAddr.addr=c_mac;
    elua_uip_init( &tempAddr );
-   
-//#elif defined( BUILD_PICOTCP )
-//   elua_pico_init(c_mac);
-#endif 
+
+#endif
 
   return c_mac;
 
@@ -147,7 +144,7 @@ int length;
 
   if (isFull(currentBuff)) {
      //dbg("Ethernet Buffer %d used\n",(currentBuff & PONG_BUFF_OFFSET)?1:0);
-     uint8_t led = _read_leds() & 0x3; // Read leds and clear upper two (bit 3,bit 2) 
+     uint8_t led = _read_leds() & 0x3; // Read leds and clear upper two (bit 3,bit 2)
      if (currentBuff & PONG_BUFF_OFFSET)
        _write_leds( (0x01<<3) | led ); // light LED7
      else
@@ -164,8 +161,8 @@ int length;
         length=O_PAYLOAD+ARP_LENGTH+4;
         break;
       default:
-        length=ethertype>MAX_FRAME?MAX_FRAME:ethertype;  
-    }   
+        length=ethertype>MAX_FRAME?MAX_FRAME:ethertype;
+    }
     if (length>maxlen) length=maxlen;
 
      memcpy(buf,(void*)currentBuff,length);
@@ -190,9 +187,9 @@ void platform_eth_force_interrupt(void)
 int oldstate=platform_cpu_set_global_interrupts(PLATFORM_CPU_DISABLE);
 
   _write_leds(0x02); // light LED5
- #ifdef BUILD_UIP 
+ #ifdef BUILD_UIP
   elua_uip_mainloop();
- #endif  
+ #endif
    _write_leds(0x0);
   platform_cpu_set_global_interrupts(oldstate);
 }
@@ -222,7 +219,7 @@ void ethernet_irq_handler()
       elua_uip_mainloop();
       in_ethernet_irq=0;
       _write_word((void*)BONFIRE_SYSIO,0x01); // clear IRQ
-      _clear_bit(ARTY_LEDS4TO7,1); 
+      _clear_bit(ARTY_LEDS4TO7,1);
 
 #endif
    } else

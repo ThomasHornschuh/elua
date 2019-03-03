@@ -24,7 +24,7 @@
 #include "semifs.h"
 #include "nffs.h"
 
-// Define here your autorun/boot files, 
+// Define here your autorun/boot files,
 // in the order you want eLua to search for them
 const char *boot_order[] = {
 #if defined(BUILD_MMCFS)
@@ -56,10 +56,10 @@ void boot_rpc( void )
 {
   lua_State *L = lua_open();
   luaL_openlibs(L);  /* open libraries */
-  
+
   // Set up UART for 8N1 w/ adjustable baud rate
   platform_uart_setup( RPC_UART_ID, RPC_UART_SPEED, 8, PLATFORM_UART_PARITY_NONE, PLATFORM_UART_STOPBITS_1 );
-  
+
   // Start RPC Server
   lua_getglobal( L, "rpc" );
   lua_getfield( L, -1, "server" );
@@ -103,11 +103,11 @@ int main( void )
   nffs_init();
 
  #ifdef BUILD_PICOTCP
-    #include "elua_picotcp.h"
-   
+    #include "elua_net.h"
+
     elua_pico_init();
-  
- #endif  
+
+ #endif
 
   // Search for autorun files in the defined order and execute the 1st if found
   for( i = 0; i < sizeof( boot_order ) / sizeof( *boot_order ); i++ )
@@ -124,7 +124,7 @@ int main( void )
 #ifdef ELUA_BOOT_RPC
   boot_rpc();
 #else
-  
+
   // Run the shell
   if( shell_init() == 0 )
   {

@@ -34,12 +34,12 @@
 #include "devman.h"
 #endif
 
-#define FREELIST_REF	0	/* free list of references */
+#define FREELIST_REF    0   /* free list of references */
 
 
 /* convert a stack index to positive */
-#define abs_index(L, i)		((i) > 0 || (i) <= LUA_REGISTRYINDEX ? (i) : \
-					lua_gettop(L) + (i) + 1)
+#define abs_index(L, i)     ((i) > 0 || (i) <= LUA_REGISTRYINDEX ? (i) : \
+                    lua_gettop(L) + (i) + 1)
 
 // Parameters for luaI_openlib
 #define LUA_USECCLOSURES          0
@@ -174,7 +174,7 @@ LUALIB_API void luaL_checkanyfunction (lua_State *L, int narg) {
   if (lua_type(L, narg) != LUA_TFUNCTION && lua_type(L, narg) != LUA_TLIGHTFUNCTION) {
     const char *msg = lua_pushfstring(L, "function or lightfunction expected, got %s",
                                       luaL_typename(L, narg));
-    luaL_argerror(L, narg, msg);    
+    luaL_argerror(L, narg, msg);
   }
 }
 
@@ -182,7 +182,7 @@ LUALIB_API void luaL_checkanytable (lua_State *L, int narg) {
   if (lua_type(L, narg) != LUA_TTABLE && lua_type(L, narg) != LUA_TROTABLE) {
     const char *msg = lua_pushfstring(L, "table or rotable expected, got %s",
                                       luaL_typename(L, narg));
-    luaL_argerror(L, narg, msg);    
+    luaL_argerror(L, narg, msg);
   }
 }
 
@@ -271,11 +271,11 @@ LUALIB_API void (luaL_register) (lua_State *L, const char *libname,
 
 LUALIB_API void (luaL_register_light) (lua_State *L, const char *libname,
                                 const luaL_Reg *l) {
-#if LUA_OPTIMIZE_MEMORY > 0                              
+#if LUA_OPTIMIZE_MEMORY > 0
   luaI_openlib(L, libname, l, 0, LUA_USELIGHTFUNCTIONS);
 #else
   luaI_openlib(L, libname, l, 0, LUA_USECCLOSURES);
-#endif  
+#endif
 }
 
 static int libsize (const luaL_Reg *l) {
@@ -446,10 +446,10 @@ LUALIB_API const char *luaL_findtable (lua_State *L, int idx,
 */
 
 
-#define bufflen(B)	((B)->p - (B)->buffer)
-#define bufffree(B)	((size_t)(LUAL_BUFFERSIZE - bufflen(B)))
+#define bufflen(B)  ((B)->p - (B)->buffer)
+#define bufffree(B) ((size_t)(LUAL_BUFFERSIZE - bufflen(B)))
 
-#define LIMIT	(LUA_MINSTACK/2)
+#define LIMIT   (LUA_MINSTACK/2)
 
 
 static int emptybuffer (luaL_Buffer *B) {
@@ -759,6 +759,9 @@ static int panic (lua_State *L) {
   (void)L;  /* to avoid warnings */
   fprintf(stderr, "PANIC: unprotected error in call to Lua API (%s)\n",
                    lua_tostring(L, -1));
+  #ifdef __riscv
+    asm("sbreak");
+  #endif
   return 0;
 }
 

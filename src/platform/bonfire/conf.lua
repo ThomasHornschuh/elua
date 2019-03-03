@@ -31,7 +31,7 @@ local ldscript = sf( "src/platform/%s/%s", platform, "riscv_local.ld" )
 if not comp.debug then
  delcf{ "-Os" }
  addcf{"-g", "-O2" }
-end 
+end
 -- Prepend with path
 specific_files = utils.prepend_path( specific_files, sf( "src/platform/%s", platform ) )
 
@@ -39,7 +39,7 @@ specific_files = utils.prepend_path( specific_files, sf( "src/platform/%s", plat
 -- Standard GCC flags
 
 addaf{ '-march=rv32im' ,'-mabi=ilp32' }
-addcf{ '-march=rv32im' ,'-mabi=ilp32' }
+addcf{ '-march=rv32im' ,'-mabi=ilp32', '-DRISCV32' }
 addcf{ '-ffunction-sections', '-fdata-sections', '-fno-strict-aliasing', '-Wall'}
 addlf{ '-march=rv32im' ,'-mabi=ilp32' }
 addlf{ '-nostartfiles', '-nostdlib', '-T', ldscript, '-Wl,--gc-sections', '-Wl,--allow-multiple-definition' }
