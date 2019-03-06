@@ -21,16 +21,14 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+// Globals
 static struct pico_device* dev;
+static int  dhcp_state = ELUA_DHCP_UNCONFIGURED;
+static bool debug_enabled = true;
+static int last_error = ELUA_NET_ERR_OK;
+static  int tick_semaphore = 0;
 
-static volatile int  dhcp_state = ELUA_DHCP_UNCONFIGURED;
-
-
-static volatile bool debug_enabled = true;
-
-static volatile int last_error = ELUA_NET_ERR_OK;
-
-static volatile int tick_semaphore = 0;
+static struct pico_ip4 local_address={0};
 
 
 // typedef struct {
@@ -434,7 +432,7 @@ int elua_pico_change_nameserver( elua_net_ip addr, uint8_t flag )
 
 static void cb_dhcp(void *cli,int code)
 {
-struct pico_ip4 address, gw, netmask, dns;
+struct pico_ip4  gw, netmask, dns;
 
 char adr_b[16],gw_b[16],netmask_b[16],dns_b[16];
 
@@ -443,12 +441,12 @@ char adr_b[16],gw_b[16],netmask_b[16],dns_b[16];
    switch(code) {
 
      case PICO_DHCP_SUCCESS:
-        address=pico_dhcp_get_address(cli);
+        local_address=pico_dhcp_get_address(cli);
         gw=pico_dhcp_get_gateway(cli);
         netmask=pico_dhcp_get_netmask(cli);
         dns=pico_dhcp_get_nameserver(cli,0);
 
-        pico_ipv4_to_string(adr_b,address.addr);
+        pico_ipv4_to_string(adr_b,local_address.addr);
         pico_ipv4_to_string(gw_b,gw.addr);
         pico_ipv4_to_string(netmask_b,netmask.addr);
         pico_ipv4_to_string(dns_b,dns.addr);
@@ -511,12 +509,21 @@ void elua_pico_tick()
 
 void elua_pico_unwind()
 {
-  tick_semaphore--;
+  if(tick_semaphore>0) tick_semaphore--;
 }
 
 void elua_pico_setdebug( bool d )
 {
   debug_enabled=d;
+}
+
+elua_net_ip elua_net_get_localip()
+{
+elua_net_ip ip;
+
+  ip.ipaddr = local_address.addr;
+  return ip;
+
 }
 
 

@@ -29,7 +29,6 @@ typedef struct  _dns_result {
   uint32_t ipaddr;
   bool success;
   t_dnscallback cb;
-  void * user_state;
 } dns_result_t;
 
 
@@ -50,5 +49,7 @@ void elua_pico_set_socketcallback( t_socketcallback cb );
 dns_result_t  * elua_net_lookup_async( const char* hostname, t_dnscallback cb  );
 
 int elua_pico_change_nameserver( elua_net_ip addr, uint8_t flag );
+
+elua_net_ip elua_net_get_localip();
 
 #endif

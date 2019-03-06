@@ -42,7 +42,6 @@
 typedef struct
 {
   uintptr_t sock; // Attention: How to deal with 64Bit Pointers?
-  lua_State *L;
 } sock_t;
 
 
@@ -132,7 +131,7 @@ static sock_t *push_socket( lua_State *L, uintptr_t sock )
       // Create userdata object for socket
       sock_t  *s = ( sock_t* )lua_newuserdata( L, sizeof( sock_t ) );
       s->sock = sock;
-      s->L=L;
+      
       luaL_getmetatable( L, NET_META_NAME );
       lua_setmetatable( L, -2 );
       // userdata is now on TOS
@@ -440,11 +439,12 @@ static void dns_cb( dns_result_t * r )
 {
   if (G_state == NULL) return ; // Don't run callbacks when Lua is not initalized
 
-  lua_State *L = (lua_State*) r->user_state;
-  if (!L) kassert_fail("dns_cb L is NULL");
+   
+   lua_State *L = lua_newthread( G_state );
+   if (!L) kassert_fail("dns_cb L is NULL");
 
 
-
+  //int top=lua_gettop( L );
   lua_getfield( L,LUA_REGISTRYINDEX,NET_CALLBACK_T_NAME );
   lua_pushlightuserdata( L,(void*)r );
   lua_gettable( L,-2 ); // Try to find callback
@@ -455,14 +455,17 @@ static void dns_cb( dns_result_t * r )
     register_callback( L, (void*)r, lua_gettop( L ) );
     lua_pop( L, 1 );
     //  Do the callback
+   
     lua_pushinteger( L,  r->ipaddr );
-    if ( lua_pcall( L,1,0,0 ) != 0 ) {
+    int res = lua_resume( L, 1 );
+    if (  res != 0 && res !=LUA_YIELD ) {
         elua_pico_unwind();
         callback_error( L );
-      };
-  } else {
-    lua_pop( L,1 ); // clean stack
-  }
+    };
+  } 
+  lua_pop( G_state, 1 ); // will hopefully GC the thread 
+
+  //if (top!=lua_gettop( L )) kassert_fail("Stack error in dns_cb");
   free( r );
 }
 
@@ -476,7 +479,6 @@ static int net_lookup( lua_State* L )
     // Run in callback mode
     dns_result_t * r = elua_net_lookup_async( name, &dns_cb );
     if ( r ) {
-      r->user_state = L;
       register_callback( L , r, 2 );
     } else     {
       luaL_error(L, "net.lookup failed");
@@ -551,25 +553,26 @@ static void socket_callback(t_socket_event ev, uintptr_t socket)
   sock_t *s = map_socket( G_state,socket );
 
   if ( s ) {
-    lua_getfield( s->L,LUA_REGISTRYINDEX,NET_CALLBACK_T_NAME );
-    lua_pushlightuserdata( s->L,(void*)socket );
-    lua_gettable( s->L,-2 ); // Try to find callback
-    lua_remove( s->L,-2 );  // remove callback table from stack
-    if ( lua_isfunction(s->L,-1) ) {
-      lua_pushstring( s->L,sock_events[(int)ev] );
+    lua_State *L = lua_newthread( G_state );
+    lua_getfield( L,LUA_REGISTRYINDEX,NET_CALLBACK_T_NAME );
+    lua_pushlightuserdata( L,(void*)socket );
+    lua_gettable( L,-2 ); // Try to find callback
+    lua_remove( L,-2 );  // remove callback table from stack
+    if ( lua_isfunction( L,-1) ) {
+      lua_pushstring( L ,sock_events[(int)ev] );
       lua_pushvalue( G_state,-1 ); // Dup socket object
-      lua_xmove( G_state,s->L,1 );
-      if ( lua_pcall( s->L,2,0,0 ) != 0 ) {
+      lua_xmove( G_state, L, 1 );
+      int res= lua_resume( L, 2 );
+      if ( res!=0 && res != LUA_YIELD ) {
         elua_pico_unwind();
-        callback_error( s->L );
+        callback_error( L );
       };
-   } else {
-     lua_pop(s->L,1); // clean stack
    }
+ 
    switch ( ev ) {
       case ELUA_NET_FIN:
         //printk("Socket FIN event\n");
-        if ( s ) finalize_socket( s->L, s);
+        if ( s ) finalize_socket( G_state, s);
         break;
 
       default:
@@ -577,7 +580,7 @@ static void socket_callback(t_socket_event ev, uintptr_t socket)
     }
   }
 
-  lua_pop( G_state,1 ); // clean Lua stack
+  lua_pop( G_state, 2 ); // clean Lua stack
 }
 
 
@@ -586,7 +589,7 @@ static int net_socket_callback(lua_State *L )
   sock_t *s = sock_check( L, 1 );
 
 
-  if ( lua_isfunction( s->L,2 ) || lua_isnil( s->L, 2 ) ) {
+  if ( lua_isfunction( L,2 ) || lua_isnil( L, 2 ) ) {
      register_callback( L, (void*)s->sock, 2 );
    } else
    {
@@ -644,6 +647,16 @@ uint8_t flag;
   return 1;
 }
 
+
+static int net_getlocal_ip( lua_State *L )
+{
+elua_net_ip res;
+
+  res = elua_net_get_localip();
+  lua_pushinteger( L, res.ipaddr );
+  return 1;
+}
+
 #endif
 
 
@@ -671,6 +684,7 @@ const LUA_REG_TYPE net_map[] =
   { LSTRKEY( "callback" ), LFUNCVAL( net_socket_callback ) }, // TH
   { LSTRKEY( "debug" ), LFUNCVAL( set_debug_mode ) }, // TH
   { LSTRKEY( "nameserver" ), LFUNCVAL( set_nameserver ) }, // TH
+  { LSTRKEY( "local_ip" ), LFUNCVAL( net_getlocal_ip ) }, // TH
 
 #endif
 #if LUA_OPTIMIZE_MEMORY > 0
