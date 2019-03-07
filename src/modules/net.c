@@ -465,7 +465,6 @@ static void dns_cb( dns_result_t * r )
   } 
   lua_pop( G_state, 1 ); // will hopefully GC the thread 
 
-  //if (top!=lua_gettop( L )) kassert_fail("Stack error in dns_cb");
   free( r );
 }
 
@@ -566,9 +565,10 @@ static void socket_callback(t_socket_event ev, uintptr_t socket)
       if ( res!=0 && res != LUA_YIELD ) {
         elua_pico_unwind();
         callback_error( L );
-      };
+    };
+    lua_pop( G_state, 1 ); // pop thread  
    }
- 
+   
    switch ( ev ) {
       case ELUA_NET_FIN:
         //printk("Socket FIN event\n");
@@ -579,8 +579,8 @@ static void socket_callback(t_socket_event ev, uintptr_t socket)
         ;// nothing
     }
   }
-
-  lua_pop( G_state, 2 ); // clean Lua stack
+  lua_pop( G_state, 1 ); // pop socket
+  
 }
 
 
