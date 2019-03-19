@@ -50,7 +50,7 @@ typedef struct {
 
 static elua_uip_accept_pending_t elua_uip_accept_pending[MAX_PENDING];
 
-static t_socketcallback  socket_cb = NULL;
+static t_socketcallback  g_socket_callback = NULL;
 
 void platform_debug_printk(const char* s, ...)
 {
@@ -67,7 +67,7 @@ va_list args;
 
 void elua_pico_set_socketcallback(t_socketcallback cb)
 {
-  socket_cb=cb;
+  g_socket_callback=cb;
 }
 
 void elua_net_set_debug_log(int enable)
@@ -94,12 +94,12 @@ int i;
   return -1;
 }
 
-static inline void  __cb(t_socket_event ev, struct pico_socket *s)
+static  void  __cb(t_socket_event ev, struct pico_socket *s)
 {
-  if (socket_cb) socket_cb(ev,(uintptr_t)s);
+  if (g_socket_callback) g_socket_callback(ev,(uintptr_t)s);
 }
 
-void cb_socket(uint16_t ev, struct pico_socket *s)
+static void cb_socket(uint16_t ev, struct pico_socket *s)
 {
    if (ev & PICO_SOCK_EV_CONN) {
      // Add to list of pending connections
@@ -236,7 +236,7 @@ bool cb_mode= tick_semaphore != 0; // recv called a pico_tick callback?
 
 elua_net_size elua_net_recv( int s, void *buf, elua_net_size maxsize, s16 readto, unsigned timer_id, timer_data_type to_us )
 {
-  return 0;
+  return -1;
 }
 
 
