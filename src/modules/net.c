@@ -143,16 +143,24 @@ static void finalize_socket( lua_State *L, sock_t *s)
 
 }
 
+// Creates new userdata and assigns the  metatable registered with name meta_name to it 
+static void* newuserdata_meta( lua_State *L, size_t sz, const char * meta_name )
+{
+void * ud = lua_newuserdata( L , sz );
+
+  luaL_getmetatable( L, meta_name );
+  lua_setmetatable( L, -2 );
+
+  return ud; 
+}
 
 static sock_t *push_socket( lua_State *L, uintptr_t sock )
 {
     if (stack_s_valid(sock)) {
       // Create userdata object for socket
-      sock_t  *s = ( sock_t* )lua_newuserdata( L, sizeof( sock_t ) );
+      sock_t  *s = ( sock_t* )newuserdata_meta( L, sizeof( sock_t ), NET_META_NAME );
       s->sock = sock;
       
-      luaL_getmetatable( L, NET_META_NAME );
-      lua_setmetatable( L, -2 );
       // userdata is now on TOS
 
       // Construct:
@@ -505,7 +513,15 @@ static int net_lookup( lua_State* L )
 
 // Timers repurpose the sock_t structure to store a timer id instead of sockets
 // Besides a different metatable there is not other difference 
-#define timer_check( L, idx ) ( sock_t* )luaL_checkudata( L, idx, NET_TIMER_META_NAME )
+
+
+typedef struct {
+  uint32_t id; // Timer Id
+  int ref; // Registry Index of associated callback
+
+} t_net_timer;
+
+#define net_timer_check( L, idx ) ( t_net_timer* )luaL_checkudata( L, idx, NET_TIMER_META_NAME )
 
 static void cb_timer(pico_time time, void * arg)
 {
@@ -514,39 +530,67 @@ static void cb_timer(pico_time time, void * arg)
    lua_State *L = lua_newthread( G_state );
    if (!L) kassert_fail("cb_timer: L is NULL");
 
-   push_callback( L, arg);
+   lua_rawgeti(L, LUA_REGISTRYINDEX,(int) arg );
    if ( lua_isfunction( L, -1) ) {
-     unref_callback( L, arg );
      
      // Do the callback
      lua_pushnumber( L, time );
-     lua_pushinteger( L, (int)arg );
-     int res = lua_resume( L, 2 );
+     int res = lua_resume( L, 1 );
      if (  res != 0 && res !=LUA_YIELD ) {
         callback_error( L );
      }
    }
+   luaL_unref(L, LUA_REGISTRYINDEX, (int)arg );
    lua_pop( G_state, 1 ); // will hopefully GC the thread 
-   free(arg);
+   
 }
 
 
 static int net_timer( lua_State *L )
 {
 
-
    pico_time  expire = (pico_time)luaL_checknumber (L, 1);
    luaL_checkanyfunction( L, 2);
-   
-   uint32_t * timer_obj=malloc(sizeof(uint32_t));
-   *timer_obj = pico_timer_add(  expire, &cb_timer, (void*) timer_obj );
-   register_callback( L, (void*)timer_obj,2);
-   lua_pushlightuserdata( L, (void*)timer_obj );
 
-   return 1; 
+   t_net_timer * t = (t_net_timer*) newuserdata_meta( L, sizeof(t_net_timer), NET_TIMER_META_NAME ); 
+   // Store callback function in registry
+   lua_pushvalue( L, 2 );  
+   t->ref = luaL_ref(L, LUA_REGISTRYINDEX);
+   t->id = pico_timer_add(  expire, &cb_timer, (void*) t->ref );
+
+   return 1; // return userdata object
 
 }
 
+static int net_timer_cancel( lua_State *L )
+{
+
+t_net_timer *t = net_timer_check( L, 1 );
+bool valid=false;
+  
+   if (t->id) {
+     // Check if calllback is still registered - this means that the timer has not expired yet 
+     lua_rawgeti(L, LUA_REGISTRYINDEX,t->ref );
+     valid = lua_isfunction (L, -1 );
+     if (valid) {
+        pico_timer_cancel( t->id );
+        luaL_unref(L, LUA_REGISTRYINDEX, t->ref );
+        t->id=0;
+        t->ref=0;
+     }
+     lua_pop( L, 1 ); 
+   }  
+   lua_pushboolean( L, valid );
+   return 1;
+}
+
+static int net_timer_to_string( lua_State *L )
+{
+t_net_timer *t = net_timer_check( L, 1 );
+
+   lua_pushfstring( L, "net.timer id(%d)",t->id );
+   return 1;
+}
 
 #else
 // Lua: iptype = lookup( "name" )
@@ -782,14 +826,17 @@ static const LUA_REG_TYPE socket_mt_map[] =
   { LNILKEY, LNILVAL }
 };
 
-// #ifdef BUILD_PICOTCP
-// static const LUA_REG_TYPE timer_mt_map[] =
-// {
-//    { LSTRKEY( "__gc" ), LFUNCVAL( timer_gc ) },
-//    { LNILKEY, LNILVAL }
-// }
+#ifdef BUILD_PICOTCP
+static const LUA_REG_TYPE timer_mt_map[] =
+{
+   { LSTRKEY( "__index" ), LRO_ROVAL( timer_mt_map ) },
+   //{ LSTRKEY( "__gc" ), LFUNCVAL( timer_gc ) },
+   { LSTRKEY( "cancel" ), LFUNCVAL( net_timer_cancel ) },
+   { LSTRKEY( "__tostring" ), LFUNCVAL( net_timer_to_string )},
+   { LNILKEY, LNILVAL }
+};
 
-// #endif 
+#endif 
 
 
 LUALIB_API int luaopen_net( lua_State *L )
@@ -803,7 +850,7 @@ LUALIB_API int luaopen_net( lua_State *L )
   init_socket_table(L);
 #ifdef BUILD_PICOTCP
   elua_pico_set_socketcallback(&cb_socket);
-  //luaL_rometatable( L, NET_TIMER_META_NAME, ( void* )timer_mt_map );
+  luaL_rometatable( L, NET_TIMER_META_NAME, ( void* )timer_mt_map );
 #endif
 
   return 0;
