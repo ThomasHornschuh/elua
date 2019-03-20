@@ -20,13 +20,15 @@
 
 #ifdef BUILD_PICOTCP
 #include "pico_socket.h"
+#include "pico_stack.h"
 #include "elua_picotcp.h"
 #endif
 
-#define NET_META_NAME      "eLua.net"
+#define NET_META_NAME      "eLua.net.socket"
 #define NET_SOCK_T_NAME    "eLua.net.socketTable"
 #define NET_CALLBACK_T_NAME "eLua.net.callbackTable"
 #define NET_WEAK_META_NAME  "eLua.net.weakmetaTable"
+#define NET_TIMER_META_NAME "elua.net.timer"
 #define THREAD_KEY "eLua.net.thread"
 
 
@@ -111,6 +113,23 @@ static void register_callback( lua_State *L,void*  keyId, int idx )
 //   if (top!=lua_gettop(L)) kassert_fail("register_callback");
 }
 
+
+// Pushes the function associated with keyId to the top of the stack
+static void push_callback( lua_State *L, void* keyId )
+{
+  lua_getfield( L,LUA_REGISTRYINDEX,NET_CALLBACK_T_NAME );
+  lua_pushlightuserdata( L,(void*)keyId );
+  lua_gettable( L,-2 ); // Try to find callback
+  lua_remove( L,-2 );  // remove callback table from stack
+}
+
+static void unref_callback( lua_State *L, void* keyId )
+{
+  lua_pushnil( L );
+  register_callback( L, keyId, lua_gettop( L ) ); 
+  lua_pop( L, 1 );
+  
+}
 
 // Helper function for cleaning up a socket
 static void finalize_socket( lua_State *L, sock_t *s)
@@ -435,7 +454,7 @@ static int net_recv( lua_State *L )
 // Lua: iptype = lookup( "name" ) or
 // Lua lookup (name, function(iptype))
 
-static void dns_cb( dns_result_t * r )
+static void cb_dns( dns_result_t * r )
 {
   if (G_state == NULL) return ; // Don't run callbacks when Lua is not initalized
 
@@ -444,24 +463,15 @@ static void dns_cb( dns_result_t * r )
    if (!L) kassert_fail("dns_cb L is NULL");
 
 
-  //int top=lua_gettop( L );
-  lua_getfield( L,LUA_REGISTRYINDEX,NET_CALLBACK_T_NAME );
-  lua_pushlightuserdata( L,(void*)r );
-  lua_gettable( L,-2 ); // Try to find callback
-  lua_remove( L,-2 );  // remove callback table from stack
+  push_callback( L, (void*)r );
   if ( lua_isfunction(L,-1) ) {
-    // Remove callback from cb table, because it will never be called again
-    lua_pushnil( L );
-    register_callback( L, (void*)r, lua_gettop( L ) );
-    lua_pop( L, 1 );
+    unref_callback( L, (void*)r );
     //  Do the callback
-   
     lua_pushinteger( L,  r->ipaddr );
     int res = lua_resume( L, 1 );
     if (  res != 0 && res !=LUA_YIELD ) {
-        elua_pico_unwind();
         callback_error( L );
-    };
+    }
   } 
   lua_pop( G_state, 1 ); // will hopefully GC the thread 
 
@@ -476,7 +486,7 @@ static int net_lookup( lua_State* L )
 
   if ( lua_isfunction( L, 2) ) {
     // Run in callback mode
-    dns_result_t * r = elua_net_lookup_async( name, &dns_cb );
+    dns_result_t * r = elua_net_lookup_async( name, &cb_dns );
     if ( r ) {
       register_callback( L , r, 2 );
     } else     {
@@ -492,6 +502,50 @@ static int net_lookup( lua_State* L )
 
 }
 
+
+// Timers repurpose the sock_t structure to store a timer id instead of sockets
+// Besides a different metatable there is not other difference 
+#define timer_check( L, idx ) ( sock_t* )luaL_checkudata( L, idx, NET_TIMER_META_NAME )
+
+static void cb_timer(pico_time time, void * arg)
+{
+   if (G_state == NULL) return ; // Don't run callbacks when Lua is not initalized
+   
+   lua_State *L = lua_newthread( G_state );
+   if (!L) kassert_fail("cb_timer: L is NULL");
+
+   push_callback( L, arg);
+   if ( lua_isfunction( L, -1) ) {
+     unref_callback( L, arg );
+     
+     // Do the callback
+     lua_pushnumber( L, time );
+     lua_pushinteger( L, (int)arg );
+     int res = lua_resume( L, 2 );
+     if (  res != 0 && res !=LUA_YIELD ) {
+        callback_error( L );
+     }
+   }
+   lua_pop( G_state, 1 ); // will hopefully GC the thread 
+   free(arg);
+}
+
+
+static int net_timer( lua_State *L )
+{
+
+
+   pico_time  expire = (pico_time)luaL_checknumber (L, 1);
+   luaL_checkanyfunction( L, 2);
+   
+   uint32_t * timer_obj=malloc(sizeof(uint32_t));
+   *timer_obj = pico_timer_add(  expire, &cb_timer, (void*) timer_obj );
+   register_callback( L, (void*)timer_obj,2);
+   lua_pushlightuserdata( L, (void*)timer_obj );
+
+   return 1; 
+
+}
 
 
 #else
@@ -544,7 +598,7 @@ static const char * sock_events[] = {
   "error"
 };
 
-static void socket_callback(t_socket_event ev, uintptr_t socket)
+static void cb_socket(t_socket_event ev, uintptr_t socket)
 {
 
   if ( !G_state ) return;
@@ -553,22 +607,17 @@ static void socket_callback(t_socket_event ev, uintptr_t socket)
 
   if ( s ) {
     lua_State *L = lua_newthread( G_state );
-    lua_getfield( L,LUA_REGISTRYINDEX,NET_CALLBACK_T_NAME );
-    lua_pushlightuserdata( L,(void*)socket );
-    lua_gettable( L,-2 ); // Try to find callback
-    lua_remove( L,-2 );  // remove callback table from stack
+    push_callback( L, (void*)socket );
     if ( lua_isfunction( L,-1) ) {
       lua_pushstring( L ,sock_events[(int)ev] );
-      lua_pushvalue( G_state,-1 ); // Dup socket object
+      lua_pushvalue( G_state,-2 ); // Dup socket object
       lua_xmove( G_state, L, 1 );
       int res= lua_resume( L, 2 );
       if ( res!=0 && res != LUA_YIELD ) {
-        elua_pico_unwind();
         callback_error( L );
-    };
-    lua_pop( G_state, 1 ); // pop thread  
+      }; 
    }
-   
+   lua_pop( G_state, 1 ); // pop thread  
    switch ( ev ) {
       case ELUA_NET_FIN:
         //printk("Socket FIN event\n");
@@ -685,6 +734,7 @@ const LUA_REG_TYPE net_map[] =
   { LSTRKEY( "debug" ), LFUNCVAL( set_debug_mode ) }, // TH
   { LSTRKEY( "nameserver" ), LFUNCVAL( set_nameserver ) }, // TH
   { LSTRKEY( "local_ip" ), LFUNCVAL( net_getlocal_ip ) }, // TH
+  { LSTRKEY( "timer" ), LFUNCVAL( net_timer ) }, // TH
 
 #endif
 #if LUA_OPTIMIZE_MEMORY > 0
@@ -732,6 +782,14 @@ static const LUA_REG_TYPE socket_mt_map[] =
   { LNILKEY, LNILVAL }
 };
 
+// #ifdef BUILD_PICOTCP
+// static const LUA_REG_TYPE timer_mt_map[] =
+// {
+//    { LSTRKEY( "__gc" ), LFUNCVAL( timer_gc ) },
+//    { LNILKEY, LNILVAL }
+// }
+
+// #endif 
 
 
 LUALIB_API int luaopen_net( lua_State *L )
@@ -744,7 +802,8 @@ LUALIB_API int luaopen_net( lua_State *L )
 
   init_socket_table(L);
 #ifdef BUILD_PICOTCP
-  elua_pico_set_socketcallback(&socket_callback);
+  elua_pico_set_socketcallback(&cb_socket);
+  //luaL_rometatable( L, NET_TIMER_META_NAME, ( void* )timer_mt_map );
 #endif
 
   return 0;
