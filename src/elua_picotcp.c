@@ -502,7 +502,7 @@ void elua_pico_tick()
     if (tick_semaphore) return; // avoid recursive pico tick calls
     tick_semaphore++;
     pico_stack_tick();
-    tick_semaphore--;
+    if (tick_semaphore>0) tick_semaphore--;
 
   }
 }
