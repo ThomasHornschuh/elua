@@ -407,13 +407,13 @@ int _svfprintf_r( struct _reent *r, FILE *stream, const char *format, va_list ap
   return _svfiprintf_r( r, stream, format, ap );
 }
 
-extern int __svfiscanf_r(struct _reent *,FILE *, _CONST char *,va_list);
+extern int __svfiscanf_r(struct _reent *,FILE *, const char *,va_list);
 int __svfscanf_r( struct _reent *r, FILE *stream, const char *format, va_list ap )
 {
   return __svfiscanf_r( r, stream, format, ap );
 }
 
-extern int __ssvfiscanf_r(struct _reent *,FILE *, _CONST char *,va_list);
+extern int __ssvfiscanf_r(struct _reent *,FILE *, const char *,va_list);
 int __ssvfscanf_r( struct _reent *r, FILE *stream, const char *format, va_list ap )
 {
   return __ssvfiscanf_r( r, stream, format, ap );
