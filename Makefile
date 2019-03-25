@@ -7,7 +7,7 @@ TARGET_PREFIX ?= riscv32-unknown-elf
 
 .PHONY: build clean
 build:
-	lua5.1 build_elua.lua board=$(BOARD) target=$(TARGET)
+	lua5.1 build_elua.lua board=$(BOARD) target=$(TARGET) debug=$(DEBUG)
 	$(TARGET_PREFIX)-objdump -S -d elua_$(TARGET)_$(BOARD).elf  >$(TARGET)_$(BOARD).lst
 
 clean:
