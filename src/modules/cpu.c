@@ -117,12 +117,18 @@ static int cpuh_int_helper( lua_State *L, int mode )
   elua_int_resnum resnum;
   int res;
 
-  if( lua_gettop( L ) > 0 )
+  int top = lua_gettop( L ); 
+
+  if( top > 0 )
   {
     id = ( elua_int_id )luaL_checkinteger( L, 1 );
     if( id < ELUA_INT_FIRST_ID || id > INT_ELUA_LAST )
       return luaL_error( L, "invalid interrupt ID" );
-    for( i = 2; i <= lua_gettop( L ); i ++ )
+// TH: Emit error when no resnum is given
+    if ( top < 2 )
+      return luaL_error( L, "missing interrupt resource" );
+// TH      
+    for( i = 2; i <= top; i ++ ) // TH
     {
       resnum = ( elua_int_resnum )luaL_checkinteger( L, i );
       res = platform_cpu_set_interrupt( id, resnum, mode );
@@ -136,7 +142,7 @@ static int cpuh_int_helper( lua_State *L, int mode )
   }
   else
 #else // #ifdef BUILD_LUA_INT_HANDLERS
-  if( lua_gettop( L ) > 0 )
+  if( top > 0 ) // TH 
     return luaL_error( L, "Lua interrupt support not available." );
 #endif // #ifdef BUILD_LUA_INT_HANDLERS
   platform_cpu_set_global_interrupts( mode );
