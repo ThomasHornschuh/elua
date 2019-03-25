@@ -11,6 +11,7 @@
 
 
 #include "bonfire_uart.h"
+#include "mem_rw.h"
 
 #include "uart.h" // depreciated !!!!
 
@@ -33,8 +34,28 @@ volatile uint32_t eth_timer_fired=0;
 
 #define __virt_timer_period ((long)(SYSCLK/VTMR_FREQ_HZ))
 
+static int ethernet_recv_pending = 0;
 
 #ifdef __ARTY_H
+
+void ethernet_irq_handler()
+{
+   if (_read_word((void*)BONFIRE_SYSIO) & 0x01) { // Pending IRQ
+      _set_bit(ARTY_LEDS4TO7,0); // light LED4     
+#ifdef  BUILD_UIP      
+      elua_uip_mainloop();
+#endif      
+      ethernet_recv_pending=1;
+      cmn_int_handler(INT_ETHERNET_RECV,0);
+      _write_word((void*)BONFIRE_SYSIO,0x01); // clear IRQ
+      _clear_bit(ARTY_LEDS4TO7,0);
+
+   } else
+     printk("Uups, ethernet irq handler called without pending IRQ\n");
+
+
+}
+
 static void ext_irq_handler()
 {
 uint32_t pending;
@@ -59,6 +80,12 @@ static int enabled[NUM_UART];
 
 #define FIFO_INT_MASK (1<<BIT_FIFO_INT_PENDING)
 
+static int int_rx_fifo_get_status(elua_int_resnum resnum)
+{
+   return enabled[resnum];
+}
+
+
 static void  uart_irq_handler(int cause)
 {
 int i;
@@ -78,7 +105,7 @@ volatile uint32_t *uart_base;
    }
 }
 
-int int_uart_rx_fifo_set_status( elua_int_resnum resnum, int state)
+static int int_uart_rx_fifo_set_status( elua_int_resnum resnum, int state)
 {
 int old = enabled[resnum];
 volatile uint32_t *uart_base;
@@ -99,12 +126,9 @@ volatile uint32_t *uart_base;
 }
 
 
-int int_uart_rx_fifo_get_status(elua_int_resnum resnum)
-{
-   return enabled[resnum];
-}
 
-int int_uart_rx_fifo_get_flag( elua_int_resnum resnum, int clear)
+
+static int int_uart_rx_fifo_get_flag( elua_int_resnum resnum, int clear)
 {
 int res = pending[resnum];
 volatile uint32_t *uart_base;
@@ -130,26 +154,56 @@ volatile uint32_t *uart_base;
  * */
 
 
-int int_tmr_match_set_status( elua_int_resnum resnum, int state)
+static int int_tmr_match_set_status( elua_int_resnum resnum, int state)
 {
     printk("int_tmr_match_set_status %d %d\n",resnum,state);
     return 0;
 }
 
 
-int int_tmr_match_get_status(elua_int_resnum resnum)
+static int int_tmr_match_get_status(elua_int_resnum resnum)
 {
    printk("int_tmr_match_get_status %d %d\n",resnum);
    return 0;
 }
 
-int int_tmr_match_get_flag( elua_int_resnum resnum, int clear)
+static int int_tmr_match_get_flag( elua_int_resnum resnum, int clear)
 {
      printk("int_tmr_match_get_flag %d %d\n",resnum,clear);
      return 0;
 }
 
 
+#ifdef BUILD_PICOTCP
+static int int_ethernet_recv_set_status( elua_int_resnum resnum, int state )
+{
+int old_state = read_csr(mie) & MIP_MEIP?1:0;
+
+  
+   if (state)
+     set_csr(mie,MIP_MEIP);
+   else 
+     clear_csr(mie,MIP_MEIP);
+   
+   return old_state;  
+
+}
+
+
+static int int_ethernet_recv_get_status( elua_int_resnum resnum )
+{
+  return read_csr(mie) & MIP_MEIP?1:0;
+}
+
+static int int_ethernet_recv_get_flag( elua_int_resnum resnum, int clear )
+{
+int res= ethernet_recv_pending;
+
+    if (clear) ethernet_recv_pending=0;
+    return res; 
+}
+
+#endif
 
 const elua_int_descriptor elua_int_table[ INT_ELUA_LAST ] =
 {
@@ -158,7 +212,11 @@ const elua_int_descriptor elua_int_table[ INT_ELUA_LAST ] =
   { int_tmr_match_set_status, int_tmr_match_get_status, int_tmr_match_get_flag }
 #ifdef INT_UART_RX_FIFO
   ,
-  { int_uart_rx_fifo_set_status, int_uart_rx_fifo_get_status,int_uart_rx_fifo_get_flag }
+  { int_uart_rx_fifo_set_status, int_rx_fifo_get_status, int_uart_rx_fifo_get_flag }
+#endif
+#ifdef BUILD_PICOTCP
+   ,
+   {int_ethernet_recv_set_status, int_ethernet_recv_get_status, int_ethernet_recv_get_flag }
 #endif
 };
 
@@ -201,13 +259,10 @@ void timer_irq_handler()
 }
 
 
-
-
-
 void platform_int_init()
 {
 
-   printk("__virt_timer_period %ld\n",__virt_timer_period);
+   //printk("__virt_timer_period %ld \n",__virt_timer_period);
    mtime_setinterval(__virt_timer_period);
 
 #ifdef INT_UART_RX_FIFO

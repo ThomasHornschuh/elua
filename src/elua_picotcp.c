@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <errno.h>
 
 // Globals
 static struct pico_device* dev;
@@ -27,16 +28,12 @@ static int  dhcp_state = ELUA_DHCP_UNCONFIGURED;
 static bool debug_enabled = true;
 static int last_error = ELUA_NET_ERR_OK;
 static  int tick_semaphore = 0;
+static FILE* debug_file=NULL;
 
 static struct pico_ip4 local_address={0};
 
 
-// typedef struct {
-//   struct pico_socket* s;
-//   uint16_t event;
 
-
-// } t_socket;
 
 typedef struct {
   u8 accept_request; // 0=accepted/not used 1=pending
@@ -58,7 +55,8 @@ va_list args;
 
   if (debug_enabled) {
     va_start (args, s);
-    vprintf (s, args);
+    vfprintf(debug_file?debug_file:stdout,s,args);
+    //vprintf (s, args);
     va_end (args);
   }
 }
@@ -516,6 +514,24 @@ void elua_pico_setdebug( bool d )
 {
   debug_enabled=d;
 }
+
+int elua_pico_setdebug_output(const char* filename)
+{
+  if (debug_file) 
+    fclose(debug_file);
+
+  if (filename==NULL) {
+     debug_file=NULL;
+     return 0;
+  } else {
+     debug_file=fopen(filename,"w");
+     if (!debug_file)
+       return errno;
+     else   
+      return 0;
+  } 
+}
+
 
 elua_net_ip elua_net_get_localip()
 {

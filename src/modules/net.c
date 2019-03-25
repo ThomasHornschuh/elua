@@ -12,6 +12,7 @@
 #include <stddef.h>
 #include "lrotable.h"
 #include <stdint.h>
+#include <errno.h>
 
 #include "console.h" // TODO: Remove...
 
@@ -711,16 +712,25 @@ int optvalue =   luaL_checkinteger( L, 3 );
   return 1;
 }
 
-static int set_debug_mode( lua_State *L )
+static int net_set_debug_mode( lua_State *L )
 {
-int mode= luaL_checkint(L, -1 );
 
+const char* filename=NULL;  
+int mode=luaL_checkint(L, 1 );
+
+  if ( lua_gettop( L )>=2 )
+    filename=luaL_checkstring( L,2 ); 
+
+  int err=elua_pico_setdebug_output(filename);
+  if (err) {
+    return luaL_error( L, strerror(err) );
+  } 
   elua_pico_setdebug( mode );
   return 0;
 
 }
 
-static int set_nameserver(lua_State *L )
+static int net_set_nameserver(lua_State *L )
 {
 elua_net_ip ip;
 const char * opmode;
@@ -775,8 +785,8 @@ const LUA_REG_TYPE net_map[] =
   { LSTRKEY( "tick" ), LFUNCVAL( net_stack_tick ) }, // TH
   { LSTRKEY( "socket_table" ), LFUNCVAL( net_get_sockettable ) }, // TH
   { LSTRKEY( "callback" ), LFUNCVAL( net_socket_callback ) }, // TH
-  { LSTRKEY( "debug" ), LFUNCVAL( set_debug_mode ) }, // TH
-  { LSTRKEY( "nameserver" ), LFUNCVAL( set_nameserver ) }, // TH
+  { LSTRKEY( "debug" ), LFUNCVAL( net_set_debug_mode ) }, // TH
+  { LSTRKEY( "nameserver" ), LFUNCVAL( net_set_nameserver ) }, // TH
   { LSTRKEY( "local_ip" ), LFUNCVAL( net_getlocal_ip ) }, // TH
   { LSTRKEY( "timer" ), LFUNCVAL( net_timer ) }, // TH
 

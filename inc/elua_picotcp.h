@@ -40,6 +40,7 @@ void elua_pico_init();
 void elua_pico_tick();
 void elua_pico_unwind();
 void elua_pico_setdebug(bool d);
+int elua_pico_setdebug_output(const char* filename);
 
 uintptr_t elua_pico_getsocketoption( uintptr_t socket, int option );
 int  elua_pico_setsocketoption( uintptr_t socket, int option, int value );

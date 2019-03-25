@@ -13,6 +13,7 @@ return {
     luaints=true,
     tcpip = { 
       stack="picotcp",
+      buffered=true,
       ip = "192.168.26.200", netmask = "255.255.255.0", 
       gw = "192.168.26.2", dns = "192.168.26.2" },
     dns=false,
@@ -46,6 +47,7 @@ return {
     'INT_TMR_MATCH',
     'INT_UART_RX_FIFO',
     'GPIO_BASE',
+    'INT_ETHERNET_RECV',
     'MTIME_BASE',
     'SPIFLASH_BASE',
     'UART_BASE',

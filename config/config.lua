@@ -308,7 +308,7 @@ function compile_board( fname, boardname )
   if not gen then return false, err end
 
   -- TH:
-  local ipstack= glconf.ELUA_CONF_IP_STACK.value or ''
+  local ipstack= ( glconf.ELUA_CONF_IP_STACK and  glconf.ELUA_CONF_IP_STACK.value ) or ''
 
   -- Return the contents of the header, as well as the name of the CPU used by this
   -- board (this information is needed by the builder) and the build information

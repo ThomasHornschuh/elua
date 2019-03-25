@@ -19,8 +19,6 @@
 #endif
 
 
-
-
 #include "encoding.h"
 #include <string.h>
 
@@ -28,7 +26,7 @@
 
 #define ETH_BUFSIZE_WORDS (0x07f0/4)
 
-static volatile int in_ethernet_irq = 0;
+//static volatile int in_ethernet_irq = 0;
 
 // Buffer Offsets
 #define O_ETHERTYPE 12
@@ -69,9 +67,9 @@ static const uint8_t c_mac[] =  {0,0, 0x5e,0,0x0fa,0x0ce };
   _write_word(ETHL_RX_PONG_CTRL,0x0);
   _write_word(ETHL_TX_PING_CTRL,0);
 
-
+  _write_word(ETHL_GIE,0x80000000); // Enable Ethernet Interrupts
+   
 #ifdef BUILD_UIP
-   _write_word(ETHL_GIE,0x80000000); // Enable Ethernet Interrupts
    set_csr(mie,MIP_MEIP); // Enable External Interrupt
    struct uip_eth_addr tempAddr;
    tempAddr.addr=c_mac;
@@ -209,24 +207,26 @@ u32 platform_eth_get_elapsed_time(void)
 
 
 
-void ethernet_irq_handler()
-{
-   if (_read_word((void*)BONFIRE_SYSIO) & 0x01) { // Pending IRQ
-
-#ifdef  BUILD_UIP
-      _set_bit(ARTY_LEDS4TO7,1); // light LED4
-      in_ethernet_irq=1;
-      elua_uip_mainloop();
-      in_ethernet_irq=0;
-      _write_word((void*)BONFIRE_SYSIO,0x01); // clear IRQ
-      _clear_bit(ARTY_LEDS4TO7,1);
-
-#endif
-   } else
-     printk("Uups, ethernet irq handler called without pending IRQ\n");
+// void ethernet_irq_handler()
+// {
+//    if (_read_word((void*)BONFIRE_SYSIO) & 0x01) { // Pending IRQ
 
 
-}
+//       _set_bit(ARTY_LEDS4TO7,1); // light LED4
+//       in_ethernet_irq=1;
+// #ifdef  BUILD_UIP      
+//       elua_uip_mainloop();
+// #endif      
+//       in_ethernet_irq=0;
+//       _write_word((void*)BONFIRE_SYSIO,0x01); // clear IRQ
+//       _clear_bit(ARTY_LEDS4TO7,1);
+
+
+//    } else
+//      printk("Uups, ethernet irq handler called without pending IRQ\n");
+
+
+// }
 
 void uip_log(char *msg)
 {
