@@ -51,10 +51,14 @@ local out=''
       print("Warning: buffered parameter ignored for UIP stack")
     end  
  elseif stack=="picotcp" then
-   out= out .. gen.print_define('BUILD_PICOTCP') ..
-        gen.simple_gen('PICOTCP_BUFFERED',data,generated)..
-        gen.simple_gen('PIOCTCP_NUMBUFFERS',data,generated)
+   out= out .. gen.print_define('BUILD_PICOTCP')
+              
    generated.BUILD_PICOTCP=true 
+   if data.PICOTCP_BUFFERED.value==1 then 
+      out = out .. gen.print_define('PICOTCP_BUFFERED') ..
+                   gen.simple_gen('PIOCTCP_NUMBUFFERS',data,generated)
+      generated.PICOTCP_BUFFERED=true
+   end  
  end 
 
  out = out ..
@@ -274,7 +278,7 @@ function init()
     gen=tcpip_gen,
     attrs = {
       stack=at.choice_attr('ELUA_CONF_IP_STACK',{'uip','picotcp'},'uip'),
-      buffered=at.bool_attr('PICOTCP_BUFFERED'),
+      buffered=at.bool_attr('PICOTCP_BUFFERED',false),
       buffers=at.int_attr('PIOCTCP_NUMBUFFERS',4,32,8),
       ip = at.ip_attr( 'ELUA_CONF_IPADDR' ),
       netmask = at.ip_attr( 'ELUA_CONF_NETMASK' ),

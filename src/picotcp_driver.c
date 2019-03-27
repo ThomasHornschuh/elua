@@ -10,9 +10,9 @@
 
 #define MAX_FRAME 1524 // make sure the number is dvidible by four 
 
-#ifdef PICOTCP_BUFFERED
-
 typedef  uint8_t t_eth_frame_buffer[MAX_FRAME];
+
+#ifdef PICOTCP_BUFFERED
 
 static t_eth_frame_buffer buffers[PIOCTCP_NUMBUFFERS];
 static u32 frame_len[PIOCTCP_NUMBUFFERS];
@@ -36,7 +36,6 @@ void check_fifo()
   if (next_read_buffrer < 0 || next_read_buffrer > (PIOCTCP_NUMBUFFERS-1) )
     kassert_fail("next_read_buffrer out of range ");  
 }
-
 
 #endif 
 
