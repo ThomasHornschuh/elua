@@ -759,8 +759,21 @@ elua_net_ip res;
   lua_pushinteger( L, res.ipaddr );
   return 1;
 }
+#ifdef PICOTCP_BUFFERED
 
-#endif
+u64  net_fifo_overflow;
+u64  net_total_packets;
+
+static int net_get_driver_stats( lua_State *L ) 
+{
+   lua_pushnumber( L, (lua_Number)net_total_packets );
+   lua_pushnumber( L, (lua_Number)net_fifo_overflow );
+   return 2;
+
+}
+#endif // PICOTCP_BUFFERED
+
+#endif // BUILD_PICOTCP
 
 
 // Module function map
@@ -789,6 +802,9 @@ const LUA_REG_TYPE net_map[] =
   { LSTRKEY( "nameserver" ), LFUNCVAL( net_set_nameserver ) }, // TH
   { LSTRKEY( "local_ip" ), LFUNCVAL( net_getlocal_ip ) }, // TH
   { LSTRKEY( "timer" ), LFUNCVAL( net_timer ) }, // TH
+#ifdef   PICOTCP_BUFFERED
+  { LSTRKEY( "get_driver_stats" ), LFUNCVAL( net_get_driver_stats ) }, // TH
+#endif   
 
 #endif
 #if LUA_OPTIMIZE_MEMORY > 0

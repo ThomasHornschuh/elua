@@ -19,7 +19,8 @@ static u32 frame_len[PIOCTCP_NUMBUFFERS];
 
 static int next_free_buffer = 0;
 static int next_read_buffrer = 0;
-static u64 fifo_overflow;
+u64  net_fifo_overflow = 0;
+u64  net_total_packets = 0;
 
 #define fifo_empty() ( next_free_buffer== next_read_buffrer )
 #define fifo_full() ( ((next_free_buffer + 1) % PIOCTCP_NUMBUFFERS) == next_read_buffrer   )
@@ -91,13 +92,17 @@ u32 len;
 
     for(;;) {
         if (fifo_full()) {
-            fifo_overflow++;
             len = platform_eth_get_packet_nb( NULL,0 ); // just clear buffer
-            if (len==0) break; 
+            if (len > 0) {
+              net_fifo_overflow++;
+              net_total_packets++;
+            }
+            
             break;
         } else {
             len = platform_eth_get_packet_nb( buffers[next_free_buffer],MAX_FRAME );
             if (len > 0) {
+                net_total_packets++;
                 frame_len[next_free_buffer] = len;
                 fifo_cnt_incr( next_free_buffer );
                 check_fifo();

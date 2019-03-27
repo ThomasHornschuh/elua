@@ -14,6 +14,7 @@ return {
     tcpip = { 
       stack="picotcp",
       buffered=true,
+      buffers=32,
       ip = "192.168.26.200", netmask = "255.255.255.0", 
       gw = "192.168.26.2", dns = "192.168.26.2" },
     dns=false,

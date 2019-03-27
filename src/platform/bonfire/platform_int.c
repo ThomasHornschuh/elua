@@ -46,8 +46,8 @@ void ethernet_irq_handler()
       elua_uip_mainloop();
 #endif      
       ethernet_recv_pending=1;
-      cmn_int_handler(INT_ETHERNET_RECV,0);
       _write_word((void*)BONFIRE_SYSIO,0x01); // clear IRQ
+      cmn_int_handler(INT_ETHERNET_RECV,0);
       _clear_bit((void*)ARTY_LEDS4TO7,0);
 
    } else
