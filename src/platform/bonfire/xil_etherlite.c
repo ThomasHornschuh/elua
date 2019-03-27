@@ -161,9 +161,9 @@ int length;
       default:
         length=ethertype>MAX_FRAME?MAX_FRAME:ethertype;
     }
-    if (length>maxlen) length=maxlen;
-
-     memcpy(buf,(void*)currentBuff,length);
+    
+    size_t copylen=length>maxlen?maxlen:length; 
+    if (copylen) memcpy(buf,(void*)currentBuff,copylen);
      _write_word((void*)currentBuff+ETHL_OFFSET_CTRL,0x8); // clear buffer, enable interrupts
     //  int i;
     //  for(i=0;i<16;i++) dbg("%x ",((uint8_t*)buf)[i]);

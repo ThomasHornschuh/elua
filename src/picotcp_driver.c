@@ -8,7 +8,7 @@
 #include "pico_stack.h"
 #include "pico_device.h"
 
-#define MAX_FRAME 1522
+#define MAX_FRAME 1524 // make sure the number is dvidible by four 
 
 #ifdef PICOTCP_BUFFERED
 
@@ -89,19 +89,23 @@ static void driver_eth_rx_int(elua_int_resnum resnum )
 {
 u32 len;
 
-  for(;;) {
-    len = platform_eth_get_packet_nb( buffers[next_free_buffer],MAX_FRAME);
-    if ( len > 0) {
+    for(;;) {
         if (fifo_full()) {
-          fifo_overflow++;
+            fifo_overflow++;
+            len = platform_eth_get_packet_nb( NULL,0 ); // just clear buffer
+            if (len==0) break; 
+            break;
         } else {
-          frame_len[next_free_buffer]=len;
-          fifo_cnt_incr( next_free_buffer );
-          check_fifo();
-        }
-    } else
-        break;
-  } 
+            len = platform_eth_get_packet_nb( buffers[next_free_buffer],MAX_FRAME );
+            if (len > 0) {
+                frame_len[next_free_buffer] = len;
+                fifo_cnt_incr( next_free_buffer );
+                check_fifo();
+            } else  {
+                break;
+        }      
+    }
+} 
   
   //platform_cpu_get_interrupt_flag( INT_ETHERNET_RECV, resnum, 1 );
 

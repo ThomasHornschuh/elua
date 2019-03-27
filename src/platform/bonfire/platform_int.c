@@ -41,14 +41,14 @@ static int ethernet_recv_pending = 0;
 void ethernet_irq_handler()
 {
    if (_read_word((void*)BONFIRE_SYSIO) & 0x01) { // Pending IRQ
-      _set_bit(ARTY_LEDS4TO7,0); // light LED4     
+      _set_bit((void*)ARTY_LEDS4TO7,0); // light LED4     
 #ifdef  BUILD_UIP      
       elua_uip_mainloop();
 #endif      
       ethernet_recv_pending=1;
       cmn_int_handler(INT_ETHERNET_RECV,0);
       _write_word((void*)BONFIRE_SYSIO,0x01); // clear IRQ
-      _clear_bit(ARTY_LEDS4TO7,0);
+      _clear_bit((void*)ARTY_LEDS4TO7,0);
 
    } else
      printk("Uups, ethernet irq handler called without pending IRQ\n");
