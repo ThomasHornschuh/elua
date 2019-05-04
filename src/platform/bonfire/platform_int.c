@@ -61,6 +61,7 @@ static int enabled[NUM_UART];
 
 static void  uart_irq_handler(int cause)
 {
+#ifdef BUILD_C_INT_HANDLERS
 int i;
 volatile uint32_t *uart_base;
 
@@ -76,6 +77,7 @@ volatile uint32_t *uart_base;
          }
       }
    }
+ #endif   
 }
 
 int int_uart_rx_fifo_set_status( elua_int_resnum resnum, int state)
@@ -206,7 +208,7 @@ void timer_irq_handler()
 
 void platform_int_init()
 {
-
+#ifdef BUILD_C_INT_HANDLERS
    printk("__virt_timer_period %ld\n",__virt_timer_period);
    mtime_setinterval(__virt_timer_period);
 
@@ -218,6 +220,7 @@ void platform_int_init()
    }
 #endif
    set_csr(mstatus,MSTATUS_MIE); // Global Interrupt Enable
+#endif    
 }
 
 
