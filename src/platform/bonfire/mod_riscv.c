@@ -46,6 +46,43 @@ u64 cycle=platform_timer_sys_raw_read();
 }
 
 
+static int riscv_cpuid(lua_State* L)
+{
+u32 impid =  read_csr(mimpid);
+
+   lua_pushfstring( L,"%d.%d",impid >> 16,impid & 0xffff );
+   return 1;
+   
+}
+
+static int riscv_readminstret(lua_State* L)
+{
+u64 val; 
+
+  if ( (read_csr(mimpid) & 0xffff)<31 ) {
+    luaL_error( L, "instret counter not implemented on cpuid: %p",read_csr(mimpid));
+    return 0; 
+  }
+    
+#if __riscv_xlen == 32
+  while (1) {
+    u32 hi = read_csr( minstreth );
+    u32 lo = read_csr( minstret );
+    if (hi == read_csr( minstreth )) {
+      val= ( (u64)hi << 32 ) | lo;
+      break;
+    }  
+  }
+#else
+   val= read_csr(minstret);
+#endif  
+
+   lua_pushnumber( L,( lua_Number )val );
+
+  return 1;
+}
+
+
 // Module function map
 #define MIN_OPT_LEVEL 2
 #include "lrodefs.h"
@@ -54,6 +91,9 @@ const LUA_REG_TYPE riscv_map[] =
   { LSTRKEY( "readcsr" ), LFUNCVAL( riscv_readcsr ) },
   { LSTRKEY( "readmtime" ), LFUNCVAL( riscv_readmtime ) },
   { LSTRKEY( "readmcycle" ), LFUNCVAL( riscv_readmcycle ) },
+  { LSTRKEY( "readminstret" ), LFUNCVAL( riscv_readminstret ) },
+  { LSTRKEY( "cpuid" ), LFUNCVAL( riscv_cpuid ) },
+  
 
 #if LUA_OPTIMIZE_MEMORY > 0
  // { LSTRKEY( "__metatable" ), LROVAL( term_map ) },
