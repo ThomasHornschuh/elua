@@ -21,7 +21,8 @@
 / The copyright owner or contributors be NOT LIABLE for any damages caused
 / by use of this software.
 */
-
+#include "platform_conf.h"
+#ifdef BUILD_MMCFS
 
 #include "ff.h"
 
@@ -15595,3 +15596,4 @@ DWORD ff_wtoupper (	/* Returns up-converted code point */
 
 
 #endif /* #if FF_USE_LFN */
+#endif 

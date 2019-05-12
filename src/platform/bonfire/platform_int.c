@@ -88,6 +88,7 @@ static int int_rx_fifo_get_status(elua_int_resnum resnum)
 
 static void  uart_irq_handler(int cause)
 {
+#ifdef BUILD_C_INT_HANDLERS
 int i;
 volatile uint32_t *uart_base;
 
@@ -103,6 +104,7 @@ volatile uint32_t *uart_base;
          }
       }
    }
+ #endif   
 }
 
 static int int_uart_rx_fifo_set_status( elua_int_resnum resnum, int state)
@@ -261,8 +263,8 @@ void timer_irq_handler()
 
 void platform_int_init()
 {
-
-   //printk("__virt_timer_period %ld \n",__virt_timer_period);
+#ifdef BUILD_C_INT_HANDLERS
+   printk("__virt_timer_period %ld\n",__virt_timer_period);
    mtime_setinterval(__virt_timer_period);
 
 #ifdef INT_UART_RX_FIFO
@@ -273,6 +275,7 @@ void platform_int_init()
    }
 #endif
    set_csr(mstatus,MSTATUS_MIE); // Global Interrupt Enable
+#endif    
 }
 
 

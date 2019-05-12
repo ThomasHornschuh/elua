@@ -41,3 +41,4 @@ wofs.img
 /.gdbinit
 /vsworkspace.code-workspace
 /.vscode/settings.json
+/.vscode/ipch
