@@ -29,7 +29,7 @@
 #define NET_SOCK_T_NAME    "eLua.net.socketTable"
 #define NET_CALLBACK_T_NAME "eLua.net.callbackTable"
 #define NET_WEAK_META_NAME  "eLua.net.weakmetaTable"
-#define NET_TIMER_META_NAME "elua.net.timer"
+#define NET_TIMER_META_NAME "eLua.net.timer"
 #define THREAD_KEY "eLua.net.thread"
 
 
@@ -328,6 +328,9 @@ static int net_close( lua_State* L )
   sock_t *s = get_socket(L,1);
   if ( s  ) {
     lua_pushinteger( L, elua_net_close( s->sock ) );
+    if (!elua_pico_isbound(s->sock)) {
+       finalize_socket( L, s);
+    }
     return 1;
   } else
    return 0;

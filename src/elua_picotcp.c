@@ -104,13 +104,17 @@ static void cb_socket(uint16_t ev, struct pico_socket *s)
      int i;
      BOOL found=FALSE;
      uint16_t port;
+     struct pico_socket* new_socket;
+
      for( i=0;i<MAX_PENDING && !found;i++ )
      {
         if ( elua_uip_accept_pending[i].accept_request!=1 ) {// free slot
-          elua_uip_accept_pending[i].sock=pico_socket_accept(s, &elua_uip_accept_pending[i].remote, &port);
-          elua_uip_accept_pending[i].port=short_be(port);
-
-          elua_uip_accept_pending[i].accept_request=1;
+          new_socket = pico_socket_accept(s, &elua_uip_accept_pending[i].remote, &port);
+          if (new_socket) {
+             elua_uip_accept_pending[i].sock = new_socket;
+             elua_uip_accept_pending[i].port = short_be(port);
+             elua_uip_accept_pending[i].accept_request=1;
+          }
           found=TRUE;
         }
      }
@@ -542,5 +546,11 @@ elua_net_ip ip;
 
 }
 
+
+int elua_pico_isbound(uintptr_t socket)
+{
+  struct pico_socket* s = (struct pico_socket*)socket;
+  return s->state & PICO_SOCKET_STATE_BOUND;
+}
 
 #endif
