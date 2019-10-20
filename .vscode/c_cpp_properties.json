@@ -3,17 +3,18 @@
         {
             "name": "Linux",
             "includePath": [
-                "${workspaceFolder}/inc",
+                "/home/thomas/opt/riscv/riscv-none-embed/include",
                 "${workspaceFolder}/inc/newlib",
                 "${workspaceFolder}/inc",
                 "${workspaceFolder}/src/platform/bonfire",
                 "${workspaceFolder}/src/lua",
                 "${workspaceFolder}/picotcp/build_rv32/include",
-                "${workspaceFolder}/picotcp/build_rv32/include/arch"
-
+                "${workspaceFolder}/picotcp/build_rv32/include/arch",
+                "${workspaceFolder}/boards/headers",
+                "${workspaceFolder}/src/modules/"
+                
             ],
             "defines": [],
-          
             "cStandard": "c11",
             "cppStandard": "c++17",
             "intelliSenseMode": "gcc-x64"
