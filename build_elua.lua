@@ -486,6 +486,7 @@ builder:set_exe_extension( ".elf" )
 builder:set_compile_cmd( compcmd )
 builder:set_link_cmd( linkcmd )
 builder:set_asm_cmd( ascmd )
+print("compile command:",compcmd)
 
 -- Create the ROMFS target
 local romfs_target = builder:target( "#phony:romfs", nil, make_romfs )
