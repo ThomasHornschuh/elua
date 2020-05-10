@@ -157,14 +157,7 @@ static void cb_socket(uint16_t ev, struct pico_socket *s)
 }
 
 
-// static t_socket * create_socket_obj(struct pico_socket* ps)
-// {
-// t_socket * s=malloc( sizeof(t_socket) );
 
-//      s->s = ps;
-//      s->event=0;
-//      return s;
-// }
 
 int elua_net_socket( int type )
 {
@@ -432,6 +425,7 @@ int elua_pico_change_nameserver( elua_net_ip addr, uint8_t flag )
    return pico_dns_client_nameserver((struct pico_ip4*)&addr.ipaddr,flag?PICO_DNS_NS_ADD:PICO_DNS_NS_DEL );
 }
 
+
 static void cb_dhcp(void *cli,int code)
 {
 struct pico_ip4  gw, netmask, dns;
@@ -468,9 +462,17 @@ char adr_b[16],gw_b[16],netmask_b[16],dns_b[16];
 
 }
 
+static bool dhcp_timeout = false;
+
+static void cb_dhcp_timeout(pico_time time, void * arg) {
+   dhcp_timeout = true;
+   //platform_debug_printk("cb_dhcp_timeout called\n");
+}
+
 extern struct pico_device *pico_eth_create(const char *name);
 
-static bool initComplete  =false;
+static bool initComplete = false;
+
 
 void elua_pico_init()
 {
@@ -486,12 +488,18 @@ uint32_t cid;
   pico_string_to_ipv4( "255.255.255.0", &netmask.addr );
   pico_ipv4_link_add( dev, ipaddr, netmask );
 
-  initComplete= true;
+  initComplete = true;
+  dhcp_timeout = false;
 
   pico_dhcp_initiate_negotiation(dev,cb_dhcp,&cid);
-  while ( dhcp_state==ELUA_DHCP_UNCONFIGURED ) {
-    pico_stack_tick();
+  u_int32_t tid = pico_timer_add( PICOTCP_DHCP_TIMEOUT, &cb_dhcp_timeout, NULL );
+  while ( dhcp_state==ELUA_DHCP_UNCONFIGURED && !dhcp_timeout ) {
+    pico_stack_tick(); 
   };
+  if (dhcp_timeout) {
+    platform_debug_printk("DHCP negotiation not complete, still trying in background\n");
+  } else 
+    pico_timer_cancel(tid);
   debug_enabled = false; // Disable debug log after inital sequence to avoid screen clobbering
 
 }

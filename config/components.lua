@@ -56,7 +56,8 @@ local out=''
    generated.BUILD_PICOTCP=true 
    if data.PICOTCP_BUFFERED.value==1 then 
       out = out .. gen.print_define('PICOTCP_BUFFERED') ..
-                   gen.simple_gen('PIOCTCP_NUMBUFFERS',data,generated)
+                   gen.simple_gen('PIOCTCP_NUMBUFFERS',data,generated) ..
+                   gen.simple_gen('PICOTCP_DHCP_TIMEOUT',data,generated)
       generated.PICOTCP_BUFFERED=true
    end  
  end 
@@ -283,7 +284,8 @@ function init()
       ip = at.ip_attr( 'ELUA_CONF_IPADDR' ),
       netmask = at.ip_attr( 'ELUA_CONF_NETMASK' ),
       gw = at.ip_attr( 'ELUA_CONF_DEFGW' ),
-      dns = at.ip_attr( 'ELUA_CONF_DNS' )
+      dns = at.ip_attr( 'ELUA_CONF_DNS' ),
+      dchp_timeout=at.int_attr('PICOTCP_DHCP_TIMEOUT',1000,60000,5000) -- Timeout in milliseconds
     }
   }
   -- Serial multiplexer
