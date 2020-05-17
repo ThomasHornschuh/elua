@@ -56,8 +56,8 @@ local out=''
    generated.BUILD_PICOTCP=true 
    if data.PICOTCP_BUFFERED.value==1 then 
       out = out .. gen.print_define('PICOTCP_BUFFERED') ..
-                   gen.simple_gen('PIOCTCP_NUMBUFFERS',data,generated) ..
-                   gen.simple_gen('PICOTCP_DHCP_TIMEOUT',data,generated)
+                   gen.simple_gen('PIOCTCP_NUMBUFFERS',data,generated)
+                  
       generated.PICOTCP_BUFFERED=true
    end  
  end 
@@ -66,7 +66,9 @@ local out=''
       gen.simple_gen('ELUA_CONF_IPADDR',data,generated)..
       gen.simple_gen('ELUA_CONF_NETMASK',data,generated)..
       gen.simple_gen('ELUA_CONF_DEFGW',data,generated)..
-      gen.simple_gen('ELUA_CONF_DNS',data,generated)
+      gen.simple_gen('ELUA_CONF_DNS',data,generated)..
+      gen.simple_gen('PICOTCP_DHCP_TIMEOUT',data,generated)..
+      gen.simple_gen('ELUA_CONF_HOSTNAME',data,generated)
      
  return out 
 end
@@ -125,7 +127,7 @@ local shell_cmd_map = {
   help = "shell_help", lua = "shell_lua", recv = "shell_recv", ver = "shell_ver",
   exit = "NULL", ls = "shell_ls", dir = "shell_ls", cat = "shell_cat",
   type = "shell_cat", cp = "shell_cp", wofmt = "shell_wofmt", mkdir = "shell_mkdir",
-  rm = "shell_adv_rm", mv = "shell_adv_mv"
+  rm = "shell_adv_rm", mv = "shell_adv_mv",edit="shell_edit",tftp = "shell_tftp"
 }
 
 local function shell_gen( eldesc, data, generated )
@@ -285,6 +287,7 @@ function init()
       netmask = at.ip_attr( 'ELUA_CONF_NETMASK' ),
       gw = at.ip_attr( 'ELUA_CONF_DEFGW' ),
       dns = at.ip_attr( 'ELUA_CONF_DNS' ),
+      hostname = at.string_attr('ELUA_CONF_HOSTNAME',32,'"elua.local"'),
       dchp_timeout=at.int_attr('PICOTCP_DHCP_TIMEOUT',1000,60000,5000) -- Timeout in milliseconds
     }
   }
@@ -311,6 +314,8 @@ function init()
   components.dns = { macro = 'BUILD_DNS', needs = 'tcpip' }
   -- DHCP client
   components.dhcp = { macro = 'BUILD_DHCPC', needs = 'tcpip' }
+  -- TFTP Server
+  components.tftp = { macro = 'BUILD_TFTP', needs = 'tcpip' }
   -- ROMFS
   components.romfs = { macro = 'BUILD_ROMFS' }
   -- WOFS

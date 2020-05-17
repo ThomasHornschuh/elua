@@ -8,7 +8,7 @@ return {
     shell = {advanced=true},
     term = { lines = 25, cols = 80 },
     xmodem= true,
-    linenoise = { shell_lines=20, lua_lines=20 },
+    linenoise = { shell_lines=20, lua_lines=20, autosave_file='"/mmc/autosave.lua"' },
     cints=true,
     luaints=true,
     tcpip = { 
@@ -16,9 +16,11 @@ return {
       buffered=true,
       buffers=32,
       ip = "192.168.26.200", netmask = "255.255.255.0", 
-      gw = "192.168.26.2", dns = "192.168.26.2" },
-    dns=false,
-    dhcp=false,
+      gw = "192.168.26.2", dns = "192.168.26.2"
+    },
+    dns=true,
+    dhcp=true,
+    tftp=true,
     mmcfs= { spi=0, codepage=850, 
              use_utf8_api=false, tiny=false, use_locking=true,
              files=32, lfn_length=255 },

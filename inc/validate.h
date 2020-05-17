@@ -44,14 +44,14 @@
 
 // For DHCP we need to have TCP/IP support
 #ifdef BUILD_DHCPC
-  #ifndef BUILD_UIP
+  #ifndef BUILD_TCPIP
   #error "DHCP client requires TCP/IP support (enable BUILD_UIP in cpu, board headers)"
   #endif // #ifndef BUILD_UIP
 #endif // #ifdef BUILD_DHCPC
 
 // For DNS we need to have TCP/IP support
 #ifdef BUILD_DNS
-  #ifndef BUILD_UIP
+  #ifndef BUILD_TCPIP
   #error "DNS resolver requires TCP/IP support (enable BUILD_UIP in cpu, board headers)"
   #endif // #ifndef BUILD_UIP
 #endif // #ifdef BUILD_DNS

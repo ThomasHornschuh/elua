@@ -55,7 +55,7 @@ static int driver_eth_poll(struct pico_device *dev, int loop_score)
 {    
 #ifdef PICOTCP_BUFFERED
      int old_status=platform_cpu_set_interrupt( INT_ETHERNET_RECV,0, PLATFORM_CPU_DISABLE ); 
-     check_fifo();
+     //check_fifo();
      while ( loop_score > 0 && !fifo_empty() ) { 
          platform_cpu_set_interrupt( INT_ETHERNET_RECV,0, old_status ); 
          pico_stack_recv( dev,buffers[next_read_buffrer],frame_len[next_read_buffrer] );
@@ -83,6 +83,11 @@ static int driver_eth_poll(struct pico_device *dev, int loop_score)
     /* return (original_loop_score - amount_of_packets_received) */
     return loop_score;
 }
+
+static int driver_link_state(struct pico_device *dev)
+{
+    return 1;
+} 
 
 #ifdef PICOTCP_BUFFERED
 static void driver_eth_rx_int(elua_int_resnum resnum )
@@ -134,6 +139,7 @@ struct pico_device *pico_eth_create(const char *name)
     /* Attach function pointers */
     eth_dev->send = driver_eth_send;
     eth_dev->poll = driver_eth_poll;
+    eth_dev->link_state = driver_link_state;
 
     /* Register the device in picoTCP */
     if( 0 != pico_device_init(eth_dev, name, mac)) {

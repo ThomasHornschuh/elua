@@ -64,6 +64,7 @@ SHELL_FUNC( shell_ver );
 SHELL_FUNC( shell_mkdir );
 SHELL_FUNC( shell_wofmt );
 SHELL_FUNC( shell_edit );
+SHELL_FUNC( shell_tftp );
 
 
 #endif // #ifndef __SHELL_H__

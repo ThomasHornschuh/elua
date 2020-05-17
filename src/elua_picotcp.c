@@ -14,6 +14,8 @@
 #include "pico_ethernet.h"
 #include "pico_socket.h"
 #include "pico_dns_client.h"
+#include "pico_mdns.h"
+
 
 
 
@@ -425,6 +427,14 @@ int elua_pico_change_nameserver( elua_net_ip addr, uint8_t flag )
    return pico_dns_client_nameserver((struct pico_ip4*)&addr.ipaddr,flag?PICO_DNS_NS_ADD:PICO_DNS_NS_DEL );
 }
 
+static bool mdns_complete = false;
+
+static void cb_mdns(pico_mdns_rtree *tree, char * hostname, void *arg)
+{
+   //platform_debug_printk("mdns hostname: %s\n",hostname);
+   mdns_complete = true;
+}
+
 
 static void cb_dhcp(void *cli,int code)
 {
@@ -447,10 +457,11 @@ char adr_b[16],gw_b[16],netmask_b[16],dns_b[16];
         pico_ipv4_to_string(netmask_b,netmask.addr);
         pico_ipv4_to_string(dns_b,dns.addr);
 
-        platform_debug_printk("DHCP assigned  ip: %s mask: %s gw: %s dns: %s  Hostname: %s\n",
-                               adr_b,netmask_b,gw_b,dns_b,pico_dhcp_get_hostname());
+        platform_debug_printk("DHCP assigned ip: %s mask: %s gw: %s dns: %s\n",
+                               adr_b,netmask_b,gw_b,dns_b);
 
         dhcp_state=ELUA_DHCP_SUCCESS;
+        pico_mdns_init(ELUA_CONF_HOSTNAME,local_address,&cb_mdns,NULL);
 
         break;
      case PICO_DHCP_ERROR:
@@ -477,29 +488,31 @@ static bool initComplete = false;
 void elua_pico_init()
 {
 
-struct pico_ip4 ipaddr, netmask;
+//struct pico_ip4 ipaddr, netmask;
 
 uint32_t cid;
 
   pico_stack_init();
   dev = pico_eth_create( "eth0");
   /* assign the IP address to the  interface */
-  pico_string_to_ipv4( "0.0.0.0", &ipaddr.addr );
-  pico_string_to_ipv4( "255.255.255.0", &netmask.addr );
-  pico_ipv4_link_add( dev, ipaddr, netmask );
+  //pico_string_to_ipv4( "0.0.0.0", &ipaddr.addr );
+  //pico_string_to_ipv4( "255.255.255.0", &netmask.addr );
+  //pico_ipv4_link_add( dev, ipaddr, netmask );
+ 
 
   initComplete = true;
   dhcp_timeout = false;
 
   pico_dhcp_initiate_negotiation(dev,cb_dhcp,&cid);
   u_int32_t tid = pico_timer_add( PICOTCP_DHCP_TIMEOUT, &cb_dhcp_timeout, NULL );
-  while ( dhcp_state==ELUA_DHCP_UNCONFIGURED && !dhcp_timeout ) {
+  while (  dhcp_state!=ELUA_DHCP_SUCCESS && !dhcp_timeout ) {
     pico_stack_tick(); 
   };
   if (dhcp_timeout) {
     platform_debug_printk("DHCP negotiation not complete, still trying in background\n");
-  } else 
+  } else {
     pico_timer_cancel(tid);
+  }
   debug_enabled = false; // Disable debug log after inital sequence to avoid screen clobbering
 
 }
