@@ -43,10 +43,44 @@ typedef  struct {
 // int (*user_cb)(struct pico_tftp_session *session, uint16_t event, uint8_t *block, int32_t len, void *arg)
 
 static int cb_tftp_tx(struct pico_tftp_session *session, uint16_t event,
-                        uint8_t *block, int32_t len, void *arg)
+                        uint8_t *block, int32_t _len, void *arg)
 {
-  tftplog("tx callback\n");
- 
+t_file_ctx *ctx = (t_file_ctx *)arg;  
+const char *rd_error = "tftp read error, aborting transfer\n"; 
+uint8_t buffer[PICO_TFTP_PAYLOAD_SIZE];
+int len;
+
+
+switch (event) {
+
+    case PICO_TFTP_EV_OK:
+      len = fread(buffer,1,PICO_TFTP_PAYLOAD_SIZE,ctx->f);
+      if (len<0) {
+        tftplog(rd_error);
+        pico_tftp_abort(session,-1,rd_error);
+          fclose(ctx->f);
+         // free(ctx);
+          return 0;
+      } else {
+        pico_tftp_send(session,buffer,len);
+        if (len<PICO_TFTP_PAYLOAD_SIZE) { // eof
+          fclose(ctx->f);
+        //  free(ctx);
+        }
+      }
+      break;
+    case PICO_TFTP_EV_ERR_PEER:
+    case PICO_TFTP_EV_ERR_LOCAL:
+      tftplog("tftp error %s\n",(char*)block);
+      fclose(ctx->f);
+     // free(ctx);
+      break;
+    case  PICO_TFTP_EV_SESSION_CLOSE:
+      free(ctx);
+      break;
+    default:
+      tftplog("unsupported event: %d\n",event);  
+  } 
   return 0;
 }                        
 
@@ -61,26 +95,30 @@ int written;
   switch (event) {
 
     case PICO_TFTP_EV_OK:
-      if (len>0) {
+      if ( len>0 ) {
         written = fwrite(block,1,len,ctx->f);
         if (written!=len) {
           tftplog(wr_error);
           pico_tftp_abort(session,-1,wr_error);
           fclose(ctx->f);
-          free(ctx);
+          //free(ctx);
+          return 0;
         }
       }
-      if (len!=512) { // Last block of file...
+      if (len!=PICO_TFTP_PAYLOAD_SIZE) { // Last block of file...
         fclose(ctx->f);
-        free(ctx);
+       // free(ctx);
       }
       break;
     case PICO_TFTP_EV_ERR_PEER:
     case PICO_TFTP_EV_ERR_LOCAL:
       tftplog("tftp error %s\n",(char*)block);
       fclose(ctx->f);
-      free(ctx);
+      //free(ctx);
       break;
+    case PICO_TFTP_EV_SESSION_CLOSE:
+      free(ctx);
+      break;  
     default:
       tftplog("unsupported event: %d\n",event);  
   }
@@ -88,12 +126,40 @@ int written;
   return 0;
 }                        
 
+static t_file_ctx *open_file(char * filename, char* mode)
+{
+char path[128];
+t_file_ctx *ctx;
+FILE *f;
+
+  strncpy(path,ELUA_TFTP_PATHPREFIX,sizeof(path));
+  strncat(path,filename,sizeof(path)-1);
+  tftplog("Trying to open file %s\n",path);
+  
+  f=fopen(path,mode);
+  if (!f) {
+    if (errno != ENOENT) {
+        perror("tftp: Unable to open file");
+    }
+    return NULL;
+  } else {
+    ctx=malloc(sizeof(t_file_ctx));
+    if (!ctx) {
+      fclose(f);
+      return NULL; // TODO: Better error handling
+    }
+    setvbuf(f,ctx->filebuf,_IOFBF,ELUA_TFTP_BUFSIZE);
+    ctx->f = f;
+    return ctx; 
+  }  
+}
+
+
 static void tftp_server_callback( union pico_address *addr, uint16_t port,
                                   uint16_t opcode, char *filename, int32_t len )
 {
 
 struct pico_tftp_session *session;
-char path[128];
 t_file_ctx *ctx;
 
   tftplog("Listem from remote port %d\n",short_be(port));
@@ -101,25 +167,15 @@ t_file_ctx *ctx;
   switch(opcode) {
     case PICO_TFTP_RRQ:
         tftplog("tftp get for %s\n",filename);
+        ctx = open_file(filename,"r");
         session = pico_tftp_session_setup(addr,PICO_PROTO_IPV4);
-        pico_tftp_start_tx(session,port,filename,cb_tftp_tx,NULL);
+        pico_tftp_start_tx(session,port,filename,cb_tftp_tx,ctx);
         break;
     case PICO_TFTP_WRQ:
       tftplog("tftp put for %s\n",filename);
-     
-      strncpy(path,ELUA_TFTP_PATHPREFIX,sizeof(path));
-      strncat(path,filename,sizeof(path)-1);
-      tftplog("Trying to create file %s\n",path);
-      ctx=malloc(sizeof(t_file_ctx));
-      ctx->f=fopen(path,"w");
-      setvbuf(ctx->f,ctx->filebuf,_IOFBF,ELUA_TFTP_BUFSIZE); 
-      if (!ctx->f) {
-        if (errno != ENOENT) {
-            perror("tftp: Unable to open file");
-          
-        }
+      ctx = open_file(filename,"w");
+      if (!ctx) { 
         pico_tftp_reject_request(addr,port,-1,"file could not be created");
-        free(ctx);
       } else {
         session = pico_tftp_session_setup(addr,PICO_PROTO_IPV4);
         pico_tftp_start_rx(session,port,filename,cb_tftp_rx,ctx);
