@@ -1,8 +1,13 @@
 
 print("Configuring picotcp")
 
-local PICODIR="picotcp/build_rv32" -- TODO: Make configurable
-
+local PICODIR
+if comp.debug then
+    PICODIR="picotcp/build_rv32_debug" -- TODO: Make configurable
+else
+    PICODIR="picotcp/build_rv32" -- TODO: Make configurable
+end
+print("Using: ",PICODIR)
 -- Link picotcp.a
 addlf(sf( '-L%s/lib',PICODIR ))
 addlib( 'picotcp' )
