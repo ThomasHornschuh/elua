@@ -426,7 +426,7 @@ static int net_unpackip( lua_State *L )
     return 1;
   }
   else
-    return luaL_error( L, "invalid format" );
+    return luaL_error( L, "format specifier must be *n or *s" );
 }
 
 // Lua: res, err = recv( sock, maxsize, [timer_id, timeout] ) or
@@ -446,10 +446,14 @@ static int net_recv( lua_State *L )
     maxsize = ( elua_net_size )luaL_checkinteger( L, 2 );
   else // invocation with line mode
   {
+  #ifdef BUILD_PICOTCP
+     return luaL_error( L, "picotcp implementation does not support line mode" );
+  #else  
     if( strcmp( luaL_checkstring( L, 2 ), "*l" ) )
       return luaL_error( L, "invalid second argument to recv" );
     lastchar = '\n';
     maxsize = BUFSIZ;
+  #endif  
   }
   cmn_get_timeout_data( L, 3, &timer_id, &timeout );
   // Initialize buffer

@@ -175,8 +175,6 @@ static void tftp_server_main()
 
 
 
-
-
 void shell_tftp( int argc, char **argv )
 {
   tftp_server_main();

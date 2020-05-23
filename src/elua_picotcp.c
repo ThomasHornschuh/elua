@@ -190,7 +190,7 @@ static inline int  _min(int a,int b)
 elua_net_size elua_net_recvbuf( int s, luaL_Buffer *buf, elua_net_size maxsize, s16 readto, unsigned timer_id, timer_data_type to_us )
 {
 timer_data_type tmrstart = 0;
-bool cb_mode= tick_semaphore != 0; // recv called a pico_tick callback?
+bool cb_mode= tick_semaphore != 0; // recv called from pico_tick callback?
 
 
     if (s==0 || s== -1 ) return 0;
@@ -201,7 +201,6 @@ bool cb_mode= tick_semaphore != 0; // recv called a pico_tick callback?
 
     while (1) {
       if (!cb_mode) pico_stack_tick();
-      //if (ps->ev_pending & PICO_SOCK_EV_RD) {
          char recvbuf[BSIZE];
          int read = 0;
          int len = 0;
@@ -221,7 +220,7 @@ bool cb_mode= tick_semaphore != 0; // recv called a pico_tick callback?
             last_error = ELUA_NET_ERR_OK;
             return len;
         }
-      //}
+       
       if( to_us == 0 || platform_timer_get_diff_crt( timer_id, tmrstart ) >= to_us )
       {
         last_error = ELUA_NET_ERR_WAIT_TIMEDOUT;
@@ -462,6 +461,15 @@ char adr_b[16],gw_b[16],netmask_b[16],dns_b[16];
 
         dhcp_state=ELUA_DHCP_SUCCESS;
         pico_mdns_init(ELUA_CONF_HOSTNAME,local_address,&cb_mdns,NULL);
+        // The DHCP client is not really updating the nameserver, so we do it now
+        if (dns.addr) {
+          pico_dns_client_nameserver(&dns,PICO_DNS_NS_ADD);
+
+          struct pico_ip4 default_ns;
+          if (pico_string_to_ipv4(PICO_DNS_NS_DEFAULT, (uint32_t *)&default_ns.addr) >= 0) {
+              pico_dns_client_nameserver(&default_ns,PICO_DNS_NS_DEL);
+          }
+        }
 
         break;
      case PICO_DHCP_ERROR:
