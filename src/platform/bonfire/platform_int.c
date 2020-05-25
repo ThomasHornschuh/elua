@@ -264,7 +264,7 @@ void timer_irq_handler()
 void platform_int_init()
 {
 #ifdef BUILD_C_INT_HANDLERS
-   printk("__virt_timer_period %ld\n",__virt_timer_period);
+   //printk("__virt_timer_period %ld\n",__virt_timer_period);
    mtime_setinterval(__virt_timer_period);
 
 #ifdef INT_UART_RX_FIFO

@@ -44,7 +44,7 @@ extern char end; // From linker script, end of data segment
 
 void platform_ll_init( void )
 {
-  printk("Heap: %08lx .. %08lx\n",&INTERNAL_RAM1_FIRST_FREE,INTERNAL_RAM1_LAST_FREE);
+ 
   // Uncomment to break into debugger on boot 
   // gdb_setup_interface(GDB_DEBUG_UART,GDB_DEBUG_BAUD);
   // printk("Connect debugger with %d baud\n",GDB_DEBUG_BAUD );
@@ -55,8 +55,7 @@ void platform_ll_init( void )
 
 int platform_init()
 {
-  printk("eLua for Bonfire SoC 1.0a\n");
-  printk("Build with GCC %s\n",__VERSION__);
+ 
   cmn_systimer_set_base_freq(SYSCLK);
 
 #ifdef  BUILD_UIP
@@ -69,6 +68,9 @@ int platform_init()
    #endif
 
   cmn_platform_init(); // call the common initialiation code
+  printk("eLua for Bonfire SoC \n");
+  printk("Build with GCC %s\n",__VERSION__);
+  printk("Heap: %08lx .. %08lx\n",&INTERNAL_RAM1_FIRST_FREE,INTERNAL_RAM1_LAST_FREE);
   return PLATFORM_OK;
 }
 
@@ -135,6 +137,10 @@ volatile uint32_t *uartadr=get_uart_base(id);
      #else
        ft=0;
      #endif
+
+     //avoid chaning Baudrate while transmit in progress transmitter ready
+       while (!(uartadr[UART_STATUS] & 0x2)); 
+
      // Set Baudrate divisor, enable port, extended mode and set FIFO Threshold
      #ifdef OLD_ZPUINO_UART
        uartadr[UART_EXT_CONTROL]= 0x030000L | ft | (uint16_t)(SYSCLK / (baud*16) -1);
