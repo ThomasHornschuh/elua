@@ -34,7 +34,7 @@
             "externalConsole": true,
             "MIMode": "gdb",
             "miDebuggerServerAddress":"/dev/ttyUSB2",
-            "miDebuggerPath": "riscv64-unknown-elf-gdb",
+            "miDebuggerPath": "${env:TARGET_PREFIX}-gdb",
             "setupCommands": [
                 {
                     "description": "Enable pretty-printing for gdb",
