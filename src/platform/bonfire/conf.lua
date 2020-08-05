@@ -49,7 +49,7 @@ addlib{ 'c','gcc','m' }
 
 local gcc_version=utils.exec_capture(comp.CC.." -dumpversion")
 print(string.format("Found %s version %s",comp.CC, gcc_version))
-if gcc_version:sub(1,1)>="7" then -- For RISCV gcc version >= 7
+if tonumber(gcc_version:match("%d+")) >=7 then -- For RISCV gcc version >= 7
   print("Configuring for gcc Version >= 7")
   addcf{'-mstrict-align' }
 else
