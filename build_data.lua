@@ -173,7 +173,7 @@ local platform_list =
   xmc4000 = { cpus = { 'XMC4400F100X512', 'XMC4500F144K1024', 'XMC4500E144K1024', 'XMC4700F144K2048' }, arch = 'cortexm' },
   lpc17xx = { cpus = { 'LPC1768' }, arch = 'cortexm' },
   riscv32spike   = {  cpus = { 'RV32IMSPIKE' }, arch = 'riscv' },
-  bonfire   = {  cpus = { 'BONFIRE10','BONFIRE_ARTY_10' }, arch = 'riscv' }
+  bonfire   = {  cpus = { 'BONFIRE10','BONFIRE_ARTY_10','BONFIRE_BASIC_SOC_10' }, arch = 'riscv' }
   
 }
 
