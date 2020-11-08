@@ -16,7 +16,7 @@
             "showOutput": "always",
 
             // Pass 'all' as the build target
-            "args": ["all", "BOARD=bonfire_arty", "DEBUG=true"],
+            "args": ["all", "BOARD=bonfire_ulx3s", "DEBUG=true"],
 
             // Use the standard less compilation problem matcher.
             "problemMatcher": {

@@ -9,8 +9,9 @@ end
 
 specific_files = "start.S platform.c stubs.c  systimer.c console.c platform_int.c mod_riscv.c"
 
--- UART
-if comp.board:lower()=="bonfire_papilio_pro" then
+
+local board=comp.board:lower()
+if board=="bonfire_papilio_pro" or board=="bonfire_ulx3s" then
    specific_files = specific_files .. " i2c.c"
 else
 --  specific_files = specific_files .. " socz80_uart.c"
@@ -49,7 +50,7 @@ addlib{ 'c','gcc','m' }
 
 local gcc_version=utils.exec_capture(comp.CC.." -dumpversion")
 print(string.format("Found %s version %s",comp.CC, gcc_version))
-if gcc_version:sub(1,1)>="7" then -- For RISCV gcc version >= 7
+if tonumber(gcc_version:match("%d+")) >=7 then -- For RISCV gcc version >= 7
   print("Configuring for gcc Version >= 7")
   addcf{'-mstrict-align' }
 else
