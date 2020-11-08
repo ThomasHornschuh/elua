@@ -16,7 +16,7 @@ return {
   },
   config = {
     vtmr= { num=4, freq=50 },
-    --i2c = { scl_bit=30, sda_bit=29 },
+    i2c = { scl_bit=8, sda_bit=9 },
     bonfire= {
       num_uarts=1,
       uarts={"UART0_BASE"}, --,"UART1_BASE"},

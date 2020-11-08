@@ -9,8 +9,9 @@ end
 
 specific_files = "start.S platform.c stubs.c  systimer.c console.c platform_int.c mod_riscv.c"
 
--- UART
-if comp.board:lower()=="bonfire_papilio_pro" then
+
+local board=comp.board:lower()
+if board=="bonfire_papilio_pro" or board=="bonfire_ulx3s" then
    specific_files = specific_files .. " i2c.c"
 else
 --  specific_files = specific_files .. " socz80_uart.c"

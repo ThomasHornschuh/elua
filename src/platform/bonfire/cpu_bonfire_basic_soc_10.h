@@ -22,7 +22,7 @@
 #define NUM_PWM               0
 #define NUM_ADC               0
 #define NUM_CAN               0
-#define NUM_I2C               0
+#define NUM_I2C               1
 
 
 // PIO prefix ('0' for P0, P1, ... or 'A' for PA, PB, ...)
