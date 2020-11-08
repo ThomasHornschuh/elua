@@ -42,3 +42,5 @@ wofs.img
 /vsworkspace.code-workspace
 /.vscode/settings.json
 /.vscode/ipch
+.vscode/c_cpp_properties.json
+.vscode/launch.json
