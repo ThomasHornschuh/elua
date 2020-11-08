@@ -83,7 +83,7 @@ switch (event) {
       break;
     case PICO_TFTP_EV_ERR_PEER:
     case PICO_TFTP_EV_ERR_LOCAL:
-      tftplog("tftp error  %s at session %lx\n",(char*)block, (uint32_t)session);
+      tftplog("tftp error %s at session %lx\n",(char*)block, (uint32_t)session);
       break;
     case  PICO_TFTP_EV_SESSION_CLOSE:
       tftplog("tftp  session %lx closed\n",(uint32_t)session);
