@@ -190,7 +190,7 @@ void power_on (BYTE id)
      */
 
     // Setup CS pin & deselect
-#if !defined(BONFIRE_ARTY_10)
+#if !defined( __MMC_USE_SPI_SELECT )
     platform_pio_op( mmcfs_cs_ports[ id ], ( ( u32 ) 1 << mmcfs_cs_pins[ id ] ), PLATFORM_IO_PIN_DIR_OUTPUT );
 #endif
     //platform_pio_op( MMCFS_CS_PORT, ( ( u32 ) 1 << MMCFS_CS_PIN ), PLATFORM_IO_PIN_PULLUP );

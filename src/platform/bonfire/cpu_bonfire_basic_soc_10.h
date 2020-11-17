@@ -16,7 +16,7 @@
 
 // Number of resources (0 if not available/not implemented)
 #define NUM_PIO               1
-#define NUM_SPI               0
+#define NUM_SPI               3 // TODO: Make configurable
 //#define NUM_UART              1
 #define NUM_TIMER             1
 #define NUM_PWM               0

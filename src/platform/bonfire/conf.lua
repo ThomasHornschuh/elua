@@ -19,6 +19,8 @@ end
 
 if comp.cpu:lower()=="bonfire_arty_10" then
   specific_files = specific_files .. " xil_etherlite.c xil_spi.c"
+elseif comp.cpu:lower()=="bonfire_basic_soc_10" then
+    specific_files = specific_files .. " bonfire_spi.c" 
 end
 
 -- Debug support

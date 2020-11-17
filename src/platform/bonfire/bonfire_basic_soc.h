@@ -1,7 +1,7 @@
 #ifndef BONFIRE_BASIC_SOC_H
 #define BONFIRE_BASIC_SOC_H
 
-#pragma message "BONFIRE_BASIC_SOC_H"
+//#pragma message "BONFIRE_BASIC_SOC_H"
 
 // New Defintions for new bonfire-soc-io core
 #define IO_BASE 0x04000000

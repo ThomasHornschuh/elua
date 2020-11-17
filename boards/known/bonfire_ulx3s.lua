@@ -11,6 +11,10 @@ return {
     linenoise = { shell_lines=20, lua_lines=20 },
     cints=true,
     luaints=true,
+    mmcfs= { spi=1, codepage=850, 
+      use_utf8_api=false, tiny=false, use_locking=true,
+      files=32, lfn_length=255
+    },
     --bonfire_gdbserver= { uart = 1,  speed=500000 },
     editor=true
   },
@@ -25,7 +29,7 @@ return {
     }
   },
   modules = {
-    generic = { 'pd', 'all_lua', 'term','uart','tmr','elua',"cpu","bit","pack","pio","i2c" },
+    generic = { 'pd', 'all_lua', 'term','uart','tmr','elua',"cpu","bit","pack","pio","i2c","spi" },
     platform = { 'riscv' } --,'gdbserver' }
   },
 
