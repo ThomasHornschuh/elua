@@ -112,7 +112,7 @@ static BYTE PowerFlag[ NUM_CARDS ];     /* indicates if "power" is on */
 
 
 static
-void xmit_spi (BYTE id, BYTE dat)
+inline void xmit_spi (BYTE id, BYTE dat)
 {
     platform_spi_send_recv( mmcfs_spi_nums[ id ], dat );
 }
@@ -123,7 +123,7 @@ void xmit_spi (BYTE id, BYTE dat)
 /*-----------------------------------------------------------------------*/
 
 static
-BYTE rcvr_spi (BYTE id)
+inline BYTE rcvr_spi (BYTE id)
 {
     DWORD rcvdat;
 
@@ -134,7 +134,7 @@ BYTE rcvr_spi (BYTE id)
 
 
 static
-void rcvr_spi_m (BYTE id, BYTE *dst)
+inline void rcvr_spi_m (BYTE id, BYTE *dst)
 {
     *dst = rcvr_spi( id );
 }
@@ -315,7 +315,7 @@ int i;
      for (i=0;i<4;i++)  xmit_spi(id,0);
      xmit_spi(id,0x95); // CRC
      for(i=0;i<10;i++) {
-        r=platform_spi_send_recv(1,0xff);
+        r=rcvr_spi(id);
         //printk("%x\n",r);
         if (r == 0x1) return r;
       }
