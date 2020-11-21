@@ -73,7 +73,7 @@ static
 void SELECT (BYTE id)
 {
 #if defined ( __MMC_USE_SPI_SELECT )
-    platform_spi_select( mmcfs_spi_nums[ id ], 1 );
+    platform_spi_select( mmcfs_spi_nums[ id ], PLATFORM_SPI_SELECT_ON );
 #else
     platform_pio_op( mmcfs_cs_ports[ id ] , ( ( u32 ) 1 << mmcfs_cs_pins[ id ] ), PLATFORM_IO_PIN_CLEAR );
 #endif
@@ -84,7 +84,7 @@ static
 void DESELECT (BYTE id)
 {
 #if defined ( __MMC_USE_SPI_SELECT )
-    platform_spi_select( mmcfs_spi_nums[ id ], 0 );
+    platform_spi_select( mmcfs_spi_nums[ id ], PLATFORM_SPI_SELECT_OFF );
 #else
     platform_pio_op( mmcfs_cs_ports[ id ], ( ( u32 ) 1 << mmcfs_cs_pins[ id ] ), PLATFORM_IO_PIN_SET );
 #endif
@@ -212,10 +212,10 @@ void set_max_speed(BYTE id)
 {
     unsigned long i;
 
-    /* Set the maximum speed as half the system clock, with a max of 12.5 MHz. */
+    /* Set the maximum speed as half the system clock, with a max of 25 MHz. */
     i = platform_cpu_get_frequency() / 2;
-    if(i > 12500000)
-        i = 12500000;
+    if(i > 25000000)
+        i = 25000000;
 
     /* Configure the SPI port */
     platform_spi_setup( mmcfs_spi_nums[ id ], PLATFORM_SPI_MASTER, i, 0, 0, 8 );
@@ -303,6 +303,25 @@ BOOL xmit_datablock (
 #endif /* _READONLY */
 
 
+/*-----------------------------------------------------------------------*/
+/* Special handling for command 0                                       */
+/*-----------------------------------------------------------------------*/
+static BYTE send_cmd_0(BYTE id)
+{
+BYTE r;
+int i;
+
+     xmit_spi(id,CMD0);
+     for (i=0;i<4;i++)  xmit_spi(id,0);
+     xmit_spi(id,0x95); // CRC
+     for(i=0;i<10;i++) {
+        r=platform_spi_send_recv(1,0xff);
+        //printk("%x\n",r);
+        if (r == 0x1) return r;
+      }
+      return 0xff;
+}
+
 
 /*-----------------------------------------------------------------------*/
 /* Send a command packet to MMC                                          */
@@ -334,9 +353,9 @@ BYTE send_cmd (
     /* Receive command response */
     if (cmd == CMD12) rcvr_spi(id);        /* Skip a stuff byte when stop reading */
     n = 10;                                /* Wait for a valid response in timeout of 10 attempts */
-    do
+    do {
         res = rcvr_spi(id);
-    while ((res & 0x80) && --n);
+    } while ((res & 0x80) && --n);
 
     return res;            /* Return with the response value */
 }
@@ -376,10 +395,11 @@ DSTATUS disk_initialize (
     do
     {
       power_on(drv);                           /* Force socket power on */
-
       SELECT(drv);                /* CS = L */
       ty = 0;
-      if (send_cmd(drv,CMD0, 0) == 1) {            /* Enter Idle state */
+      BYTE r = send_cmd_0(drv);
+      if (r == 1) {            /* Enter Idle state */
+       
         Timer1 = platform_timer_read( PLATFORM_TIMER_SYS_ID );
         if (send_cmd(drv,CMD8, 0x1AA) == 1) {    /* SDC Ver2+ */
           for (n = 0; n < 4; n++) ocr[n] = rcvr_spi(drv);

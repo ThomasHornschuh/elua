@@ -68,14 +68,12 @@ uint32_t _div;
 
   if (base) {
       div = (double)SYSCLK/(double)(2*clock) - 1;
-      printk("div: %f\n",div);
       if (div<0) {
         _div = 0;
       } else {
         _div = (div-floor(div))>0?(uint32_t)div + 1:(uint32_t)div;
         if (_div>255) _div=255;
       }
-      printk("Set Clk divider to %ld\n",_div);
       _write_word(base+SPI_MODE_DIVISOR,_div | (cpol?1<<SPI_CPOL_BIT:0) | (cpha?1<<SPI_CPHA_BIT:0));
       return SYSCLK/((_div+1)*2);
   }

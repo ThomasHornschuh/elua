@@ -22,9 +22,9 @@ return {
     vtmr= { num=4, freq=50 },
     i2c = { scl_bit=8, sda_bit=9 },
     bonfire= {
-      num_uarts=1,
-      uarts={"UART0_BASE"}, --,"UART1_BASE"},
-      uart_ints={"UART0_INTNUM"} --,"UART1_INTNUM"}
+      num_uarts=2,
+      uarts={"UART0_BASE","UART1_BASE"},
+      uart_ints={"UART0_INTNUM","UART1_INTNUM"}
     
     }
   },
@@ -35,7 +35,8 @@ return {
 
   macros = {
     'ZPUINO_UART',
-     {'UART_FIFO_THRESHOLD', 48 }
+     {'UART_FIFO_THRESHOLD', 48 },
+    'ULX3S'
   },
 
   cpu_constants = {
@@ -45,8 +46,8 @@ return {
     'MTIME_BASE',
     'SPIFLASH_BASE',
     'UART_BASE',
-    'UART0_BASE'
-    --'UART1_BASE'
+    'UART0_BASE',
+    'UART1_BASE'
   }
 }
 

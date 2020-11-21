@@ -53,6 +53,42 @@ void platform_ll_init( void )
   // gdb_breakpoint();
 }
 
+// #ifdef ULX3S
+// static void init_sd()
+// {
+// u8 r;
+
+//     u32 i=platform_spi_setup( 1, PLATFORM_SPI_MASTER, 400000, 0, 0, 8 );
+//     printk("MMC SPI init clock set to %ld Hz\n",i);
+//     for(int k=1;k<10;k++) {     
+//       //printk("Send inital clock train\n");
+//       platform_spi_select(1,PLATFORM_SPI_DISABLE);    
+//       for (i=1;i<=10;i++) {
+//         platform_spi_send_recv(1,0xff);
+//       }
+//       //printk("Send CMD0\n");
+//       platform_spi_select(1,PLATFORM_SPI_ENABLE);
+//       platform_spi_send_recv(1,0x40);
+//       platform_spi_send_recv(1,0);
+//       platform_spi_send_recv(1,0);
+//       platform_spi_send_recv(1,0);
+//       platform_spi_send_recv(1,0); 
+//       platform_spi_send_recv(1,0x95);
+      
+//       i=10;
+//       do {
+//         r=platform_spi_send_recv(1,0xff);
+//       } while ((r & 0x80) && --i);
+//       platform_spi_select(1,PLATFORM_SPI_DISABLE);
+      
+//       if (r==1) break;
+//     }
+//     printk("SD Card return %0x\n",r);
+// }
+
+// #endif
+
+
 int platform_init()
 {
  
@@ -65,6 +101,15 @@ int platform_init()
    #if NUM_PIO>0
     // GPIO Input is always enabled
     _write_word((void*)GPIO_BASE+GPIO_INPUT_EN,0xffffffff);
+    #ifdef ULX3S
+       // Set SD(2) pin high, it has to be low on ESP32 boot, but high for SD card usage
+       // Set Wifi EN to 1 to keep ESP32 running
+       // Frist set output val, then enable output to avoid glith on Wifi_EN
+       _set_bit((void*)GPIO_BASE+GPIO_OUTPUT_VAL,11);
+       _set_bit((void*)GPIO_BASE+GPIO_OUTPUT_EN,11);
+       //init_sd();
+       
+    #endif
    #endif
 
   cmn_platform_init(); // call the common initialiation code
