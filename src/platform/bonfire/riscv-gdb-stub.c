@@ -80,6 +80,7 @@
 #include "trapframe.h"
 
 #include ELUA_CPU_HEADER
+#include ELUA_BOARD_HEADER
 
 #include "platform.h"
 
@@ -88,7 +89,7 @@
  * external low-level support routines
  */
 
-//#define DEBUG 1
+#define DEBUG 1
 
 #include "console.h"
 #ifdef DEBUG
@@ -263,12 +264,20 @@ static void putpacket ( char *buffer)
       count = 0;
 
       while ((ch = buffer[count]))
-    {
-      putDebugChar(ch);
-      checksum += ch;
-      count += 1;
-    }
-
+      {
+        putDebugChar(ch);
+        checksum += ch;
+        count += 1;
+        #ifdef ULX3S
+        #pragma message "ULX3S Delay in gdb server"
+          if ((count % 16)==0) {
+            // Make a 1ms pause every 16 chars
+            PRINTK("%d ",count);
+            platform_timer_delay(NULL,100000);
+          }
+        #endif
+      }
+      printk("\nChecksum: #%x\n",checksum);
       putDebugChar('#');
       putDebugChar(hexchars[checksum >> 4]);
       putDebugChar(hexchars[checksum & 0xf]);

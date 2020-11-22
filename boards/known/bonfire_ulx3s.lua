@@ -15,7 +15,7 @@ return {
       use_utf8_api=false, tiny=false, use_locking=true,
       files=32, lfn_length=255
     },
-    --bonfire_gdbserver= { uart = 1,  speed=500000 },
+    bonfire_gdbserver= { uart = 1,  speed=115200 },
     editor=true
   },
   config = {
@@ -30,7 +30,7 @@ return {
   },
   modules = {
     generic = { 'pd', 'all_lua', 'term','uart','tmr','elua',"cpu","bit","pack","pio","i2c","spi" },
-    platform = { 'riscv' } --,'gdbserver' }
+    platform = { 'riscv','gdbserver' }
   },
 
   macros = {
