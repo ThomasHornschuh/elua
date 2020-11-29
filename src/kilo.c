@@ -35,7 +35,7 @@
 #include "platform_conf.h"
 #ifdef BUILD_EDITOR
 
-#define KILO_VERSION "0.0.1"
+#define KILO_VERSION "0.1.0 eLua"
 
 #define _BSD_SOURCE
 #define _GNU_SOURCE
@@ -108,6 +108,7 @@ struct editorConfig {
     char display_filename[21];
     time_t statusmsg_time;
     struct editorSyntax *syntax;    /* Current syntax highlight, or NULL. */
+    int cursor_upate_only; /* <>0 indicates that only cursor position update is needed */
 };
 
 static struct editorConfig E;
@@ -931,70 +932,75 @@ static void editorRefreshScreen(void) {
     struct abuf ab = ABUF_INIT;
 
     abAppend(&ab,"\x1b[?25l",6); /* Hide cursor. */
-    abAppend(&ab,"\x1b[H",3); /* Go home. */
-    for (y = 0; y < E.screenrows; y++) {
-        int filerow = E.rowoff+y;
+    if (!E.cursor_upate_only) {
+        abAppend(&ab,"\x1b[H",3); /* Go home. */
+        for (y = 0; y < E.screenrows; y++) {
+            int filerow = E.rowoff+y;
 
-        if (filerow >= E.numrows) {
-            if (E.numrows == 0 && y == E.screenrows/3) {
-                char welcome[80];
-                int welcomelen = snprintf(welcome,sizeof(welcome),
-                    "Kilo editor -- verison %s\x1b[0K\r\n", KILO_VERSION);
-                int padding = (E.screencols-welcomelen)/2;
-                if (padding) {
-                    abAppend(&ab,"~",1);
-                    padding--;
-                }
-                while(padding--) abAppend(&ab," ",1);
-                abAppend(&ab,welcome,welcomelen);
-            } else {
-                abAppend(&ab,"~\x1b[0K\r\n",7);
-            }
-            continue;
-        }
-
-        r = &E.row[filerow];
-
-        int len = r->rsize - E.coloff;
-        int current_color = -1;
-        if (len > 0) {
-            if (len > E.screencols) len = E.screencols;
-            char *c = r->render+E.coloff;
-            unsigned char *hl = r->hl+E.coloff;
-            int j;
-            for (j = 0; j < len; j++) {
-                if (hl[j] == HL_NONPRINT) {
-                    char sym;
-                    abAppend(&ab,"\x1b[7m",4);
-                    if (c[j] <= 26)
-                        sym = '@'+c[j];
-                    else
-                        sym = '?';
-                    abAppend(&ab,&sym,1);
-                    abAppend(&ab,"\x1b[0m",4);
-                } else if (hl[j] == HL_NORMAL) {
-                    if (current_color != -1) {
-                        abAppend(&ab,"\x1b[39m",5);
-                        current_color = -1;
+            if (filerow >= E.numrows) {
+                if (E.numrows == 0 && y == E.screenrows/3) {
+                    char welcome[80];
+                    int welcomelen = snprintf(welcome,sizeof(welcome),
+                        "Kilo editor -- verison %s\x1b[0K\r\n", KILO_VERSION);
+                    int padding = (E.screencols-welcomelen)/2;
+                    if (padding) {
+                        abAppend(&ab,"~",1);
+                        padding--;
                     }
-                    abAppend(&ab,c+j,1);
+                    while(padding--) abAppend(&ab," ",1);
+                    abAppend(&ab,welcome,welcomelen);
                 } else {
-                    int color = editorSyntaxToColor(hl[j]);
-                    if (color != current_color) {
-                        char buf[16];
-                        int clen = snprintf(buf,sizeof(buf),"\x1b[%dm",color);
-                        current_color = color;
-                        abAppend(&ab,buf,clen);
+                    abAppend(&ab,"~\x1b[0K\r\n",7);
+                }
+                continue;
+            }
+
+            r = &E.row[filerow];
+
+            int len = r->rsize - E.coloff;
+            int current_color = -1;
+            if (len > 0) {
+                if (len > E.screencols) len = E.screencols;
+                char *c = r->render+E.coloff;
+                unsigned char *hl = r->hl+E.coloff;
+                int j;
+                for (j = 0; j < len; j++) {
+                    if (hl[j] == HL_NONPRINT) {
+                        char sym;
+                        abAppend(&ab,"\x1b[7m",4);
+                        if (c[j] <= 26)
+                            sym = '@'+c[j];
+                        else
+                            sym = '?';
+                        abAppend(&ab,&sym,1);
+                        abAppend(&ab,"\x1b[0m",4);
+                    } else if (hl[j] == HL_NORMAL) {
+                        if (current_color != -1) {
+                            abAppend(&ab,"\x1b[39m",5);
+                            current_color = -1;
+                        }
+                        abAppend(&ab,c+j,1);
+                    } else {
+                        int color = editorSyntaxToColor(hl[j]);
+                        if (color != current_color) {
+                            char buf[16];
+                            int clen = snprintf(buf,sizeof(buf),"\x1b[%dm",color);
+                            current_color = color;
+                            abAppend(&ab,buf,clen);
+                        }
+                        abAppend(&ab,c+j,1);
                     }
-                    abAppend(&ab,c+j,1);
                 }
             }
+            abAppend(&ab,"\x1b[39m",5);
+            abAppend(&ab,"\x1b[0K",4);
+            abAppend(&ab,"\r\n",2);
         }
-        abAppend(&ab,"\x1b[39m",5);
-        abAppend(&ab,"\x1b[0K",4);
-        abAppend(&ab,"\r\n",2);
+    } else {
+        // Position cursor at beginning of status line
+        snprintf(buf,sizeof(buf),"\x1b[%d;%dH",E.screenrows+1,0);
+        abAppend(&ab,buf,strlen(buf));
     }
-
     /* Create a two rows status. First row: */
     abAppend(&ab,"\x1b[0K",4);
     abAppend(&ab,"\x1b[7m",4);
@@ -1177,6 +1183,7 @@ static void editorMoveCursor(int key) {
             }
         } else {
             E.cx -= 1;
+            E.cursor_upate_only = 1;
         }
         break;
     case ARROW_RIGHT:
@@ -1185,6 +1192,7 @@ static void editorMoveCursor(int key) {
                 E.coloff++;
             } else {
                 E.cx += 1;
+                E.cursor_upate_only = 1;
             }
         } else if (row && filecol == row->size) {
             E.cx = 0;
@@ -1193,6 +1201,7 @@ static void editorMoveCursor(int key) {
                 E.rowoff++;
             } else {
                 E.cy += 1;
+                E.cursor_upate_only = 1;
             }
         }
         break;
@@ -1201,6 +1210,7 @@ static void editorMoveCursor(int key) {
             if (E.rowoff) E.rowoff--;
         } else {
             E.cy -= 1;
+            E.cursor_upate_only = 1;
         }
         break;
     case ARROW_DOWN:
@@ -1209,6 +1219,7 @@ static void editorMoveCursor(int key) {
                 E.rowoff++;
             } else {
                 E.cy += 1;
+                E.cursor_upate_only = 1;
             }
         }
         break;
@@ -1237,6 +1248,8 @@ static void editorProcessKeypress(int fd) {
 
     int c = editorReadKey(fd);
     if ( c == KC_UNKNOWN ) return;
+
+    E.cursor_upate_only = 0;
 
     switch(c) {
     case ENTER:         /* Enter */
@@ -1350,7 +1363,7 @@ int I;
 
 int kilo_main(int argc, char **argv) {
     if (argc != 2) {
-        fprintf(stderr,"Usage: kilo <filename>\n");
+        fprintf(stderr,"Usage: edit <filename>\n");
        return -1;
     }
 
@@ -1367,6 +1380,7 @@ int kilo_main(int argc, char **argv) {
     //enableRawMode(STDIN_FILENO);
     editorSetStatusMessage(
         "HELP: Ctrl-S = save | Ctrl-Q = quit | Ctrl-F = find | Ctrl-D = delete line");
+    E.cursor_upate_only=0;
     while(!global_quit) {
         editorRefreshScreen();
         editorProcessKeypress(STDIN_FILENO);

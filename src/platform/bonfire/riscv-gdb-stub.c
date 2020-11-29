@@ -89,7 +89,7 @@
  * external low-level support routines
  */
 
-#define DEBUG 1
+//#define DEBUG 1
 
 #include "console.h"
 #ifdef DEBUG
@@ -268,7 +268,7 @@ static void putpacket ( char *buffer)
         putDebugChar(ch);
         checksum += ch;
         count += 1;
-        #ifdef ULX3S
+        #ifdef ULX3
         #pragma message "ULX3S Delay in gdb server"
           if ((count % 16)==0) {
             // Make a 1ms pause every 16 chars
@@ -277,7 +277,7 @@ static void putpacket ( char *buffer)
           }
         #endif
       }
-      printk("\nChecksum: #%x\n",checksum);
+      PRINTK("\nChecksum: #%x Length: %d\n",checksum,count);
       putDebugChar('#');
       putDebugChar(hexchars[checksum >> 4]);
       putDebugChar(hexchars[checksum & 0xf]);
