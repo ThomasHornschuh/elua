@@ -32,7 +32,7 @@
 #define SRAM_TOP  (SRAM_BASE+SRAM_SIZE-1)
 
 //#define DCACHE_SIZE (2048*4)
-#define DCACHE_SIZE 0 // (2048*4)  // DCache Size in Bytes
+#define DCACHE_SIZE   (2048*4)  // DCache Size in Bytes
 
 #ifndef SYSCLK
 #define SYSCLK 62500000 // 62.5 MHz 

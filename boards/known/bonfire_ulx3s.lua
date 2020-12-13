@@ -4,11 +4,11 @@ return {
   cpu = 'BONFIRE_BASIC_SOC_10',
   components = {
     sercon = { uart = 0, speed = 115200, buf_size=4096 },
-    romfs = true,
+    romfs = false,
     shell = {advanced=true},
     term = { lines = 25, cols = 80 },
     xmodem= true,
-    linenoise = { shell_lines=20, lua_lines=20 },
+    linenoise = { shell_lines=20, lua_lines=20, autosave_file='"/mmc/autosave.lua"' },
     cints=true,
     luaints=true,
     mmcfs= { spi=1, codepage=850, 

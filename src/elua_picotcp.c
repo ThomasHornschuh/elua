@@ -241,13 +241,14 @@ elua_net_size elua_net_send( int s, const void* buf, elua_net_size len )
 int r;
    if (s==0 || s== -1 ) return -1;
 
-   r = pico_socket_send((struct pico_socket*)s,buf,len);
+   //r = pico_socket_send((struct pico_socket*)s,buf,len);
+   r = pico_socket_write((struct pico_socket*)s,buf,len);
    if ( r== -1 ) {
      last_error = ELUA_NET_ERR_ABORTED;
      return r;
    } else {
      last_error = ELUA_NET_ERR_OK;
-     return len;
+     return r;
    }
 }
 int elua_accept( u16 port, unsigned timer_id, timer_data_type to_us, elua_net_ip* pfrom )

@@ -18,6 +18,8 @@
 
 #ifdef BUILD_EDITOR
 
+#pragma message "BUILD_EDITOR"
+
 const char shell_help_edit[] = "[<path>]\n"
   "  [<path>] - file to edit.\n";
 const char shell_help_summary_edit[] = "edit a file";

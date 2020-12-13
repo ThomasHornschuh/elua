@@ -20,9 +20,8 @@
 
 #pragma message "Build TFTP server"
 
-const char shell_help_edit[] = "[<path>]\n"
-  "  [<path>] - file to edit.\n";
-const char shell_help_summary_edit[] = "edit a file";
+const char shell_help_tftp[] = "tftp\n";
+const char shell_help_summary_tftp[] = "Starts a tftp server in the background (experimental)";
 
 extern char *shell_prog;
 
@@ -182,8 +181,8 @@ void shell_tftp( int argc, char **argv )
 
 #else 
 
-const char shell_help_edit[] = "";
-const char shell_help_summary_edit[] = "";
+const char shell_help_tftp[] = "";
+const char shell_help_summary_tftp[] = "";
 
 void shell_tftp( int argc, char **argv )
 {
