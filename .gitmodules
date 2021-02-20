@@ -1,3 +1,6 @@
 [submodule "picotcp"]
 	path = picotcp
 	url = git@github.com:ThomasHornschuh/picotcp.git
+[submodule "src/platform/bonfire/oled-display"]
+	path = src/platform/bonfire/oled-display
+	url = git@github.com:ThomasHornschuh/oled-display.git

@@ -12,8 +12,7 @@ specific_files = "start.S platform.c stubs.c  systimer.c console.c platform_int.
 
 local board=comp.board:lower()
 if board=="bonfire_papilio_pro" or board=="bonfire_ulx3s" then
-   specific_files = specific_files .. " i2c.c"
-else
+   specific_files = specific_files .. " i2c.c oled-display/font.c oled-display/lcd.c oled-display/mod_oled.c"
 --  specific_files = specific_files .. " socz80_uart.c"
 end
 

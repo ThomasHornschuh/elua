@@ -34,9 +34,12 @@ function add_platform_components( t, board, cpu )
       uart = at.uart_attr('GDB_DEBUG_UART','1'),
       speed= at.int_attr('GDB_DEBUG_BAUD',300,1000000,115200)
     }
-
-    
   }
+  
+  t.bonfire_oled = {
+    macro= 'ENABLE_BONFIRE_OLED'
+  }  
+
 end
 
 
@@ -66,7 +69,8 @@ end
 function get_platform_modules( board, cpu )
 
   m = { riscv = {  lib = '"riscv"',  open = luaopen_riscv },
-        gdbserver= { lib='"gdbserver"', map="gdbserver_map", open=false }
+        gdbserver= { lib='"gdbserver"', map="gdbserver_map", open=false },
+        oled = { lib='"oled"',map="oled_map",open=false }
    }
 
   return m

@@ -30,7 +30,7 @@ return {
   },
   modules = {
     generic = { 'pd', 'all_lua', 'term','uart','tmr','elua',"cpu","bit","pack","pio","i2c","spi" },
-    platform = { 'riscv','gdbserver' }
+    platform = { 'riscv','gdbserver', "oled" }
   },
 
   macros = {

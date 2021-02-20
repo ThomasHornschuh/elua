@@ -104,7 +104,7 @@ int platform_init()
     #ifdef ULX3S
        // Set SD(2) pin high, it has to be low on ESP32 boot, but high for SD card usage
        // Set Wifi EN to 1 to keep ESP32 running
-       // Frist set output val, then enable output to avoid glith on Wifi_EN
+       // First set output val, then enable output to avoid glitch on Wifi_EN
        _set_bit((void*)GPIO_BASE+GPIO_OUTPUT_VAL,11);
        _set_bit((void*)GPIO_BASE+GPIO_OUTPUT_EN,11);
        //init_sd();
