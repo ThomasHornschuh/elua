@@ -3,6 +3,13 @@
 #ifndef lrotable_h
 #define lrotable_h
 
+#if defined(ELUA_LUA55)
+
+/* Lua 5.5 does not expose the VM internals used by Lua-5.1 ROM tables. */
+#include "lua_compat.h"
+
+#else
+
 #include "lua.h"
 #include "llimits.h"
 #include "lobject.h"
@@ -73,5 +80,7 @@ int luaR_isrotable(void *p);
 #else
 #define luaR_isrotable(p)     (0)
 #endif
+
+#endif // !defined(ELUA_LUA55)
 
 #endif

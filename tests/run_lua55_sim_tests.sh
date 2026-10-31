@@ -35,14 +35,14 @@ TESTS=(
   coroutine
   pd
   elua
-  cpu
+  term
   filesystem
 )
 
 failed=0
 for test_name in "${TESTS[@]}"; do
   marker="ELUA_LUA55_TEST_PASS ${test_name}"
-  if [ "$test_name" = "pd" ] || [ "$test_name" = "elua" ] || [ "$test_name" = "cpu" ] || [ "$test_name" = "filesystem" ]; then
+  if [ "$test_name" = "pd" ] || [ "$test_name" = "elua" ] || [ "$test_name" = "term" ] || [ "$test_name" = "filesystem" ]; then
     test_path="tests/lua55/${test_name}.lua"
   else
     test_path="src/lua55/testes/${test_name}.lua"

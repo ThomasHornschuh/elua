@@ -6,7 +6,9 @@
 #include "platform.h"
 #include "auxmods.h"
 #include "lrotable.h"
+#if !defined(ELUA_LUA55)
 #include "legc.h"
+#endif
 #include "platform_conf.h"
 #include "linenoise.h"
 #include "shell.h"
@@ -25,6 +27,7 @@
 #include "version.h"
 #endif
 
+#if !defined(ELUA_LUA55)
 // Lua: elua.egc_setup( mode, [ memlimit ] )
 static int elua_egc_setup( lua_State *L )
 {
@@ -36,6 +39,7 @@ static int elua_egc_setup( lua_State *L )
   legc_set_mode( L, mode, memlimit );
   return 0;
 }
+#endif
 
 // Lua: heap, inuse = elua.heapstats()
 static int elua_heapstats( lua_State *L )
@@ -108,7 +112,9 @@ static int elua_shell( lua_State *L )
 #include "lrodefs.h"
 const LUA_REG_TYPE elua_map[] =
 {
+#if !defined(ELUA_LUA55)
   { LSTRKEY( "egc_setup" ), LFUNCVAL( elua_egc_setup ) },
+#endif
   { LSTRKEY( "heapstats" ), LFUNCVAL( elua_heapstats ) },
   { LSTRKEY( "version" ), LFUNCVAL( elua_version ) },
   { LSTRKEY( "save_history" ), LFUNCVAL( elua_save_history ) },
@@ -130,10 +136,12 @@ LUALIB_API int luaopen_elua( lua_State *L )
   return 0;
 #else
   luaL_register( L, AUXLIB_ELUA, elua_map );
+#if !defined(ELUA_LUA55)
   MOD_REG_NUMBER( L, "EGC_NOT_ACTIVE", EGC_NOT_ACTIVE );
   MOD_REG_NUMBER( L, "EGC_ON_ALLOC_FAILURE", EGC_ON_ALLOC_FAILURE );
   MOD_REG_NUMBER( L, "EGC_ON_MEM_LIMIT", EGC_ON_MEM_LIMIT );
   MOD_REG_NUMBER( L, "EGC_ALWAYS", EGC_ALWAYS );
+#endif
   return 1;
 #endif
 }

@@ -80,22 +80,23 @@ Lua 5.5
 
 Lua 5.5.1 is imported from the official `v5.5.1` source release in
 `src/lua55/` and is compiled from its normal individual source files; the
-upstream convenience file `onelua.c` is not part of an eLua build.  The first
-eLua modules, `pd`, `elua` and `cpu`, are available:
+upstream convenience file `onelua.c` is not part of an eLua build.  Lua 5.5
+uses the normal eLua sources in `src/modules/`; the board configuration selects
+which modules are registered.  For `sim`, these include `pd`, `elua` and
+`term`:
 
 ~~~text
 > print(pd.platform(), pd.cpu(), pd.board())
 SIM     LINUX   SIM
 ~~~
 
-`elua.version()` and `elua.heapstats()` are currently provided.  The former
-Lua-5.1-specific emergency-GC controls are intentionally not exposed yet.
-`cpu.clock()` returns the configured platform CPU frequency; direct memory and
-interrupt operations remain to be ported.
+`elua.version()` and `elua.heapstats()` are available.  The
+Lua-5.1-specific emergency-GC controls are intentionally omitted.  The
+Lua-5.1 ROM-table/LTR implementation relies on VM internals, so Lua 5.5 uses
+ordinary RAM-backed module tables for now.
 
 Lua 5.5 `io.open`, `loadfile` and `dofile` also use eLua device-manager paths,
-such as `/rom/...` and `/mmc/...`.  The remaining eLua objects and libraries
-(for example `pio` and `tmr`) are not registered yet.
+such as `/rom/...` and `/mmc/...`.
 
 ### Lua 5.5 regression selection in `sim`
 
@@ -104,8 +105,8 @@ Many of its tests intentionally require a Unix/DOS filesystem, locale data,
 dynamic modules, or the special upstream C test module and therefore do not
 belong in a portable eLua smoke test.  The curated runner below executes a
 fresh simulator process for each selected platform-neutral test (parser, VM,
-garbage collector, coroutines, strings, UTF-8 and math) plus `pd` and virtual
-filesystem smoke tests:
+garbage collector, coroutines, strings, UTF-8 and math) plus configured eLua
+module and virtual-filesystem smoke tests:
 
 ~~~sh
 bash tests/run_lua55_sim_tests.sh

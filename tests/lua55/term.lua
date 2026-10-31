@@ -1,0 +1,5 @@
+assert(type(term) == "table")
+assert(type(term.getlines) == "function")
+assert(type(term.getcols) == "function")
+assert(term.getlines() > 0)
+assert(term.getcols() > 0)

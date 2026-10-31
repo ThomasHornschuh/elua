@@ -371,7 +371,7 @@ if platform == 'sim' then addm( { "ELUA_SIMULATOR", "ELUA_SIM_" .. cnorm( comp.c
 
 -- Lua source files and include path.  Exactly one runtime is compiled into a
 -- firmware image.  The host Lua that runs this build script is unrelated.
-exclude_patterns = { "^src/platform", "^src/uip", "^src/serial", "^src/luarpc_desktop_serial.c", "^src/linenoise_posix.c", "^src/lua/", "^src/lua55/", "^src/modules/", "^src/modules55/" }
+exclude_patterns = { "^src/platform", "^src/uip", "^src/serial", "^src/luarpc_desktop_serial.c", "^src/linenoise_posix.c", "^src/lua/", "^src/lua55/", "^src/modules/" }
 local source_files = utils.get_files( "src", function( fname )
   fname = fname:gsub( "\\", "/" )
   local include = fname:find( ".*%.c$" )
@@ -382,7 +382,7 @@ local source_files = utils.get_files( "src", function( fname )
 end )
 
 local lua_source_dir = comp.lua_version == 'lua55' and 'src/lua55' or 'src/lua'
-local module_source_dir = comp.lua_version == 'lua55' and 'src/modules55' or 'src/modules'
+local module_source_dir = 'src/modules'
 local lua_source_files = utils.get_files( lua_source_dir, function( fname )
   fname = fname:gsub( "\\", "/" )
   return fname:match( ".*%.c$" ) and not fname:match( "/print%.c$" ) and
@@ -401,8 +401,11 @@ if bdata.ipstack=="uip" then
 elseif bdata.ipstack=="picotcp" then
   dofile('config/picotcp.lua')  
 end
-addi{ { 'inc', 'inc/newlib',  'inc/remotefs', 'src/platform', lua_source_dir }, { module_source_dir, 'src/modules', 'src/platform/' .. platform, 'src/platform/' .. platform .. '/cpus' }, "src/uip", "src/fatfs", "inc/niffs" }
-addm( "LUA_OPTIMIZE_MEMORY=" .. ( comp.optram and "2" or "0" ) )
+addi{ { 'inc', 'inc/newlib',  'inc/remotefs', 'src/platform', lua_source_dir, 'src/lua' }, { module_source_dir, 'src/modules', 'src/platform/' .. platform, 'src/platform/' .. platform .. '/cpus' }, "src/uip", "src/fatfs", "inc/niffs" }
+-- eLua's Lua-5.1 ROM tables expose Lua VM internals.  Lua 5.5 uses the
+-- regular table registration path until an equivalent compact representation
+-- has been designed.
+addm( "LUA_OPTIMIZE_MEMORY=" .. ( comp.lua_version == 'lua55' and "0" or ( comp.optram and "2" or "0" ) ) )
 addcf( { '-fomit-frame-pointer' } )
 
 if comp.debug == true then

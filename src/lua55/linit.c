@@ -21,9 +21,21 @@
 #include "llimits.h"
 
 #if defined(ELUA_LUA55)
-int luaopen_pd (lua_State *L);
-int luaopen_elua (lua_State *L);
-int luaopen_cpu (lua_State *L);
+#include "platform_conf.h"
+
+static int luaopen_dummy (lua_State *L) {
+  (void)L;
+  return 0;
+}
+
+#undef _ROM
+#define _ROM( name, openf, table ) { name, openf },
+static const luaL_Reg eluamods[] = {
+#if defined(LUA_PLATFORM_LIBS_ROM)
+  LUA_PLATFORM_LIBS_ROM
+#endif
+  {NULL, NULL}
+};
 #endif
 
 
@@ -66,11 +78,9 @@ LUALIB_API void luaL_openselectedlibs (lua_State *L, int load, int preload) {
   lua_assert((mask >> 1) == LUA_UTF8LIBK);
   lua_pop(L, 1);  /* remove PRELOAD table */
 #if defined(ELUA_LUA55)
-  luaL_requiref(L, "pd", luaopen_pd, 1);
-  lua_pop(L, 1);
-  luaL_requiref(L, "elua", luaopen_elua, 1);
-  lua_pop(L, 1);
-  luaL_requiref(L, "cpu", luaopen_cpu, 1);
-  lua_pop(L, 1);
+  for (lib = eluamods; lib->name != NULL; lib++) {
+    luaL_requiref(L, lib->name, lib->func, 1);
+    lua_pop(L, 1);
+  }
 #endif
 }
