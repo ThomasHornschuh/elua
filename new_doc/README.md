@@ -76,6 +76,24 @@ firmware image.  It provides the upstream standard libraries only; eLua Lua
 objects and modules (for example `pd`, `pio`, `tmr`, and eLua filesystem
 integration) are deliberately not registered in `lua55` yet.
 
+### Lua 5.5 regression selection in `sim`
+
+The upstream Lua source includes its comprehensive `src/lua55/testes/` suite.
+Many of its tests intentionally require a Unix/DOS filesystem, locale data,
+dynamic modules, or the special upstream C test module and therefore do not
+belong in a portable eLua smoke test.  The curated runner below executes a
+fresh simulator process for each selected platform-neutral test (parser, VM,
+garbage collector, coroutines, strings, UTF-8 and math):
+
+~~~sh
+bash tests/run_lua55_sim_tests.sh
+~~~
+
+The runner prints `PASS: <test>` for every completed test and returns a
+non-zero status if a test fails or does not reach its explicit completion
+marker.  Set `ELUA_SIM` to test another simulator binary and `TIMEOUT` (in
+seconds) to adjust the per-test limit.
+
 ## Filesystem images
 
 * `wofs.img` is created automatically in the current directory when WOFS is
