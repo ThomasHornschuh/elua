@@ -14,8 +14,6 @@
 #include <stdint.h>
 #include <errno.h>
 
-#include "console.h" // TODO: Remove...
-
 #include "platform_conf.h"
 #ifdef BUILD_TCPIP
 
@@ -924,4 +922,3 @@ void elua_net_cleanup()
 }
 
 #endif // #ifdef BUILD_UIP
-

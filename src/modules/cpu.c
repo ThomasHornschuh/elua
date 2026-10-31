@@ -111,13 +111,13 @@ static int cpu_r8( lua_State *L )
 // Either disables or enables the given interrupt(s)
 static int cpuh_int_helper( lua_State *L, int mode )
 {
+  int top = lua_gettop( L );
+
 #ifdef BUILD_LUA_INT_HANDLERS
   unsigned i;
   elua_int_id id;
   elua_int_resnum resnum;
   int res;
-
-  int top = lua_gettop( L ); 
 
   if( top > 0 )
   {

@@ -22,6 +22,18 @@ addlib{ 'c','gcc','m' }
 
 local target_flags = { '-march=rv32im' ,'-mabi=ilp32' } --,'-mstrict-align'}
 addcf{ target_flags}
+addlf{ target_flags}
+
+-- The Debian RISC-V compiler is shipped without Newlib.  Use Picolibc for
+-- this Linux-hosted Spike target while retaining eLua's existing syscall and
+-- device-manager implementation.
+local picolibc_sysroot = "/usr/lib/picolibc/riscv64-unknown-elf"
+local picolibc_libdir = picolibc_sysroot .. "/lib/rv32im/ilp32"
+addcf{ '-DELUA_PICOLIBC', '--sysroot=' .. picolibc_sysroot,
+       '-isystem', picolibc_sysroot .. '/include' }
+addlf{ '--sysroot=' .. picolibc_sysroot, '-L' .. picolibc_libdir,
+       '-specs=' .. picolibc_sysroot .. '/picolibc.specs', '-nostartfiles',
+       '-nostdlib', '-Wl,-u,stdin,-u,stdout,-u,stderr' }
 
 --addcf{ target_flags, '-fno-builtin', '-fno-stack-protector' }
 --addlf{ target_flags, '-Wl,-e,start', '-Wl,-static' }
@@ -44,4 +56,3 @@ tools.riscv32spike.pre_build = function()
   local t = builder:target( "#phony:prog", { exetarget }, tools.riscv32spike.progfunc )
   builder:add_target( t, "build eLua firmware image", { "prog" } )
 end
-

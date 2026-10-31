@@ -24,14 +24,9 @@ OUTPUT_ARCH( "riscv" )
 
 ENTRY( _start )
 
-/* The GROUP command is special since the listed archives will be
-   searched repeatedly until there are no new undefined references. We
-   need this since -lc depends on -lgloss and -lgloss depends on -lc. I
-   thought gcc would automatically include -lgcc when needed, but
-   idt32.ld includes it explicitly here and I was seeing link errors
-   without it. */
-
-GROUP( -lc -lgloss -lgcc )
+/* Picolibc provides C startup and the standard libraries.  Syscalls are
+   supplied by eLua, so Newlib's libgloss is deliberately omitted. */
+GROUP( -lcrt0 -lc -lnosys -lgcc -lm )
 
 /*----------------------------------------------------------------------*/
 /* Sections                                                             */
@@ -177,6 +172,9 @@ SECTIONS
     *(.data.*)
     *(.gnu.linkonce.d.*)
   }
+  __data_start = ADDR( .data );
+  __data_source = LOADADDR( .data );
+  __data_size = SIZEOF( .data );
 
 
 /* Have _gp point to middle of sdata/sbss to maximize displacement range */
@@ -214,6 +212,12 @@ SECTIONS
     *(.gnu.linkonce.sb.*)
   }
 
+  .tdata :
+  {
+    *(.tdata .tdata.* .gnu.linkonce.td.*)
+  }
+  __tls_base = ADDR( .tdata );
+
   /* bss: Uninitialized writeable data section */
   . = .;
   _bss_start = .;
@@ -224,8 +228,13 @@ SECTIONS
     *(.gnu.linkonce.b.*)
     *(COMMON)
   }
+  __bss_start = ADDR( .bss );
+  __bss_size = SIZEOF( .bss );
 
   /* End of uninitialized data segment (used by syscalls.c for heap) */
   PROVIDE( end = . );
   _end = ALIGN(8);
+  __heap_start = _end;
+  __stack = 0x7fff0000;
+  __heap_end = __stack - 0x10000;
 }

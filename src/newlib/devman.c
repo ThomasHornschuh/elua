@@ -121,6 +121,10 @@ int dm_get_num_devices(void)
 int dm_init(void) 
 {
   std_register();
+#ifdef ELUA_PICOLIBC
+  extern void elua_picolibc_stdio_init( void );
+  elua_picolibc_stdio_init();
+#endif
 #ifndef BUILD_CON_TCP         // we need buffering on stdout for console over TCP
   setbuf( stdout, NULL );
 #endif
@@ -212,4 +216,3 @@ const char* dm_getaddr( int fd )
 
   return pinst->pdev->p_getaddr_r( _REENT, DM_GET_FD( fd ), pinst->pdata );
 }
-

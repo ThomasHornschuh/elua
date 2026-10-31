@@ -16,6 +16,24 @@
 #include "salloc.h"
 #include "shell.h"
 
+// Picolibc has no Newlib _reent ABI.  The compatibility header supplies the
+// small context used by eLua's device-manager callbacks.
+#ifdef ELUA_PICOLIBC
+struct _reent elua_reent;
+
+/* Picolibc leaves the three standard stream objects to the platform. */
+FILE *elua_picolibc_stdin __asm__( "stdin" );
+FILE *elua_picolibc_stdout __asm__( "stdout" );
+FILE *elua_picolibc_stderr __asm__( "stderr" );
+
+void elua_picolibc_stdio_init( void )
+{
+  elua_picolibc_stdin = fdopen( DM_STDIN_NUM, "r" );
+  elua_picolibc_stdout = fdopen( DM_STDOUT_NUM, "w" );
+  elua_picolibc_stderr = fdopen( DM_STDERR_NUM, "w" );
+}
+#endif
+
 #ifdef USE_MULTIPLE_ALLOCATOR
 #include "dlmalloc.h"
 #else
@@ -159,6 +177,13 @@ off_t _lseek_r( struct _reent *r, int file, off_t off, int whence )
   // And call the close function
   return pinst->pdev->p_lseek_r( r, DM_GET_FD( file ), off, whence, pinst->pdata );
 }
+
+#ifdef ELUA_PICOLIBC
+off_t lseek( int file, off_t off, int whence )
+{
+  return _lseek_r( _REENT, file, off, whence );
+}
+#endif
 
 // *****************************************************************************
 // _read_r 
@@ -376,6 +401,23 @@ int _gettimeofday_r( struct _reent *r, struct timeval *tv, void *tz )
   return -1;  
 }
 
+#ifdef ELUA_PICOLIBC
+clock_t times( struct tms *buf )
+{
+  return _times_r( _REENT, buf );
+}
+
+int gettimeofday( struct timeval *tv, void *tz )
+{
+  return _gettimeofday_r( _REENT, tv, tz );
+}
+
+int rename( const char *oldname, const char *newname )
+{
+  return _rename_r( _REENT, oldname, newname );
+}
+#endif
+
 #include <stdlib.h>
 void _exit( int status )
 {
@@ -472,11 +514,25 @@ void* _sbrk_r( struct _reent* r, ptrdiff_t incr )
   return ptr;
 } 
 
+#ifdef ELUA_PICOLIBC
+// Picolibc requests the non-reentrant syscall entry point.  Keep the memory
+// allocation policy in one place and delegate to eLua's existing allocator.
+void* _sbrk( ptrdiff_t incr )
+{
+  return _sbrk_r( _REENT, incr );
+}
+#endif
+
 // mallinfo()
 struct mallinfo mallinfo( void )
 {
 #ifdef USE_MULTIPLE_ALLOCATOR
   return dlmallinfo();
+#elif defined( ELUA_PICOLIBC )
+  // Picolibc exposes mallinfo() but has no Newlib _mallinfo_r().  eLua only
+  // uses this as optional diagnostic information, so report an empty value.
+  struct mallinfo info = { 0 };
+  return info;
 #else
   return _mallinfo_r( _REENT );
 #endif
