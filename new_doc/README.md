@@ -55,6 +55,27 @@ SIM
 Press **Ctrl-D** to leave the Lua interpreter and return to the eLua shell.
 At the eLua shell, use `exit` to stop the simulator.
 
+## Lua 5.5.1 alongside eLua Lua 5.1
+
+The image also contains the upstream Lua 5.5.1 interpreter.  Start it from
+the eLua shell with `lua55`:
+
+~~~text
+eLua# lua55
+Starting Lua 5.5 (without eLua modules)
+Lua 5.5.1  Copyright (C) 1994-2026 Lua.org, PUC-Rio
+> print(_VERSION)
+Lua 5.5
+>
+~~~
+
+`lua` remains the existing eLua Lua 5.1 interpreter.  Lua 5.5.1 is imported
+from the official `v5.5.1` source release in `src/lua55/` and is compiled as
+a private single translation unit, so both interpreters can reside in one
+firmware image.  It provides the upstream standard libraries only; eLua Lua
+objects and modules (for example `pd`, `pio`, `tmr`, and eLua filesystem
+integration) are deliberately not registered in `lua55` yet.
+
 ## Filesystem images
 
 * `wofs.img` is created automatically in the current directory when WOFS is

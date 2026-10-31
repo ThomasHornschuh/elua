@@ -1,6 +1,7 @@
 .build/
 .build-picolibc*/
 .build-sim*/
+.build-spike*/
 *.hex
 *.elf
 *.dfu

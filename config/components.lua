@@ -124,7 +124,7 @@ end
 
 -- Mapping between shell commands and their corresponding functions in shell.c
 local shell_cmd_map = {
-  help = "shell_help", lua = "shell_lua", recv = "shell_recv", ver = "shell_ver",
+  help = "shell_help", lua = "shell_lua", lua55 = "shell_lua55", recv = "shell_recv", ver = "shell_ver",
   exit = "NULL", ls = "shell_ls", dir = "shell_ls", cat = "shell_cat",
   type = "shell_cat", cp = "shell_cp", wofmt = "shell_wofmt", mkdir = "shell_mkdir",
   rm = "shell_adv_rm", mv = "shell_adv_mv",edit="shell_edit",tftp = "shell_tftp"
@@ -334,4 +334,3 @@ function init()
   -- All done
   return components
 end
-

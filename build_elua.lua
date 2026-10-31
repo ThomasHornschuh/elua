@@ -369,7 +369,9 @@ if bd.get_endianness_of_platform( platform ) == "big" then addm( "ELUA_ENDIAN_BI
 if platform == 'sim' then addm( { "ELUA_SIMULATOR", "ELUA_SIM_" .. cnorm( comp.cpu ) } ) end
 
 -- Lua source files and include path
-exclude_patterns = { "^src/platform", "^src/uip", "^src/serial", "^src/luarpc_desktop_serial.c", "^src/linenoise_posix.c", "^src/lua/print.c", "^src/lua/luac.c" }
+-- Lua 5.5 is compiled through src/shell/shell_lua55.c as one translation
+-- unit.  Do not compile its individual upstream source files as well.
+exclude_patterns = { "^src/platform", "^src/uip", "^src/serial", "^src/luarpc_desktop_serial.c", "^src/linenoise_posix.c", "^src/lua/print.c", "^src/lua/luac.c", "^src/lua55" }
 local source_files = utils.get_files( "src", function( fname )
   fname = fname:gsub( "\\", "/" )
   local include = fname:find( ".*%.c$" )
@@ -522,4 +524,3 @@ end
 
 -- Finally build everything
 builder:build()
-
