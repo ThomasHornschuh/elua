@@ -106,7 +106,7 @@ FILE *f;
   strncat(path,filename,sizeof(path)-1);
   tftplog("open file %s mode %s\n",path,mode);
   
-  f=fopen(path,mode);
+  f=elua_fopen(path,mode);
   if (!f) {
     if (errno != ENOENT) {
         perror("tftp: Unable to open file");

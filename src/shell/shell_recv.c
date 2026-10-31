@@ -1,6 +1,7 @@
 // Shell: 'recv' implementation
 
 #include <stdio.h>
+#include "elua_stdio.h"
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
@@ -60,7 +61,7 @@ void shell_recv( int argc, char **argv )
   // we've received an argument, try saving it to a file
   if( argc == 2 )
   {
-    FILE *foutput = fopen( argv[ 1 ], "w" );
+    FILE *foutput = elua_fopen( argv[ 1 ], "w" );
     size_t file_sz = p - shell_prog;
     if( foutput == NULL )
     {
@@ -104,4 +105,3 @@ void shell_recv( int argc, char **argv )
 }
 
 #endif // #ifdef BUILD_XMODEM
-

@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include "elua_stdio.h"
 #include "platform.h"
 #include "romfs.h"
 #include "xmodem.h"
@@ -14,6 +15,7 @@
 #include "elua_rfs.h"
 #ifdef ELUA_SIMULATOR
 #include "hostif.h"
+extern void platform_ll_init( void );
 #endif
 
 // Validate eLua configuratin options
@@ -77,6 +79,10 @@ int main( void )
   int i;
   FILE* fp;
 
+#ifdef ELUA_SIMULATOR
+  platform_ll_init();
+#endif
+
   // Initialize platform first
   if( platform_init() != PLATFORM_OK )
   {
@@ -112,7 +118,7 @@ int main( void )
   // Search for autorun files in the defined order and execute the 1st if found
   for( i = 0; i < sizeof( boot_order ) / sizeof( *boot_order ); i++ )
   {
-    if( ( fp = fopen( boot_order[ i ], "r" ) ) != NULL )
+    if( ( fp = elua_fopen( boot_order[ i ], "r" ) ) != NULL )
     {
       fclose( fp );
       char* lua_argv[] = { (char *)"lua", (char *)boot_order[i], NULL };

@@ -16,6 +16,7 @@
 #include "lua.h"
 
 #include "lauxlib.h"
+#include "elua_stdio.h"
 #include "lualib.h"
 #include "lrotable.h"
 
@@ -187,7 +188,7 @@ static int io_open (lua_State *L) {
   const char *filename = luaL_checkstring(L, 1);
   const char *mode = luaL_optstring(L, 2, "r");
   FILE **pf = newfile(L);
-  *pf = fopen(filename, mode);
+  *pf = elua_fopen(filename, mode);
   return (*pf == NULL) ? pushresult(L, 0, filename) : 1;
 }
 
@@ -227,7 +228,7 @@ static int g_iofile (lua_State *L, int f, const char *mode) {
     const char *filename = lua_tostring(L, 1);
     if (filename) {
       FILE **pf = newfile(L);
-      *pf = fopen(filename, mode);
+      *pf = elua_fopen(filename, mode);
       if (*pf == NULL)
         fileerror(L, 1, filename);
     }
@@ -279,7 +280,7 @@ static int io_lines (lua_State *L) {
   else {
     const char *filename = luaL_checkstring(L, 1);
     FILE **pf = newfile(L);
-    *pf = fopen(filename, "r");
+    *pf = elua_fopen(filename, "r");
     if (*pf == NULL)
       fileerror(L, 1, filename);
     aux_lines(L, lua_gettop(L), 1);

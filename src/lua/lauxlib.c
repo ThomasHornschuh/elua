@@ -25,6 +25,7 @@
 #include "lrotable.h"
 
 #include "lauxlib.h"
+#include "elua_stdio.h"
 #include "lgc.h"
 #include "ldo.h"
 #include "lobject.h"
@@ -632,7 +633,7 @@ LUALIB_API int luaL_loadfile (lua_State *L, const char *filename) {
   }
   else {
     lua_pushfstring(L, "@%s", filename);
-    lf.f = fopen(filename, "r");
+    lf.f = elua_fopen(filename, "r");
     if (lf.f == NULL) return errfile(L, "open", fnameindex);
 #ifndef LUA_CROSS_COMPILER
     srcp = dm_getaddr(fileno(lf.f));
@@ -650,7 +651,7 @@ LUALIB_API int luaL_loadfile (lua_State *L, const char *filename) {
     if (c == '\n') c = getc(lf.f);
   }
   if (c == LUA_SIGNATURE[0] && filename) {  /* binary file? */
-    lf.f = freopen(filename, "rb", lf.f);  /* reopen in binary mode */
+    lf.f = elua_freopen(filename, "rb", lf.f);  /* reopen in binary mode */
     if (lf.f == NULL) return errfile(L, "reopen", fnameindex);
     /* skip eventual `#!...' */
    while ((c = getc(lf.f)) != EOF && c != LUA_SIGNATURE[0]) ;
@@ -772,4 +773,3 @@ LUALIB_API lua_State *luaL_newstate (void) {
   if (L) lua_atpanic(L, &panic);
   return L;
 }
-

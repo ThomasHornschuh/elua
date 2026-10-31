@@ -2,6 +2,7 @@
 
 #include "common.h"
 #include <stdio.h>
+#include "elua_stdio.h"
 #include "devman.h"
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -83,7 +84,7 @@ char *cmn_fs_split_path( const char *path, const char **pmask )
   *pmask = strrchr( path, '/' ) + 1;
   if( strchr( path, '*' ) || strchr( path, '?' ) )
     return strndup( path, *pmask - path - 1 );
-  if( ( fp = fopen( path, "r" ) ) != NULL )
+  if( ( fp = elua_fopen( path, "r" ) ) != NULL )
   {
     fclose( fp );
     return strndup( path, *pmask - path - 1 );
@@ -122,7 +123,7 @@ int cmn_fs_get_type( const char *path )
   // But first check for '*' or '?' chars in path (which means it is definitely a file spec)
   if( strchr( path, '*' ) || strchr( path, '?' ) )
     return CMN_FS_TYPE_PATTERN;
-  if( ( fp = fopen( path, "r" ) ) != NULL )
+  if( ( fp = elua_fopen( path, "r" ) ) != NULL )
   {
     fclose( fp );
     return CMN_FS_TYPE_FILE;
@@ -298,4 +299,3 @@ int cmn_fs_check_directory( const char *path )
   dm_closedir( d );
   return 1;
 }
-

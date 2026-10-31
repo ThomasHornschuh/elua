@@ -872,7 +872,7 @@ union luai_Cast { double l_d; long l_l; };
 ** without modifying the main part of the file.
 */
 
-#if !defined(LUA_CROSS_COMPILER)
+#if !defined(LUA_CROSS_COMPILER) && !defined(ELUA_SIMULATOR)
 typedef short int16_t;
 typedef long int32_t;
 #endif

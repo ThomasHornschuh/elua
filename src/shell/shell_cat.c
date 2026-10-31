@@ -6,6 +6,7 @@
 #include <ctype.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include "elua_stdio.h"
 #include "shell.h"
 #include "common.h"
 #include "type.h"
@@ -29,7 +30,7 @@ void shell_cat( int argc, char **argv )
   }
   for( i = 1; i < argc; i ++ )
   {
-    if( ( fp = fopen( argv[ i ] , "rb" ) ) != NULL )
+    if( ( fp = elua_fopen( argv[ i ] , "rb" ) ) != NULL )
     {
       c = fgetc( fp );
       while( c != EOF )
@@ -43,5 +44,4 @@ void shell_cat( int argc, char **argv )
       printf( "Unable to open '%s'\n", argv[ i ] );
   }
 }    
-
 

@@ -15,7 +15,11 @@
 
 typedef unsigned char  BYTE;
 typedef unsigned short WORD;
+#ifdef ELUA_SIMULATOR
+typedef unsigned int   DWORD;
+#else
 typedef unsigned long  DWORD;
+#endif
 typedef unsigned int   BOOL;
 
 typedef unsigned char u8;

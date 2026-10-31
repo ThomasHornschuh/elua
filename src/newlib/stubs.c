@@ -1,5 +1,9 @@
 // Newlib stubs implementation
 
+#ifdef ELUA_SIMULATOR
+#define _GNU_SOURCE
+#endif
+
 #include <reent.h>
 #include <errno.h>
 #include <string.h>
@@ -7,6 +11,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include "devman.h"
 #include "ioctl.h"
 #include "platform.h"
@@ -15,12 +20,15 @@
 #include "utils.h"
 #include "salloc.h"
 #include "shell.h"
+#include "elua_stdio.h"
 
 // Picolibc has no Newlib _reent ABI.  The compatibility header supplies the
 // small context used by eLua's device-manager callbacks.
-#ifdef ELUA_PICOLIBC
+#if defined( ELUA_PICOLIBC ) || defined( ELUA_SIMULATOR )
 struct _reent elua_reent;
+#endif
 
+#ifdef ELUA_PICOLIBC
 /* Picolibc leaves the three standard stream objects to the platform. */
 FILE *elua_picolibc_stdin __asm__( "stdin" );
 FILE *elua_picolibc_stdout __asm__( "stdout" );
@@ -40,7 +48,7 @@ void elua_picolibc_stdio_init( void )
 #include <malloc.h>
 #endif
 
-int open( const char *name, int flags, mode_t mode );
+int open( const char *name, int flags, ... );
 int _kill( int pid, int sig );
 pid_t _getpid( void );
 
@@ -119,7 +127,7 @@ int _open_r( struct _reent *r, const char *name, int flags, int mode )
   return DM_MAKE_DESC( devid, res );
 }
 
-int open( const char *name, int flags, mode_t mode )
+int open( const char *name, int flags, ... )
 {
   return _open_r( _REENT, name, flags, 0 );
 }
@@ -528,9 +536,9 @@ struct mallinfo mallinfo( void )
 {
 #ifdef USE_MULTIPLE_ALLOCATOR
   return dlmallinfo();
-#elif defined( ELUA_PICOLIBC )
-  // Picolibc exposes mallinfo() but has no Newlib _mallinfo_r().  eLua only
-  // uses this as optional diagnostic information, so report an empty value.
+#elif defined( ELUA_PICOLIBC ) || defined( ELUA_SIMULATOR )
+  // Picolibc and the host libc have no Newlib _mallinfo_r(). eLua only uses
+  // this as optional diagnostic information, so report an empty value.
   struct mallinfo info = { 0 };
   return info;
 #else
@@ -604,6 +612,116 @@ const DM_DEVICE* std_get_desc( void )
 }
 
 #endif // #if !defined( BUILD_CON_GENERIC ) && !defined( BUILD_CON_TCP )
+
+#ifdef ELUA_SIMULATOR
+typedef struct
+{
+  int fd;
+} ELUA_STDIO_COOKIE;
+
+static int elua_stdio_mode_flags( const char* mode )
+{
+  int flags;
+
+  switch( mode[ 0 ] )
+  {
+    case 'r': flags = O_RDONLY; break;
+    case 'w': flags = O_WRONLY | O_CREAT | O_TRUNC; break;
+    case 'a': flags = O_WRONLY | O_CREAT | O_APPEND; break;
+    default: return -1;
+  }
+  if( strchr( mode, '+' ) )
+    flags = ( flags & ~O_ACCMODE ) | O_RDWR;
+  return flags;
+}
+
+static ssize_t elua_stdio_read( void* data, char* buffer, size_t size )
+{
+  ELUA_STDIO_COOKIE* cookie = ( ELUA_STDIO_COOKIE* )data;
+  return _read_r( _REENT, cookie->fd, buffer, size );
+}
+
+static ssize_t elua_stdio_write( void* data, const char* buffer, size_t size )
+{
+  ELUA_STDIO_COOKIE* cookie = ( ELUA_STDIO_COOKIE* )data;
+  return _write_r( _REENT, cookie->fd, buffer, size );
+}
+
+static int elua_stdio_seek( void* data, off64_t* offset, int whence )
+{
+  ELUA_STDIO_COOKIE* cookie = ( ELUA_STDIO_COOKIE* )data;
+  off_t result = _lseek_r( _REENT, cookie->fd, *offset, whence );
+
+  if( result == -1 )
+    return -1;
+  *offset = result;
+  return 0;
+}
+
+static int elua_stdio_close( void* data )
+{
+  ELUA_STDIO_COOKIE* cookie = ( ELUA_STDIO_COOKIE* )data;
+  int result = _close_r( _REENT, cookie->fd );
+
+  free( cookie );
+  return result;
+}
+
+FILE* elua_fopen( const char* name, const char* mode )
+{
+  char* actname;
+  int flags, fd;
+  FILE* stream;
+  ELUA_STDIO_COOKIE* cookie;
+  cookie_io_functions_t io =
+  {
+    elua_stdio_read,
+    elua_stdio_write,
+    elua_stdio_seek,
+    elua_stdio_close
+  };
+
+  if( find_dm_entry( name, &actname ) < 0 )
+    return fopen( name, mode );
+  if( ( flags = elua_stdio_mode_flags( mode ) ) < 0 )
+    return NULL;
+  if( ( fd = _open_r( _REENT, name, flags, 0 ) ) < 0 )
+    return NULL;
+  if( ( cookie = malloc( sizeof( ELUA_STDIO_COOKIE ) ) ) == NULL )
+  {
+    _close_r( _REENT, fd );
+    return NULL;
+  }
+  cookie->fd = fd;
+  stream = fopencookie( cookie, mode, io );
+  if( stream == NULL )
+  {
+    elua_stdio_close( cookie );
+    return NULL;
+  }
+  return stream;
+}
+
+FILE* elua_freopen( const char* name, const char* mode, FILE* stream )
+{
+  char* actname;
+
+  if( find_dm_entry( name, &actname ) < 0 )
+    return freopen( name, mode, stream );
+  fclose( stream );
+  return elua_fopen( name, mode );
+}
+#else
+FILE* elua_fopen( const char* name, const char* mode )
+{
+  return fopen( name, mode );
+}
+
+FILE* elua_freopen( const char* name, const char* mode, FILE* stream )
+{
+  return freopen( name, mode, stream );
+}
+#endif // ELUA_SIMULATOR
 
 // ****************************************************************************
 // memcpy is broken on AVR32's Newlib, so implement a simple version here

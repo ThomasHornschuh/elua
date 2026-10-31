@@ -19,6 +19,7 @@
 #include "lua.h"
 
 #include "lauxlib.h"
+#include "elua_stdio.h"
 #include "lualib.h"
 #include "lrotable.h"
 
@@ -330,7 +331,7 @@ static int ll_loadlib (lua_State *L) {
 
 
 static int readable (const char *filename) {
-  FILE *f = fopen(filename, "r");  /* try to open file */
+  FILE *f = elua_fopen(filename, "r");  /* try to open file */
   if (f == NULL) return 0;  /* open failed */
   fclose(f);
   return 1;
@@ -681,4 +682,3 @@ LUALIB_API int luaopen_package (lua_State *L) {
   lua_pop(L, 1);
   return 1;  /* return 'package' table */
 }
-

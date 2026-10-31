@@ -24,6 +24,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdint.h>
 
 //#define u8_t uint8_t
 //#define i16_t int16_t
