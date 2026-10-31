@@ -4,7 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "elua_lua55.h"
+#include "lua.h"
+#include "lauxlib.h"
 #include "shell.h"
 
 #if defined( USE_GIT_REVISION )
@@ -13,18 +14,18 @@
 #include "version.h"
 #endif
 
-static int elua_version( elua_lua55_State* L )
+static int elua_version( lua_State* L )
 {
-  elua_lua55_pushstring( L, ELUA_STR_VERSION );
+  lua_pushstring( L, ELUA_STR_VERSION );
   return 1;
 }
 
-static int elua_heapstats( elua_lua55_State* L )
+static int elua_heapstats( lua_State* L )
 {
 #ifndef USE_SIMPLE_ALLOCATOR
   struct mallinfo m = mallinfo();
-  elua_lua55_pushinteger( L, ( long long )m.arena );
-  elua_lua55_pushinteger( L, ( long long )m.uordblks );
+  lua_pushinteger( L, ( lua_Integer )m.arena );
+  lua_pushinteger( L, ( lua_Integer )m.uordblks );
   return 2;
 #else
   ( void )L;
@@ -33,13 +34,13 @@ static int elua_heapstats( elua_lua55_State* L )
 }
 
 #ifdef BUILD_SHELL
-static int elua_shell( elua_lua55_State* L )
+static int elua_shell( lua_State* L )
 {
-  const char* command = elua_lua55_checkstring( L, 1 );
+  const char* command = luaL_checkstring( L, 1 );
   char* command_copy = malloc( strlen( command ) + 2 );
 
   if( command_copy == NULL )
-    return elua_lua55_error( L, "not enough memory for elua.shell" );
+    return luaL_error( L, "not enough memory for elua.shell" );
   strcpy( command_copy, command );
   shellh_execute_command( command_copy, 0 );
   free( command_copy );
@@ -47,17 +48,17 @@ static int elua_shell( elua_lua55_State* L )
 }
 #endif
 
-int elua_lua55open_elua( elua_lua55_State* L )
+int luaopen_elua( lua_State* L )
 {
-  elua_lua55_newtable( L );
+  lua_newtable( L );
 
-  elua_lua55_pushcfunction( L, elua_version );
-  elua_lua55_setfield( L, -2, "version" );
-  elua_lua55_pushcfunction( L, elua_heapstats );
-  elua_lua55_setfield( L, -2, "heapstats" );
+  lua_pushcfunction( L, elua_version );
+  lua_setfield( L, -2, "version" );
+  lua_pushcfunction( L, elua_heapstats );
+  lua_setfield( L, -2, "heapstats" );
 #ifdef BUILD_SHELL
-  elua_lua55_pushcfunction( L, elua_shell );
-  elua_lua55_setfield( L, -2, "shell" );
+  lua_pushcfunction( L, elua_shell );
+  lua_setfield( L, -2, "shell" );
 #endif
   return 1;
 }

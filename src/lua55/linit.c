@@ -21,7 +21,9 @@
 #include "llimits.h"
 
 #if defined(ELUA_LUA55)
-#include "elua_lua55.h"
+int luaopen_pd (lua_State *L);
+int luaopen_elua (lua_State *L);
+int luaopen_cpu (lua_State *L);
 #endif
 
 
@@ -40,11 +42,6 @@ static const luaL_Reg stdlibs[] = {
   {LUA_STRLIBNAME, luaopen_string},
   {LUA_TABLIBNAME, luaopen_table},
   {LUA_UTF8LIBNAME, luaopen_utf8},
-#if defined(ELUA_LUA55)
-  {"pd", elua_lua55open_pd},
-  {"elua", elua_lua55open_elua},
-  {"cpu", elua_lua55open_cpu},
-#endif
   {NULL, NULL}
 };
 
@@ -68,4 +65,12 @@ LUALIB_API void luaL_openselectedlibs (lua_State *L, int load, int preload) {
   }
   lua_assert((mask >> 1) == LUA_UTF8LIBK);
   lua_pop(L, 1);  /* remove PRELOAD table */
+#if defined(ELUA_LUA55)
+  luaL_requiref(L, "pd", luaopen_pd, 1);
+  lua_pop(L, 1);
+  luaL_requiref(L, "elua", luaopen_elua, 1);
+  lua_pop(L, 1);
+  luaL_requiref(L, "cpu", luaopen_cpu, 1);
+  lua_pop(L, 1);
+#endif
 }

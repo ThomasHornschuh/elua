@@ -56,7 +56,11 @@ extern char etext[];
 #ifdef ELUA_BOOT_RPC
 void boot_rpc( void )
 {
+#if defined(ELUA_LUA55)
+  lua_State *L = luaL_newstate();
+#else
   lua_State *L = lua_open();
+#endif
   luaL_openlibs(L);  /* open libraries */
 
   // Set up UART for 8N1 w/ adjustable baud rate

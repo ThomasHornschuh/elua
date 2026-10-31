@@ -1,18 +1,19 @@
 // Lua 5.5 CPU module, initially exposing platform-neutral clock information.
 
-#include "elua_lua55.h"
+#include "lua.h"
+#include "lauxlib.h"
 #include "platform.h"
 
-static int cpu_clock( elua_lua55_State* L )
+static int cpu_clock( lua_State* L )
 {
-  elua_lua55_pushinteger( L, ( long long )platform_cpu_get_frequency() );
+  lua_pushinteger( L, ( lua_Integer )platform_cpu_get_frequency() );
   return 1;
 }
 
-int elua_lua55open_cpu( elua_lua55_State* L )
+int luaopen_cpu( lua_State* L )
 {
-  elua_lua55_newtable( L );
-  elua_lua55_pushcfunction( L, cpu_clock );
-  elua_lua55_setfield( L, -2, "clock" );
+  lua_newtable( L );
+  lua_pushcfunction( L, cpu_clock );
+  lua_setfield( L, -2, "clock" );
   return 1;
 }

@@ -24,6 +24,11 @@
 #include "lualib.h"
 #include "llimits.h"
 
+#if defined(ELUA_LUA55)
+#include "elua_stdio.h"
+#define fopen elua_fopen
+#endif
+
 
 /*
 ** LUA_CSUBSEP is the character that replaces dots in submodule names
@@ -745,4 +750,3 @@ LUAMOD_API int luaopen_package (lua_State *L) {
   lua_pop(L, 1);  /* pop global table */
   return 1;  /* return 'package' table */
 }
-

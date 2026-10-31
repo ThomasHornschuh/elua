@@ -55,24 +55,33 @@ SIM
 Press **Ctrl-D** to leave the Lua interpreter and return to the eLua shell.
 At the eLua shell, use `exit` to stop the simulator.
 
-## Lua 5.5.1 alongside eLua Lua 5.1
+## Selecting the Lua runtime
 
-The image also contains the upstream Lua 5.5.1 interpreter.  Start it from
-the eLua shell with `lua55`:
+An eLua image contains exactly one Lua interpreter.  The build-script option
+`lua_version` selects it; it does **not** select the host Lua which executes
+`build_elua.lua`.  `lua51` is the default and preserves the historic eLua
+build.  Select Lua 5.5.1 explicitly:
+
+~~~sh
+lua5.1 build_elua.lua board=sim lua_version=lua55 \
+  build_mode=build_dir_linearized build_dir=.build-sim-lua55
+~~~
+
+Start the selected interpreter from the eLua shell with the regular `lua`
+command:
 
 ~~~text
-eLua# lua55
-Starting Lua 5.5 (without eLua modules)
+eLua# lua
 Lua 5.5.1  Copyright (C) 1994-2026 Lua.org, PUC-Rio
 > print(_VERSION)
 Lua 5.5
 >
 ~~~
 
-`lua` remains the existing eLua Lua 5.1 interpreter.  Lua 5.5.1 is imported
-from the official `v5.5.1` source release in `src/lua55/` and is compiled as
-a private single translation unit, so both interpreters can reside in one
-firmware image.  The first eLua modules, `pd`, `elua` and `cpu`, are available:
+Lua 5.5.1 is imported from the official `v5.5.1` source release in
+`src/lua55/` and is compiled from its normal individual source files; the
+upstream convenience file `onelua.c` is not part of an eLua build.  The first
+eLua modules, `pd`, `elua` and `cpu`, are available:
 
 ~~~text
 > print(pd.platform(), pd.cpu(), pd.board())

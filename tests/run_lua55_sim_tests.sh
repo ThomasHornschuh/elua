@@ -14,7 +14,7 @@ TIMEOUT=${TIMEOUT:-60}
 
 if [ ! -x "$ELUA_SIM" ]; then
   echo "Simulator executable not found: $ELUA_SIM" >&2
-  echo "Build it with: lua5.1 build_elua.lua board=sim build_mode=build_dir_linearized build_dir=.build-sim" >&2
+  echo "Build it with: lua5.1 build_elua.lua board=sim lua_version=lua55 build_mode=build_dir_linearized build_dir=.build-sim" >&2
   exit 2
 fi
 
@@ -50,7 +50,7 @@ for test_name in "${TESTS[@]}"; do
   output=$(mktemp)
   trap 'rm -f "$output"' EXIT
 
-  printf "lua55 -e \"dofile('%s'); print('%s')\"\nexit\n" \
+  printf "lua -e \"dofile('%s'); print('%s')\"\nexit\n" \
     "$test_path" "$marker" \
     | timeout "$TIMEOUT" "$ELUA_SIM" >"$output" 2>&1
   run_status=$?

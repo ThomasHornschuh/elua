@@ -76,7 +76,11 @@ void shell_recv( int argc, char **argv )
   }
   else // no arg, running the file with lua.
   {
+#if defined(ELUA_LUA55)
+    if( ( L = luaL_newstate() ) == NULL )
+#else
     if( ( L = lua_open() ) == NULL )
+#endif
     {
       printf( "Unable to create Lua state\n" );
       goto exit;

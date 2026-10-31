@@ -774,6 +774,10 @@ static int pmain (lua_State *L) {
 }
 
 
+/* eLua invokes the interpreter from its shell and boot sequence. */
+#if defined(ELUA_LUA55)
+#define main lua_main
+#endif
 int main (int argc, char **argv) {
   int status, result;
   lua_State *L = luaL_newstate();  /* create state */
@@ -791,4 +795,3 @@ int main (int argc, char **argv) {
   lua_close(L);
   return (result && status == LUA_OK) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
-

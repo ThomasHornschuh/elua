@@ -14,7 +14,9 @@
 #include "lualib.h"
 #include "lauxlib.h"
 #include "platform.h"
+#if !defined(ELUA_LUA55)
 #include "lrotable.h"
+#endif
 #include "common.h"
 #include "sermux.h"
 #include "platform_conf.h"

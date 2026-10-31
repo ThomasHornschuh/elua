@@ -27,6 +27,12 @@
 #include "lauxlib.h"
 #include "llimits.h"
 
+#if defined(ELUA_LUA55)
+#include "elua_stdio.h"
+#define fopen elua_fopen
+#define freopen elua_freopen
+#endif
+
 
 /*
 ** {======================================================
@@ -1212,4 +1218,3 @@ LUALIB_API void luaL_checkversion_ (lua_State *L, lua_Number ver, size_t sz) {
     luaL_error(L, "version mismatch: app. needs %f, Lua core provides %f",
                   (LUAI_UACNUMBER)ver, (LUAI_UACNUMBER)v);
 }
-

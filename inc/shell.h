@@ -60,7 +60,6 @@ SHELL_FUNC( shell_recv );
 SHELL_FUNC( shell_help );
 SHELL_FUNC( shell_cat );
 SHELL_FUNC( shell_lua );
-SHELL_FUNC( shell_lua55 );
 SHELL_FUNC( shell_ver );
 SHELL_FUNC( shell_mkdir );
 SHELL_FUNC( shell_wofmt );

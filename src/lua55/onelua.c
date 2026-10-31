@@ -72,26 +72,6 @@
 
 #include "luaconf.h"
 
-/*
-** eLua builds Lua 5.1 and Lua 5.5 into the same firmware image.  This
-** combined source file is intentionally a private implementation of the
-** 'lua55' shell command: keeping its public API and standard-library entry
-** points static prevents them from colliding with the Lua 5.1 symbols.
-*/
-#if defined(ELUA_LUA55)
-#include "elua_stdio.h"
-#undef LUA_API
-#undef LUALIB_API
-#undef LUAMOD_API
-#define LUA_API         static
-#define LUALIB_API      static
-#define LUAMOD_API      static
-
-/* Route Lua 5.5's loadfile/io APIs through the eLua device manager. */
-#define fopen           elua_fopen
-#define freopen         elua_freopen
-#endif
-
 /* do not export internal symbols */
 #undef LUAI_FUNC
 #undef LUAI_DDEC

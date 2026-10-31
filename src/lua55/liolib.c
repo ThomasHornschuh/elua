@@ -23,6 +23,11 @@
 #include "lualib.h"
 #include "llimits.h"
 
+#if defined(ELUA_LUA55)
+#include "elua_stdio.h"
+#define fopen elua_fopen
+#endif
+
 
 /*
 ** Change this macro to accept other modes for 'fopen' besides
@@ -838,4 +843,3 @@ LUAMOD_API int luaopen_io (lua_State *L) {
   createstdfile(L, stderr, NULL, "stderr");
   return 1;
 }
-

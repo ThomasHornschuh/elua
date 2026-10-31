@@ -131,6 +131,7 @@ local function check_cmdline_vs_conf( argname, comp, bd )
 end
 
 builder:add_option( 'target', 'build "regular" float lua, 32 bit integer-only "lualong" or 64-bit integer only lua "lualonglong"', 'lua', { 'lua', 'lualong', 'lualonglong' } )
+builder:add_option( 'lua_version', 'select Lua runtime included in the firmware image', 'lua51', { 'lua51', 'lua55' } )
 builder:add_option( 'allocator', 'select memory allocator', 'auto', { 'newlib', 'multiple', 'simple', 'auto' } )
 builder:add_option( 'board', 'selects board for target (cpu will be inferred)', nil, board_list )
 builder:add_option( 'toolchain', 'specifies toolchain to use (auto=search for usable toolchain)', 'auto', { bd.get_all_toolchains(), 'auto' } )
@@ -368,10 +369,9 @@ if bd.get_endianness_of_platform( platform ) == "big" then addm( "ELUA_ENDIAN_BI
 -- Special macro definitions for the SIM target
 if platform == 'sim' then addm( { "ELUA_SIMULATOR", "ELUA_SIM_" .. cnorm( comp.cpu ) } ) end
 
--- Lua source files and include path
--- Lua 5.5 is compiled through src/shell/shell_lua55.c as one translation
--- unit.  Do not compile its individual upstream source files as well.
-exclude_patterns = { "^src/platform", "^src/uip", "^src/serial", "^src/luarpc_desktop_serial.c", "^src/linenoise_posix.c", "^src/lua/print.c", "^src/lua/luac.c", "^src/lua55" }
+-- Lua source files and include path.  Exactly one runtime is compiled into a
+-- firmware image.  The host Lua that runs this build script is unrelated.
+exclude_patterns = { "^src/platform", "^src/uip", "^src/serial", "^src/luarpc_desktop_serial.c", "^src/linenoise_posix.c", "^src/lua/", "^src/lua55/", "^src/modules/", "^src/modules55/" }
 local source_files = utils.get_files( "src", function( fname )
   fname = fname:gsub( "\\", "/" )
   local include = fname:find( ".*%.c$" )
@@ -380,6 +380,20 @@ local source_files = utils.get_files( "src", function( fname )
   end
   return include
 end )
+
+local lua_source_dir = comp.lua_version == 'lua55' and 'src/lua55' or 'src/lua'
+local module_source_dir = comp.lua_version == 'lua55' and 'src/modules55' or 'src/modules'
+local lua_source_files = utils.get_files( lua_source_dir, function( fname )
+  fname = fname:gsub( "\\", "/" )
+  return fname:match( ".*%.c$" ) and not fname:match( "/print%.c$" ) and
+         not fname:match( "/luac%.c$" ) and not fname:match( "/ltests%.c$" ) and
+         not fname:match( "/onelua%.c$" ) and not fname:match( "/testes/" )
+end )
+local module_source_files = utils.get_files( module_source_dir, function( fname )
+  return fname:gsub( "\\", "/" ):match( ".*%.c$" )
+end )
+source_files = source_files .. ' ' .. lua_source_files .. ' ' .. module_source_files
+if comp.lua_version == 'lua55' then addm( 'ELUA_LUA55' ) end
 -- Add uIP files manually because not all of them are included in the build ([TODO] why?)
  uip_files = ''
 if bdata.ipstack=="uip" then 
@@ -387,7 +401,7 @@ if bdata.ipstack=="uip" then
 elseif bdata.ipstack=="picotcp" then
   dofile('config/picotcp.lua')  
 end
-addi{ { 'inc', 'inc/newlib',  'inc/remotefs', 'src/platform', 'src/lua' }, { 'src/modules', 'src/platform/' .. platform, 'src/platform/' .. platform .. '/cpus' }, "src/uip", "src/fatfs", "inc/niffs" }
+addi{ { 'inc', 'inc/newlib',  'inc/remotefs', 'src/platform', lua_source_dir }, { module_source_dir, 'src/modules', 'src/platform/' .. platform, 'src/platform/' .. platform .. '/cpus' }, "src/uip", "src/fatfs", "inc/niffs" }
 addm( "LUA_OPTIMIZE_MEMORY=" .. ( comp.optram and "2" or "0" ) )
 addcf( { '-fomit-frame-pointer' } )
 

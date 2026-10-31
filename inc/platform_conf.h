@@ -5,7 +5,9 @@
 
 #include "buf.h"
 #include "sermux.h"
+#if !defined(ELUA_LUA55)
 #include "legc.h"
+#endif
 #include "platform.h"
 #include "auxmods.h"
 #include "lualib.h"
@@ -18,4 +20,3 @@
 #include "platform_generic.h"     // generic platform header (include whatever else is missing here)
 
 #endif
-

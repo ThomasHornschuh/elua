@@ -519,6 +519,11 @@ struct lua_Debug {
 #define LUA_VERSION	"Lua " LUA_VERSION_MAJOR "." LUA_VERSION_MINOR
 #define LUA_RELEASE	LUA_VERSION "." LUA_VERSION_RELEASE
 
+/* eLua's shell invokes the standalone interpreter directly. */
+#if defined(ELUA_LUA55)
+int lua_main (int argc, char **argv);
+#endif
+
 
 /******************************************************************************
 * Copyright (C) 1994-2026 Lua.org, PUC-Rio.
