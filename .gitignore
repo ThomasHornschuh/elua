@@ -1,4 +1,5 @@
 .build/
+.build-picolibc*/
 *.hex
 *.elf
 *.dfu
