@@ -72,9 +72,21 @@ Lua 5.5
 `lua` remains the existing eLua Lua 5.1 interpreter.  Lua 5.5.1 is imported
 from the official `v5.5.1` source release in `src/lua55/` and is compiled as
 a private single translation unit, so both interpreters can reside in one
-firmware image.  It provides the upstream standard libraries only; eLua Lua
-objects and modules (for example `pd`, `pio`, `tmr`, and eLua filesystem
-integration) are deliberately not registered in `lua55` yet.
+firmware image.  The first eLua modules, `pd`, `elua` and `cpu`, are available:
+
+~~~text
+> print(pd.platform(), pd.cpu(), pd.board())
+SIM     LINUX   SIM
+~~~
+
+`elua.version()` and `elua.heapstats()` are currently provided.  The former
+Lua-5.1-specific emergency-GC controls are intentionally not exposed yet.
+`cpu.clock()` returns the configured platform CPU frequency; direct memory and
+interrupt operations remain to be ported.
+
+Lua 5.5 `io.open`, `loadfile` and `dofile` also use eLua device-manager paths,
+such as `/rom/...` and `/mmc/...`.  The remaining eLua objects and libraries
+(for example `pio` and `tmr`) are not registered yet.
 
 ### Lua 5.5 regression selection in `sim`
 
@@ -83,7 +95,8 @@ Many of its tests intentionally require a Unix/DOS filesystem, locale data,
 dynamic modules, or the special upstream C test module and therefore do not
 belong in a portable eLua smoke test.  The curated runner below executes a
 fresh simulator process for each selected platform-neutral test (parser, VM,
-garbage collector, coroutines, strings, UTF-8 and math):
+garbage collector, coroutines, strings, UTF-8 and math) plus `pd` and virtual
+filesystem smoke tests:
 
 ~~~sh
 bash tests/run_lua55_sim_tests.sh

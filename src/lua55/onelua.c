@@ -79,12 +79,17 @@
 ** points static prevents them from colliding with the Lua 5.1 symbols.
 */
 #if defined(ELUA_LUA55)
+#include "elua_stdio.h"
 #undef LUA_API
 #undef LUALIB_API
 #undef LUAMOD_API
 #define LUA_API         static
 #define LUALIB_API      static
 #define LUAMOD_API      static
+
+/* Route Lua 5.5's loadfile/io APIs through the eLua device manager. */
+#define fopen           elua_fopen
+#define freopen         elua_freopen
 #endif
 
 /* do not export internal symbols */

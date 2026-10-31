@@ -20,6 +20,10 @@
 #include "lauxlib.h"
 #include "llimits.h"
 
+#if defined(ELUA_LUA55)
+#include "elua_lua55.h"
+#endif
+
 
 /*
 ** Standard Libraries. (Must be listed in the same ORDER of their
@@ -36,6 +40,11 @@ static const luaL_Reg stdlibs[] = {
   {LUA_STRLIBNAME, luaopen_string},
   {LUA_TABLIBNAME, luaopen_table},
   {LUA_UTF8LIBNAME, luaopen_utf8},
+#if defined(ELUA_LUA55)
+  {"pd", elua_lua55open_pd},
+  {"elua", elua_lua55open_elua},
+  {"cpu", elua_lua55open_cpu},
+#endif
   {NULL, NULL}
 };
 
@@ -60,4 +69,3 @@ LUALIB_API void luaL_openselectedlibs (lua_State *L, int load, int preload) {
   lua_assert((mask >> 1) == LUA_UTF8LIBK);
   lua_pop(L, 1);  /* remove PRELOAD table */
 }
-

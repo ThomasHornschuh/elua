@@ -19,8 +19,9 @@ if [ ! -x "$ELUA_SIM" ]; then
 fi
 
 # These exercise the VM, parser, garbage collector and standard pure-Lua
-# libraries.  Deliberately excluded: tests that require host files, locales,
-# dynamic modules, the Lua test C module, or the full upstream test driver.
+# libraries, plus the initial eLua Lua-5.5 bindings. Deliberately excluded:
+# upstream tests that require host files, locales, dynamic modules, the Lua
+# test C module, or the full upstream test driver.
 TESTS=(
   literals
   constructs
@@ -32,16 +33,25 @@ TESTS=(
   closure
   events
   coroutine
+  pd
+  elua
+  cpu
+  filesystem
 )
 
 failed=0
 for test_name in "${TESTS[@]}"; do
   marker="ELUA_LUA55_TEST_PASS ${test_name}"
+  if [ "$test_name" = "pd" ] || [ "$test_name" = "elua" ] || [ "$test_name" = "cpu" ] || [ "$test_name" = "filesystem" ]; then
+    test_path="tests/lua55/${test_name}.lua"
+  else
+    test_path="src/lua55/testes/${test_name}.lua"
+  fi
   output=$(mktemp)
   trap 'rm -f "$output"' EXIT
 
-  printf "lua55 -e \"dofile('src/lua55/testes/%s.lua'); print('%s')\"\nexit\n" \
-    "$test_name" "$marker" \
+  printf "lua55 -e \"dofile('%s'); print('%s')\"\nexit\n" \
+    "$test_path" "$marker" \
     | timeout "$TIMEOUT" "$ELUA_SIM" >"$output" 2>&1
   run_status=$?
 
