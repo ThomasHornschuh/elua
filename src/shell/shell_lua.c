@@ -12,7 +12,7 @@
 #include "platform_conf.h"
 
 // EOF is different in UART mode and TCP/IP mode
-#ifdef BUILD_CON_GENERIC
+#if defined( BUILD_CON_GENERIC ) && !defined( ELUA_SHELL_EOF_CTRL_D )
   #define SHELL_EOF_STRING        "CTRL+Z"
 #else
   #define SHELL_EOF_STRING        "CTRL+D"
@@ -33,4 +33,3 @@ void shell_lua( int argc, char **argv )
   lua_main( argc, argv );
   clearerr( stdin );
 }
-

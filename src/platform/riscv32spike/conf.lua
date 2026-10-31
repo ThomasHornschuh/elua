@@ -29,7 +29,7 @@ addlf{ target_flags}
 -- device-manager implementation.
 local picolibc_sysroot = "/usr/lib/picolibc/riscv64-unknown-elf"
 local picolibc_libdir = picolibc_sysroot .. "/lib/rv32im/ilp32"
-addcf{ '-DELUA_PICOLIBC', '--sysroot=' .. picolibc_sysroot,
+addcf{ '-DELUA_PICOLIBC', '-DELUA_SHELL_EOF_CTRL_D', '--sysroot=' .. picolibc_sysroot,
        '-isystem', picolibc_sysroot .. '/include' }
 addlf{ '--sysroot=' .. picolibc_sysroot, '-L' .. picolibc_libdir,
        '-specs=' .. picolibc_sysroot .. '/picolibc.specs', '-nostartfiles',

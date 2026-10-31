@@ -66,9 +66,9 @@ static _ssize_t std_read( struct _reent *r, int fd, void* vptr, size_t len, void
       }      
       continue;
     }
-    if( !isprint( c ) && c != '\n' && c != '\r' && c != STD_CTRLZ_CODE )
+    if( !isprint( c ) && c != '\n' && c != '\r' && c != STD_EOF_CODE )
       continue;
-    if( c == STD_CTRLZ_CODE )
+    if( c == STD_EOF_CODE )
       return 0;
     std_send_char_func( DM_STDOUT_NUM, c );
     if( c == '\r' || c == '\n' )

@@ -38,4 +38,12 @@
 
 #define STD_CTRLZ_CODE    26    
 
+/* UART consoles traditionally use Ctrl-Z as EOF. The Linux-hosted Spike
+ * target uses Ctrl-D instead, avoiding the terminal job-control character. */
+#ifdef ELUA_SHELL_EOF_CTRL_D
+#define STD_EOF_CODE      4
+#else
+#define STD_EOF_CODE      STD_CTRLZ_CODE
+#endif
+
 #endif
