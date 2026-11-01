@@ -103,6 +103,10 @@ such as `/rom/...` and `/mmc/...`.
 For the complete setup, automated test flow, and interactive SD-card workflow,
 see [Lua 5.5 testing](LUA55_TESTING.md).
 
+For guidance on making an eLua C module build with both Lua 5.1 and Lua 5.5,
+including a `pd` walkthrough and a coding-agent checklist, see
+[Lua 5.5 module porting](LUA55_MODULE_PORTING.md).
+
 The upstream Lua source includes its comprehensive `src/lua55/testes/` suite.
 Many of its tests intentionally require a Unix/DOS filesystem, locale data,
 dynamic modules, or the special upstream C test module and therefore do not
