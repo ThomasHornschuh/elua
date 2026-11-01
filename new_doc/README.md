@@ -100,6 +100,9 @@ such as `/rom/...` and `/mmc/...`.
 
 ### Lua 5.5 regression selection in `sim`
 
+For the complete setup, automated test flow, and interactive SD-card workflow,
+see [Lua 5.5 testing](LUA55_TESTING.md).
+
 The upstream Lua source includes its comprehensive `src/lua55/testes/` suite.
 Many of its tests intentionally require a Unix/DOS filesystem, locale data,
 dynamic modules, or the special upstream C test module and therefore do not
