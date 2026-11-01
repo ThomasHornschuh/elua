@@ -13,6 +13,11 @@ void hostif_putstr(const char *c);
 
 // Get a char from keyboard
 int hostif_getch();
+int hostif_getch_timeout( unsigned timeout_ms );
+
+// Enable/restore raw input when the simulator is attached to a host terminal.
+void hostif_init_terminal();
+void hostif_restore_terminal();
 
 // Get memory
 void *hostif_getmem( unsigned size );
@@ -39,4 +44,3 @@ long hostif_lseek( int fd, long pos, int whence );
 s64 hostif_gettime();
 
 #endif // __HOSTIO_H__
-

@@ -8,10 +8,10 @@ return {
     romfs = true,
     shell = { advanced = true },
     term = { lines = 25, cols = 80 },
+    linenoise = { shell_lines = 20, lua_lines = 50 },
     mmcfs = { spi = 0, cs_port = 0, cs_pin = 0 },
   },
   modules = {
     generic = { 'pd', 'all_lua', 'term', 'elua' }
   }
 }
-

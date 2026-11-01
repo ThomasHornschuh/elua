@@ -420,6 +420,21 @@ static int handle_luainit (lua_State *L) {
 #endif
 
 
+/* eLua uses its embedded linenoise implementation for the Lua REPL. */
+#if defined(ELUA_LUA55) && defined(BUILD_LINENOISE)
+#include "linenoise.h"
+
+#define lua_initreadline(L)	((void)(L))
+static char *elua_lua_readline (char *buffer, const char *prompt) {
+  return (linenoise_getline(LINENOISE_ID_LUA, buffer, LUA_MAXINPUT, prompt) != -1)
+         ? buffer : NULL;
+}
+#define lua_readline(buffer, prompt) elua_lua_readline((buffer), (prompt))
+#define lua_saveline(line) linenoise_addhistory(LINENOISE_ID_LUA, (line))
+#define lua_freeline(line) ((void)(line))
+#endif
+
+
 /*
 ** lua_stdin_is_tty detects whether the standard input is a 'tty' (that
 ** is, whether we're running lua interactively).
@@ -793,5 +808,8 @@ int main (int argc, char **argv) {
   result = lua_toboolean(L, -1);  /* get result */
   report(L, status);
   lua_close(L);
+#if defined(ELUA_LUA55) && defined(BUILD_LINENOISE)
+  linenoise_cleanup(LINENOISE_ID_LUA);
+#endif
   return (result && status == LUA_OK) ? EXIT_SUCCESS : EXIT_FAILURE;
 }

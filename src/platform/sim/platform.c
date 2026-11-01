@@ -36,12 +36,14 @@ static int i386_term_in( int mode )
 static int i386_term_translate( int data )
 {
   int newdata = data;
+  int seq;
 
   if( data == 0 )
     return KC_UNKNOWN;
   else switch( data )
   {
     case '\n':
+    case '\r':
       newdata = KC_ENTER;
       break;
 
@@ -50,11 +52,67 @@ static int i386_term_translate( int data )
       break;
 
     case '\b':
+    case 0x7f:
       newdata = KC_BACKSPACE;
       break;
 
     case 0x1B:
-      newdata = KC_ESC;
+      /*
+       * The host terminal sends cursor keys as ANSI escape sequences.  On
+       * embedded targets these are decoded by the UART terminal driver; do
+       * the equivalent here so linenoise can use them for editing/history.
+       */
+      if( hostif_getch_timeout( 100 ) != '[' )
+        newdata = KC_ESC;
+      else if( ( seq = hostif_getch_timeout( 100 ) ) >= 'A' && seq <= 'D' )
+      {
+        static const int cursor_keys[] = { KC_UP, KC_DOWN, KC_RIGHT, KC_LEFT };
+        newdata = cursor_keys[ seq - 'A' ];
+      }
+      else if( seq == 'H' )
+        newdata = KC_HOME;
+      else if( seq == 'F' )
+        newdata = KC_END;
+      else if( seq >= '1' && seq <= '6' && hostif_getch_timeout( 100 ) == '~' )
+      {
+        static const int edit_keys[] = { KC_HOME, KC_UNKNOWN, KC_DEL,
+                                         KC_END, KC_PAGEUP, KC_PAGEDOWN };
+        newdata = edit_keys[ seq - '1' ];
+      }
+      else
+        newdata = KC_UNKNOWN;
+      break;
+
+    case 0x01:
+      newdata = KC_CTRL_A;
+      break;
+
+    case 0x03:
+      newdata = KC_CTRL_C;
+      break;
+
+    case 0x04:
+      newdata = KC_CTRL_D;
+      break;
+
+    case 0x05:
+      newdata = KC_CTRL_E;
+      break;
+
+    case 0x0b:
+      newdata = KC_CTRL_K;
+      break;
+
+    case 0x14:
+      newdata = KC_CTRL_T;
+      break;
+
+    case 0x15:
+      newdata = KC_CTRL_U;
+      break;
+
+    case 0x1a:
+      newdata = KC_CTRL_Z;
       break;
   }
   return newdata;
@@ -106,6 +164,7 @@ int platform_init()
   }
 
   // Set the std input/output functions
+  hostif_init_terminal();
   // Set the send/recv functions                          
   std_set_send_func( scr_write );
   std_set_get_func( kb_read );       
@@ -177,4 +236,3 @@ int platform_cpu_get_global_interrupts( void )
 {
   return 0;
 }
-

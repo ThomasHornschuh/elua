@@ -169,11 +169,18 @@ static int linenoisePrompt(int id, char *buf, size_t buflen, const char *prompt)
           case KC_ENTER:
           case KC_CTRL_C:
           case KC_CTRL_Z:
+#ifdef ELUA_SHELL_EOF_CTRL_D
+          case KC_CTRL_D:
+#endif
             history_lengths[ id ] --;
             free( histories[ id ][history_lengths[ id ]] );
             if( c == KC_CTRL_C )
               return LINENOISE_CTRL_C;
-            else if( c == KC_CTRL_Z )
+            else if( c == KC_CTRL_Z
+#ifdef ELUA_SHELL_EOF_CTRL_D
+                     || c == KC_CTRL_D
+#endif
+                   )
               return -1;
             return len;      
                         
