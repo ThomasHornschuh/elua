@@ -21,6 +21,11 @@
 #include "lualib.h"
 #include "llimits.h"
 
+/* eLua board features (including BUILD_LINENOISE). */
+#if defined(ELUA_LUA55)
+#include "platform_conf.h"
+#endif
+
 
 #if !defined(LUA_PROGNAME)
 #define LUA_PROGNAME		"lua"
