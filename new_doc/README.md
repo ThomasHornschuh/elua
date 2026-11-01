@@ -117,6 +117,32 @@ non-zero status if a test fails or does not reach its explicit completion
 marker.  Set `ELUA_SIM` to test another simulator binary and `TIMEOUT` (in
 seconds) to adjust the per-test limit.
 
+### Interactive tests from an emulated SD card
+
+Create a separate FAT image containing the same curated test selection:
+
+~~~sh
+bash tests/create_lua55_sd_image.sh
+~~~
+
+The simulator opens `sdcard.img` in its current directory.  To preserve an
+existing image, start it in a temporary directory containing a copy of the
+test image:
+
+~~~sh
+mkdir -p /tmp/elua-lua55-tests
+cp lua55-tests-sdcard.img /tmp/elua-lua55-tests/sdcard.img
+( cd /tmp/elua-lua55-tests && /path/to/elua_lua_sim.elf )
+~~~
+
+At the eLua prompt, list tests or run one/all of them:
+
+~~~text
+eLua# lua /mmc/lua55/run.lua list
+eLua# lua /mmc/lua55/run.lua literals
+eLua# lua /mmc/lua55/run.lua all
+~~~
+
 ## Filesystem images
 
 * `wofs.img` is created automatically in the current directory when WOFS is
