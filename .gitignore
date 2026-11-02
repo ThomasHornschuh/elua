@@ -2,6 +2,7 @@
 .build-picolibc*/
 .build-sim*/
 .build-spike*/
+.build-bonfire*/
 *.hex
 *.elf
 *.dfu

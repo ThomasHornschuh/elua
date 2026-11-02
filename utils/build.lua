@@ -614,10 +614,21 @@ end
 -- Return a link command based on the specified args
 builder.link_cmd = function( self, args )
   local flags = type( args.flags ) == 'table' and table_to_string( utils.linearize_array( args.flags ) ) or args.flags
-  local libraries = type( args.libraries ) == 'table' and table_to_string( utils.linearize_array( args.libraries ) ) or args.libraries
+  local libraries = args.libraries
+  if type( libraries ) == 'table' then
+    libraries = utils.linearize_array( libraries )
+    for i, library in ipairs( libraries ) do
+      -- Library names use the conventional -l prefix.  A linker option or an
+      -- absolute archive path is already complete and must be kept verbatim.
+      if library:sub( 1, 1 ) ~= '-' and not library:find( '/', 1, true ) then
+        libraries[ i ] = '-l' .. library
+      end
+    end
+    libraries = table_to_string( libraries )
+  end
   local linkcmd = args.linker or "gcc"
   linkcmd = linkcmd .. " " .. flags .. " -o $(TARGET) $(DEPENDS)"
-  linkcmd = linkcmd .. " " .. utils.prepend_string( libraries, "-l" )
+  linkcmd = linkcmd .. " " .. libraries
   return linkcmd
 end
 
@@ -845,4 +856,3 @@ end
 function new_builder( build_dir )
   return builder.new( build_dir )
 end
-

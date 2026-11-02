@@ -25,7 +25,6 @@
 
 #include "gdb_interface.h"
 
-
 volatile uint32_t *pmtime = (uint32_t*)MTIME_BASE; // Pointer to memory mapped RISC-V Timer registers
 
 uint32_t tick_interval=0;
@@ -351,4 +350,3 @@ char c;
     }
     return ptf;
 }
-

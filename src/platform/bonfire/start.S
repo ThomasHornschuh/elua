@@ -51,11 +51,11 @@
   STORE  x30,30*REGBYTES(x2)
   STORE  x31,31*REGBYTES(x2)
 
-  # get sr, epc, badvaddr, cause
+  # get sr, epc, fault address, cause
   csrr t0,mscratch // orginal SP from trap
   csrr   s0,mstatus
   csrr   t1,mepc
-  csrr   t2,mbadaddr
+  csrr   t2,mtval
 
   csrr   t3,mcause
   STORE  t0,2*REGBYTES(x2)

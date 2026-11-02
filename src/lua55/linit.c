@@ -28,6 +28,38 @@ static int luaopen_dummy (lua_State *L) {
   return 0;
 }
 
+#if defined(PLATFORM_MODULES_ENABLE)
+/* Lua 5.1 built the platform namespace in its customised linit.c.  Keep the
+ * same `bonfire.<module>` API when the selected runtime is Lua 5.5. */
+typedef struct {
+  const char *name;
+  const luaL_Reg *functions;
+} elua_platform_module;
+
+#undef _ROM
+#define _ROM( name, openf, table ) extern const luaL_Reg table[];
+PLATFORM_MODULES_LIBS_ROM
+
+static const elua_platform_module platform_modules[] = {
+#undef _ROM
+#define _ROM( name, openf, table ) { name, table },
+  PLATFORM_MODULES_LIBS_ROM
+  {NULL, NULL}
+};
+
+LUALIB_API int luaopen_platform (lua_State *L) {
+  const elua_platform_module *module;
+
+  lua_newtable(L);
+  for (module = platform_modules; module->name != NULL; module++) {
+    lua_createtable(L, 0, 0);
+    luaL_setfuncs(L, module->functions, 0);
+    lua_setfield(L, -2, module->name);
+  }
+  return 1;
+}
+#endif
+
 #undef _ROM
 #define _ROM( name, openf, table ) { name, openf },
 static const luaL_Reg eluamods[] = {

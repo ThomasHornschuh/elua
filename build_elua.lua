@@ -372,11 +372,17 @@ if platform == 'sim' then addm( { "ELUA_SIMULATOR", "ELUA_SIM_" .. cnorm( comp.c
 -- Lua source files and include path.  Exactly one runtime is compiled into a
 -- firmware image.  The host Lua that runs this build script is unrelated.
 exclude_patterns = { "^src/platform", "^src/uip", "^src/serial", "^src/luarpc_desktop_serial.c", "^src/linenoise_posix.c", "^src/lua/", "^src/lua55/", "^src/modules/" }
+local without_network = comp.board == 'bonfire_arty_minimal'
 local source_files = utils.get_files( "src", function( fname )
   fname = fname:gsub( "\\", "/" )
   local include = fname:find( ".*%.c$" )
   if include then
     utils.foreach( exclude_patterns, function( k, v ) if fname:match( v ) then include = false end end )
+    if without_network and ( fname == 'src/picotcp_driver.c' or
+                             fname == 'src/elua_picotcp.c' or
+                             fname == 'src/elua_uip.c' ) then
+      include = false
+    end
   end
   return include
 end )
@@ -390,7 +396,8 @@ local lua_source_files = utils.get_files( lua_source_dir, function( fname )
          not fname:match( "/onelua%.c$" ) and not fname:match( "/testes/" )
 end )
 local module_source_files = utils.get_files( module_source_dir, function( fname )
-  return fname:gsub( "\\", "/" ):match( ".*%.c$" )
+  fname = fname:gsub( "\\", "/" )
+  return fname:match( ".*%.c$" ) and not ( without_network and fname:match( "/net%.c$" ) )
 end )
 source_files = source_files .. ' ' .. lua_source_files .. ' ' .. module_source_files
 if comp.lua_version == 'lua55' then addm( 'ELUA_LUA55' ) end

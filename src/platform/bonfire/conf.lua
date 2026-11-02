@@ -17,15 +17,17 @@ if board=="bonfire_papilio_pro" or board=="bonfire_ulx3s" then
 end
 
 if comp.cpu:lower()=="bonfire_arty_10" then
-  specific_files = specific_files .. " xil_etherlite.c xil_spi.c"
+  -- The SPI core is needed for MMC/SD.  The Ethernet Lite driver is only
+  -- needed when the board configuration selects an IP stack.
+  specific_files = specific_files .. " xil_spi.c"
+  if board ~= "bonfire_arty_minimal" then
+    specific_files = specific_files .. " xil_etherlite.c"
+  end
 elseif comp.cpu:lower()=="bonfire_basic_soc_10" then
     specific_files = specific_files .. " bonfire_spi.c" 
 end
 
--- Debug support
---if comp.board:lower()=="bonfire_papilio_pro" then
-  specific_files = specific_files .. " gdb_interface.c riscv-gdb-stub.c mod_gdbserver.c"
---end
+specific_files = specific_files .. " gdb_interface.c riscv-gdb-stub.c mod_gdbserver.c"
 
 local ldscript = sf( "src/platform/%s/%s", platform, "riscv_local.ld" )
 
@@ -40,12 +42,38 @@ specific_files = utils.prepend_path( specific_files, sf( "src/platform/%s", plat
 
 -- Standard GCC flags
 
-addaf{ '-march=rv32im' ,'-mabi=ilp32' }
-addcf{ '-march=rv32im' ,'-mabi=ilp32', '-DRISCV32' }
+-- Recent GCC releases require CSR instructions to be requested explicitly.
+addaf{ '-march=rv32im_zicsr_zifencei' ,'-mabi=ilp32' }
+addcf{ '-march=rv32im_zicsr_zifencei' ,'-mabi=ilp32', '-DRISCV32' }
 addcf{ '-ffunction-sections', '-fdata-sections', '-fno-strict-aliasing', '-Wall'}
-addlf{ '-march=rv32im' ,'-mabi=ilp32' }
-addlf{ '-nostartfiles', '-nostdlib', '-T', ldscript, '-Wl,--gc-sections', '-Wl,--allow-multiple-definition' }
-addlib{ 'c','gcc','m' }
+addlf{ '-march=rv32im_zicsr_zifencei' ,'-mabi=ilp32' }
+addlf{ '-nostartfiles', board == "bonfire_arty_minimal" and '-nodefaultlibs' or '-nostdlib',
+       '-T', ldscript, '-Wl,--gc-sections', '-Wl,--allow-multiple-definition' }
+-- Debian's RISC-V bare-metal compiler injects Newlib's libgloss for -lc.
+-- This firmware uses Picolibc and eLua's own stubs, therefore link the
+-- Picolibc archives directly for the minimal Arty profile.
+local picolibc_sysroot = "/usr/lib/picolibc/riscv64-unknown-elf"
+local picolibc_libdir = picolibc_sysroot .. "/lib/rv32im/ilp32"
+if board == "bonfire_arty_minimal" then
+  addlib{ picolibc_libdir .. '/libc.a', 'gcc', picolibc_libdir .. '/libm.a' }
+else
+  addlib{ 'c','gcc','m' }
+end
+
+if board == "bonfire_arty_minimal" then
+  -- Debian's RISC-V bare-metal compiler is shipped without Newlib.  Use the
+  -- installed Picolibc sysroot; eLua supplies its own start-up and syscall
+  -- stubs for the Bonfire firmware.
+  addcf{ '-DELUA_PICOLIBC', '--sysroot=' .. picolibc_sysroot,
+         '-isystem', picolibc_sysroot .. '/include' }
+  addlf{ '--sysroot=' .. picolibc_sysroot, '-L' .. picolibc_libdir,
+         '-Wl,-u,stdin,-u,stdout,-u,stderr', '-nolibc' }
+end
+
+-- Keep the normal optimized build, but use a non-LTO link for Picolibc.
+if board == "bonfire_arty_minimal" then
+  delcf{ '-flto' }
+end
 
 
 
@@ -77,4 +105,3 @@ tools.bonfire = {}
   --local t = builder:target( "#phony:prog", { exetarget }, tools.bonfire.progfunc )
   --builder:add_target( t, "build eLua firmware image", { "prog" } )
 --end
-

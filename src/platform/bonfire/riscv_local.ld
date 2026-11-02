@@ -26,14 +26,11 @@ OUTPUT_ARCH( "riscv" )
 
 ENTRY( _start )
 
-/* The GROUP command is special since the listed archives will be
-   searched repeatedly until there are no new undefined references. We
-   need this since -lc depends on -lgloss and -lgloss depends on -lc. I
-   thought gcc would automatically include -lgcc when needed, but
-   idt32.ld includes it explicitly here and I was seeing link errors
-   without it. */
+/* The GROUP command makes the C runtime and compiler support archives
+   available repeatedly.  System-call stubs are supplied by eLua, so do not
+   pull in Newlib's libgloss; this also permits Picolibc builds. */
 
-GROUP( -lc -lgloss -lgcc )
+GROUP( -lc -lgcc )
 
 /*----------------------------------------------------------------------*/
 /* Sections                                                             */
@@ -230,6 +227,12 @@ SECTIONS
 
   _end = ALIGN(8);
   end = .;  __end = .;
+
+  /* Picolibc's sbrk implementation uses these bounds.  Reserve eLua's
+     user and interrupt stacks at the top of the Arty DRAM. */
+  __heap_start = _end;
+  __stack = 0x0ffffff0;
+  __heap_end = __stack - 0x10800;
 
 /*
   _stacktop = ‭0x07fffff0‬;
