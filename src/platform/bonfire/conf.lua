@@ -49,25 +49,18 @@ addcf{ '-ffunction-sections', '-fdata-sections', '-fno-strict-aliasing', '-Wall'
 addlf{ '-march=rv32im_zicsr_zifencei' ,'-mabi=ilp32' }
 addlf{ '-nostartfiles', board == "bonfire_arty_minimal" and '-nodefaultlibs' or '-nostdlib',
        '-T', ldscript, '-Wl,--gc-sections', '-Wl,--allow-multiple-definition' }
--- Debian's RISC-V bare-metal compiler injects Newlib's libgloss for -lc.
--- This firmware uses Picolibc and eLua's own stubs, therefore link the
--- Picolibc archives directly for the minimal Arty profile.
-local picolibc_sysroot = "/usr/lib/picolibc/riscv64-unknown-elf"
-local picolibc_libdir = picolibc_sysroot .. "/lib/rv32im/ilp32"
 if board == "bonfire_arty_minimal" then
-  addlib{ picolibc_libdir .. '/libc.a', 'gcc', picolibc_libdir .. '/libm.a' }
+  -- The toolchain's Picolibc specs file supplies headers and libraries; no
+  -- distribution-specific sysroot or archive path belongs in eLua.
+  addlib{ 'c', 'gcc', 'm' }
 else
   addlib{ 'c','gcc','m' }
 end
 
 if board == "bonfire_arty_minimal" then
-  -- Debian's RISC-V bare-metal compiler is shipped without Newlib.  Use the
-  -- installed Picolibc sysroot; eLua supplies its own start-up and syscall
-  -- stubs for the Bonfire firmware.
-  addcf{ '-DELUA_PICOLIBC', '--sysroot=' .. picolibc_sysroot,
-         '-isystem', picolibc_sysroot .. '/include' }
-  addlf{ '--sysroot=' .. picolibc_sysroot, '-L' .. picolibc_libdir,
-         '-Wl,-u,stdin,-u,stdout,-u,stderr', '-nolibc' }
+  -- eLua supplies its own start-up and syscall stubs.
+  addcf{ '-DELUA_PICOLIBC', '-specs=picolibc.specs' }
+  addlf{ '-specs=picolibc.specs', '-Wl,-u,stdin,-u,stdout,-u,stderr' }
 end
 
 -- Keep the normal optimized build, but use a non-LTO link for Picolibc.
