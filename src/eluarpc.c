@@ -28,18 +28,18 @@ static u8* eluarpc_write_op_id( u8 *p, u8 fdata )
 static u8 *eluarpc_write_u16( u8 *p, u16 fdata )
 {
   *p ++ = TYPE_INT_16;
-  *p ++ = fdata & 0xFF;
-  *p ++ = ( fdata >> 8 ) & 0xFF;
-  return p;    
+  *p ++ = ( u8 )( fdata & 0xFFU );
+  *p ++ = ( u8 )( ( fdata >> 8 ) & 0xFFU );
+  return p;
 }
 
 static u8 *eluarpc_write_u32( u8 *p, u32 fdata )
 {
   *p ++ = TYPE_INT_32;
-  *p ++ = fdata & 0xFF;
-  *p ++ = ( fdata >> 8 ) & 0xFF;
-  *p ++ = ( fdata >> 16 ) & 0xFF;
-  *p ++ = ( fdata >> 24 ) & 0xFF;
+  *p ++ = ( u8 )( fdata & 0xFFU );
+  *p ++ = ( u8 )( ( fdata >> 8 ) & 0xFFU );
+  *p ++ = ( u8 )( ( fdata >> 16 ) & 0xFFU );
+  *p ++ = ( u8 )( ( fdata >> 24 ) & 0xFFU );
   return p;        
 }
 
@@ -147,17 +147,22 @@ static u8* eluarpc_start_packet( u8 *p )
   return p;
 }
 
-static u8* eluarpc_end_packet( u8 *p )
+static int eluarpc_end_packet( u8 *p )
 {
-  u16 len;
+  size_t len;
   
   *p ++ = TYPE_END;
-  p = eluarpc_write_u32( p, ~PACKET_SIG );
-  len = p - eluarpc_packet_ptr;
+  p = eluarpc_write_u32( p, PACKET_END_SIG );
+  len = ( size_t )( p - eluarpc_packet_ptr );
   p = eluarpc_packet_ptr;
   *p ++ = TYPE_PKT_SIZE;
-  eluarpc_write_u16( p, len );  
-  return p;  
+  if( len > 0xFFFFU )
+  {
+    eluarpc_write_u16( p, 0 );
+    return ELUARPC_ERR;
+  }
+  eluarpc_write_u16( p, ( u16 )len );
+  return ELUARPC_OK;
 }
 
 static const u8* eluarpc_match_packet_start( const u8 *p )
@@ -178,7 +183,7 @@ static const u8* eluarpc_match_packet_end( const u8 *p )
   
   p = eluarpc_read_expect( p, TYPE_END );
   p = eluarpc_read_u32( p, &fdata );
-  if( fdata != ~PACKET_SIG )
+  if( fdata != PACKET_END_SIG )
     eluarpc_err_flag = ELUARPC_ERR;
   return p;
 }
@@ -204,6 +209,8 @@ int eluarpc_get_packet_size( const u8 *p, u16 *psize )
   eluarpc_err_flag = ELUARPC_OK;
   p = eluarpc_read_expect( p, TYPE_PKT_SIZE );
   p = eluarpc_read_u16( p, psize );
+  if( *psize == 0 )
+    eluarpc_err_flag = ELUARPC_ERR;
   return eluarpc_err_flag;
 }
 
@@ -217,7 +224,7 @@ int eluarpc_get_packet_size( const u8 *p, u16 *psize )
 //             L - s32
 //             p - ptr (given as ptr, len, len is an u32)
 //             P - ptr (given as ptr, len, len is an u16)
-void eluarpc_gen_write( u8 *p, const char *fmt, ... )
+int eluarpc_gen_write( u8 *p, const char *fmt, ... )
 {
   va_list ap;
   const void *ptr;
@@ -229,7 +236,7 @@ void eluarpc_gen_write( u8 *p, const char *fmt, ... )
     switch( *fmt ++ )
     {
       case 'o':
-        p = eluarpc_write_op_id( p, va_arg( ap, int ) );
+        p = eluarpc_write_op_id( p, ( u8 )va_arg( ap, int ) );
         break;
         
       case 'r':
@@ -264,11 +271,17 @@ void eluarpc_gen_write( u8 *p, const char *fmt, ... )
         
       case 'P':
         ptr = va_arg( ap, void * );
-        ptrlen = ( u16 )va_arg( ap, int );
-        p = eluarpc_write_small_ptr( p, ptr, ptrlen );
+        ptrlen = ( u32 )va_arg( ap, int );
+        if( ptrlen > 0xFFFFU )
+        {
+          va_end( ap );
+          return ELUARPC_ERR;
+        }
+        p = eluarpc_write_small_ptr( p, ptr, ( u16 )ptrlen );
         break;        
     }
-  eluarpc_end_packet( p );
+  va_end( ap );
+  return eluarpc_end_packet( p );
 }
 
 // Generic read function
@@ -298,7 +311,7 @@ int eluarpc_gen_read( const u8 *p, const char *fmt, ... )
     switch( *fmt ++ )
     {
       case 'o':
-        p = eluarpc_expect_op_id( p, va_arg( ap, int ) );
+        p = eluarpc_expect_op_id( p, ( u8 )va_arg( ap, int ) );
         break;
         
       case 'r':

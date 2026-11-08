@@ -38,6 +38,30 @@
 
 
 
+#if defined( ELUA_SIM_LINUX )
+
+/*
+ * The Lua CPU API transports raw addresses as u32 values. Native 64-bit
+ * simulator pointers cannot be represented by that API, so reject raw memory
+ * access instead of truncating a host pointer and dereferencing it.
+ */
+static int cpu_raw_memory_unavailable( lua_State *L )
+{
+  return luaL_error( L, "raw memory access is not available on the Linux simulator" );
+}
+
+#define CPU_RAW_MEMORY_UNAVAILABLE( name ) \
+  static int name( lua_State *L ) { return cpu_raw_memory_unavailable( L ); }
+
+CPU_RAW_MEMORY_UNAVAILABLE( cpu_w32 )
+CPU_RAW_MEMORY_UNAVAILABLE( cpu_r32 )
+CPU_RAW_MEMORY_UNAVAILABLE( cpu_w16 )
+CPU_RAW_MEMORY_UNAVAILABLE( cpu_r16 )
+CPU_RAW_MEMORY_UNAVAILABLE( cpu_w8 )
+CPU_RAW_MEMORY_UNAVAILABLE( cpu_r8 )
+
+#else
+
 // Lua: w32( address, data )
 static int cpu_w32( lua_State *L )
 {
@@ -107,6 +131,8 @@ static int cpu_r8( lua_State *L )
   lua_pushnumber( L, ( lua_Number )( *( u8* )addr ) );
   return 1;
 }
+
+#endif // defined( ELUA_SIM_LINUX )
 
 // Either disables or enables the given interrupt(s)
 static int cpuh_int_helper( lua_State *L, int mode )

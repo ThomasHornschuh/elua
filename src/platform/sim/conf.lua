@@ -22,7 +22,7 @@ addm({"_READ_WRITE_RETURN_TYPE=_ssize_t"})
 
 -- The selected simulator source set contains only C files.  Build with the
 -- native host compiler; do not force a host ISA, 32-bit ABI, or NASM.
-addcf{ '-DELUA_SHELL_EOF_CTRL_D', '-fno-pie', '-fno-builtin', '-fno-stack-protector' }
+addcf{ '-DELUA_SHELL_EOF_CTRL_D', '-DLUA_USE_POSIX', '-fno-pie', '-fno-builtin', '-fno-stack-protector' }
 addlf{ '-no-pie' }
 
 -- Toolset data

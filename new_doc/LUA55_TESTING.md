@@ -53,8 +53,26 @@ can modify globals.
 The selected upstream tests are parser/VM/library tests (`literals`,
 `constructs`, `calls`, `strings`, `utf8`, `math`, `vararg`, `closure`,
 `events`, `coroutine`).  eLua smoke tests cover the board-configured `pd`,
-`elua`, `term`, and `tmr` modules plus filesystem access. The timer smoke
-test runs directly from `/rom/lua55_timers.lua`.
+`elua`, `term`, `tmr`, and `cpu` modules plus filesystem access. The timer
+smoke test runs directly from `/rom/lua55_timers.lua`. On the native 64-bit
+simulator, `cpu.r8/r16/r32` and `cpu.w8/w16/w32` raise an error instead of
+attempting unsafe raw-address access; the Lua CPU API only carries 32-bit
+addresses and cannot represent native host pointers.
+
+## RPC packet codec regression test
+
+Run the focused native-host codec test with:
+
+```sh
+bash tests/run_eluarpc_codec_test.sh
+```
+
+It compiles `src/eluarpc.c` with `-Wall -Wextra -Wconversion -Werror` and
+checks fixed-width start/end signatures, valid packet decoding, rejection of
+corrupted signatures, and rejection of packets that exceed the `u16` wire-size
+field. `eluarpc_gen_write` returns `ELUARPC_ERR` for an oversized encoded
+packet; callers must provide a buffer large enough for the packet being
+encoded.
 
 ## Simulator timers
 
@@ -77,9 +95,6 @@ but does not count Linux suspend time. The smoke test allows up to two
 seconds of additional scheduling latency rather than asserting exact timing;
 this is a test tolerance, not a real-time guarantee.
 
-The board configuration generator may warn that it cannot include `tmr`
-because `NUM_TIMER` is zero. The simulator platform header overrides that
-hardware-only guard for its system and virtual timers.
 
 ## GitHub Actions
 
@@ -92,7 +107,15 @@ curated test script against that simulator. Build and test logs are uploaded
 as an artifact if either step fails.
 
 The local-equivalent build and test commands are the ones shown above; CI uses
-a separate build directory to keep its generated files isolated.
+a separate build directory to keep its generated files isolated. To build with
+a strict warning check locally, run:
+
+```sh
+bash tests/check_lua55_sim_warnings.sh
+```
+
+The check rejects compiler, preprocessor, and linker warning diagnostics while
+allowing informational `#pragma message` output.
 
 ## Interactive FAT SD-card image
 

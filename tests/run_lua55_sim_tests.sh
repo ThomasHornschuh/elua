@@ -37,6 +37,8 @@ TESTS=(
   elua
   term
   filesystem
+  cpu_sim
+  os_tmpname
   timers
 )
 
@@ -45,7 +47,7 @@ for test_name in "${TESTS[@]}"; do
   marker="ELUA_LUA55_TEST_PASS ${test_name}"
   if [ "$test_name" = "timers" ]; then
     test_path="/rom/lua55_timers.lua"
-  elif [ "$test_name" = "pd" ] || [ "$test_name" = "elua" ] || [ "$test_name" = "term" ] || [ "$test_name" = "filesystem" ]; then
+  elif [ "$test_name" = "pd" ] || [ "$test_name" = "elua" ] || [ "$test_name" = "term" ] || [ "$test_name" = "filesystem" ] || [ "$test_name" = "cpu_sim" ] || [ "$test_name" = "os_tmpname" ]; then
     test_path="tests/lua55/${test_name}.lua"
   else
     test_path="src/lua55/testes/${test_name}.lua"

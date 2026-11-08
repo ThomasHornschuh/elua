@@ -38,7 +38,7 @@ local elua_generic_modules = {
   pwm = { guards = {"NUM_PWM > 0" } }, 
   spi = { guards = { "NUM_SPI > 0" } },
   term = { guards = { "BUILD_TERM" } },
-  tmr = { guards = { "NUM_TIMER > 0" } },
+  tmr = { guards = { "NUM_TIMER > 0 || VTMR_NUM_TIMERS > 0" } },
   uart = { guards = { "NUM_UART > 0" } },
   fs = { guards = { "BUILD_NIFFS" } }
 }

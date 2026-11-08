@@ -34,8 +34,7 @@ jobs:
       - name: Build Lua 5.5 simulator
         run: |
           set -o pipefail
-          lua5.1 build_elua.lua board=sim lua_version=lua55 \
-            build_mode=build_dir_linearized build_dir=.build-ci-sim-lua55 \
+          bash tests/check_lua55_sim_warnings.sh .build-ci-sim-lua55 \
             2>&1 | tee build.log
 
       - name: Run curated simulator tests

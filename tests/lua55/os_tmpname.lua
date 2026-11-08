@@ -1,0 +1,5 @@
+local name = assert(os.tmpname())
+local file = assert(io.open(name, "wb"))
+assert(file:write("elua tmpname test\n"))
+assert(file:close())
+assert(os.remove(name))

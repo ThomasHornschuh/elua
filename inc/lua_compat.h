@@ -10,7 +10,7 @@
 
 typedef luaL_Reg luaL_reg;
 
-static void elua_luaL_register( lua_State* L, const char* name, const luaL_Reg* functions )
+static inline void elua_luaL_register( lua_State* L, const char* name, const luaL_Reg* functions )
 {
   lua_createtable( L, 0, 0 );
   luaL_setfuncs( L, functions, 0 );

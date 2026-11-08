@@ -5,7 +5,8 @@
 
 #include "type.h"
 
-#define   PACKET_SIG          0x18AFC284UL
+#define   PACKET_SIG          ( ( u32 )0x18AFC284U )
+#define   PACKET_END_SIG      ( ( u32 )~PACKET_SIG )
 
 // Error codes
 #define   ELUARPC_OK          0
@@ -38,7 +39,10 @@ u32 eluarpc_replace_flag( u32 val, u32 origflag, u32 newflag );
 // Get packet size
 int eluarpc_get_packet_size( const u8 *p, u16 *psize );
 
-// Generic write function
+// Generic write function. Returns ELUARPC_ERR when the encoded packet is
+// larger than the u16 wire-size field. The caller must provide a buffer large
+// enough for the complete packet, including an oversized packet that is
+// rejected after encoding.
 // Specifiers: o - operation
 //             r - response
 //             c - u8
@@ -48,7 +52,7 @@ int eluarpc_get_packet_size( const u8 *p, u16 *psize );
 //             L - s32
 //             p - ptr (given as ptr, len, len is an u32)
 //             P - ptr (given as ptr, len, len is an u16)
-void eluarpc_gen_write( u8 *p, const char *fmt, ... );
+int eluarpc_gen_write( u8 *p, const char *fmt, ... );
 
 // Generic read function
 // Specifiers: o - operation

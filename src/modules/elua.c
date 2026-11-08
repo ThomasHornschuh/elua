@@ -47,6 +47,8 @@ static int elua_heapstats( lua_State *L )
 #ifndef USE_SIMPLE_ALLOCATOR // the simple allocator doesn't offer memory usage data
 #ifdef USE_MULTIPLE_ALLOCATOR
   struct mallinfo m = dlmallinfo();
+#elif defined( ELUA_CPU_LINUX ) && defined( __GLIBC__ ) && __GLIBC_PREREQ( 2, 33 )
+  struct mallinfo2 m = mallinfo2();
 #else
   struct mallinfo m = mallinfo();
 #endif

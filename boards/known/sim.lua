@@ -15,6 +15,6 @@ return {
     vtmr = { num = 4, freq = 10 },
   },
   modules = {
-    generic = { 'pd', 'all_lua', 'term', 'elua', 'tmr' }
+    generic = { 'pd', 'all_lua', 'term', 'elua', 'tmr', 'cpu' }
   }
 }
