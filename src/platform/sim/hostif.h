@@ -19,6 +19,8 @@ int hostif_getch_timeout( unsigned timeout_ms );
 void hostif_init_terminal();
 void hostif_restore_terminal();
 
+int hostif_init_timers();
+
 // Get memory
 void *hostif_getmem( unsigned size );
 

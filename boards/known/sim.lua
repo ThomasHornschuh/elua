@@ -11,7 +11,10 @@ return {
     linenoise = { shell_lines = 20, lua_lines = 50 },
     mmcfs = { spi = 0, cs_port = 0, cs_pin = 0 },
   },
+  config = {
+    vtmr = { num = 4, freq = 10 },
+  },
   modules = {
-    generic = { 'pd', 'all_lua', 'term', 'elua' }
+    generic = { 'pd', 'all_lua', 'term', 'elua', 'tmr' }
   }
 }

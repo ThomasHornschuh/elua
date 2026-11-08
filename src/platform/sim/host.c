@@ -50,9 +50,9 @@ void *host_mmap( void *addr, size_t length, int prot, int flags, int fd,
   return result == -1 ? MAP_FAILED : (void *)result;
 }
 
-int host_gettimeofday( struct timeval *tv )
+int host_clock_gettime( struct timespec *ts )
 {
-  return (int)host_syscall_result( syscall( SYS_gettimeofday, tv, NULL ) );
+  return (int)host_syscall_result( syscall( SYS_clock_gettime, CLOCK_MONOTONIC, ts ) );
 }
 
 void host_exit( int status )

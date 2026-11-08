@@ -1,6 +1,8 @@
 // Host I/O operations for eLua 'simulator'
 
 #include <ctype.h>
+#include <errno.h>
+#include <signal.h>
 #include <string.h>
 #include <stdio.h>
 #include <sys/time.h>
@@ -10,6 +12,8 @@
 #include "term.h"
 #include "host.h"
 #include "hostif.h"
+#include "platform_conf.h"
+#include "common.h"
 
 #define EOF (-1)
 #define STDIN_FILENO 0
@@ -17,6 +21,44 @@
 
 static struct termios saved_termios;
 static int terminal_is_raw;
+
+#if VTMR_NUM_TIMERS > 0
+#if defined( BUILD_INT_HANDLERS ) && defined( INT_TMR_MATCH )
+#error Simulator virtual timer signal handler cannot run timer interrupt handlers
+#endif
+#if VTMR_FREQ_HZ > 1000000 || 1000000 % VTMR_FREQ_HZ != 0
+#error Simulator virtual timer frequency must divide 1000000
+#endif
+
+static void hostif_timer_signal( int signo )
+{
+  ( void )signo;
+  cmn_virtual_timer_cb();
+}
+#endif
+
+int hostif_init_timers()
+{
+#if VTMR_NUM_TIMERS > 0
+  struct sigaction action;
+  struct itimerval timer;
+
+  memset( &action, 0, sizeof( action ) );
+  action.sa_handler = hostif_timer_signal;
+  action.sa_flags = SA_RESTART;
+  sigemptyset( &action.sa_mask );
+  if( sigaction( SIGALRM, &action, NULL ) != 0 )
+    return -1;
+
+  memset( &timer, 0, sizeof( timer ) );
+  timer.it_interval.tv_sec = ( 1000000 / VTMR_FREQ_HZ ) / 1000000;
+  timer.it_interval.tv_usec = ( 1000000 / VTMR_FREQ_HZ ) % 1000000;
+  timer.it_value = timer.it_interval;
+  if( setitimer( ITIMER_REAL, &timer, NULL ) != 0 )
+    return -1;
+#endif
+  return 0;
+}
 
 void hostif_restore_terminal()
 {
@@ -70,12 +112,17 @@ int hostif_getch_timeout( unsigned timeout_ms )
 {
   fd_set fds;
   struct timeval timeout;
+  int result;
 
-  FD_ZERO( &fds );
-  FD_SET( STDIN_FILENO, &fds );
   timeout.tv_sec = timeout_ms / 1000;
   timeout.tv_usec = ( timeout_ms % 1000 ) * 1000;
-  if( select( STDIN_FILENO + 1, &fds, NULL, NULL, &timeout ) <= 0 )
+  do
+  {
+    FD_ZERO( &fds );
+    FD_SET( STDIN_FILENO, &fds );
+    result = select( STDIN_FILENO + 1, &fds, NULL, NULL, &timeout );
+  } while( result < 0 && errno == EINTR );
+  if( result <= 0 )
     return EOF;
   return hostif_getch();
 }
@@ -88,6 +135,16 @@ void* hostif_getmem( unsigned size )
 
 void hostif_exit()
 {
+#if VTMR_NUM_TIMERS > 0
+  sigset_t blocked;
+  struct itimerval timer;
+
+  sigemptyset( &blocked );
+  sigaddset( &blocked, SIGALRM );
+  sigprocmask( SIG_BLOCK, &blocked, NULL );
+  memset( &timer, 0, sizeof( timer ) );
+  setitimer( ITIMER_REAL, &timer, NULL );
+#endif
 	hostif_restore_terminal();
 	host_exit( 0 );
 }
@@ -119,8 +176,9 @@ long hostif_lseek( int fd, long pos, int whence )
 
 s64 hostif_gettime()
 {
-  struct timeval tv;
+  struct timespec ts;
 
-  host_gettimeofday( &tv );
-  return ( s64 )tv.tv_sec * 1000000 + tv.tv_usec;
+  if( host_clock_gettime( &ts ) != 0 )
+    return 0;
+  return ( s64 )ts.tv_sec * 1000000 + ts.tv_nsec / 1000;
 }

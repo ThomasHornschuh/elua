@@ -37,12 +37,15 @@ TESTS=(
   elua
   term
   filesystem
+  timers
 )
 
 failed=0
 for test_name in "${TESTS[@]}"; do
   marker="ELUA_LUA55_TEST_PASS ${test_name}"
-  if [ "$test_name" = "pd" ] || [ "$test_name" = "elua" ] || [ "$test_name" = "term" ] || [ "$test_name" = "filesystem" ]; then
+  if [ "$test_name" = "timers" ]; then
+    test_path="/rom/lua55_timers.lua"
+  elif [ "$test_name" = "pd" ] || [ "$test_name" = "elua" ] || [ "$test_name" = "term" ] || [ "$test_name" = "filesystem" ]; then
     test_path="tests/lua55/${test_name}.lua"
   else
     test_path="src/lua55/testes/${test_name}.lua"
@@ -56,7 +59,8 @@ for test_name in "${TESTS[@]}"; do
   run_status=$?
 
   cat "$output"
-  if [ "$run_status" -ne 0 ] || ! grep -Fq "$marker" "$output"; then
+  if [ "$run_status" -ne 0 ] || ! grep -Fq "$marker" "$output" ||
+     { [ "$test_name" = "timers" ] && ! grep -Fxq "ELUA_LUA55_TIMERS_PASS" "$output"; }; then
     echo "FAIL: ${test_name}" >&2
     failed=1
   else

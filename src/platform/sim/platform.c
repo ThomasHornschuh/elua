@@ -163,6 +163,12 @@ int platform_init()
     return PLATFORM_ERR;
   }
 
+  if( hostif_init_timers() != 0 )
+  {
+    hostif_putstr( "platform_init(): timer setup failed\n" );
+    return PLATFORM_ERR;
+  }
+
   // Set the std input/output functions
   hostif_init_terminal();
   // Set the send/recv functions                          
@@ -207,7 +213,7 @@ int platform_s_uart_set_flow_control( unsigned id, int type )
 }
 
 // ****************************************************************************
-// "Dummy" timer functions
+// There are no hardware timers on sim.
 
 void platform_s_timer_delay( unsigned id, timer_data_type delay_us )
 {
@@ -220,7 +226,7 @@ timer_data_type platform_s_timer_op( unsigned id, int op, timer_data_type data )
 
 timer_data_type platform_timer_read_sys( void )
 {
-  return hostif_gettime();
+  return ( u64 )hostif_gettime() % ( ( u64 )PLATFORM_TIMER_SYS_MAX + 1 );
 }
 
 // ****************************************************************************
