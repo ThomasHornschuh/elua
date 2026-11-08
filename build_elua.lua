@@ -188,6 +188,10 @@ if not bdata then
   print( utils.col_red( "[CONFIG] Error compiling board description file: " .. err ) )
   return
 end
+if bdata.ipstack == "picotcp" then
+  print( utils.col_red( "[CONFIG] PicoTCP is unavailable until the eLua adapter is ported (Draft 2, 'Integrate PicoTCP-NG with eLua'). Use board=bonfire_arty_minimal for a non-network Bonfire build." ) )
+  os.exit( 1 )
+end
 -- Check if the file has changed. If not, do not rewrite it. This keeps the compilation time sane.
 local bhname = utils.concat_path( { board_base_dir, "headers", "board_" .. comp.board:lower() .. ".h" } )
 if builder:get_option( "skip_conf" ) then

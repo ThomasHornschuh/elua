@@ -3,6 +3,7 @@
 .build-sim*/
 .build-spike*/
 .build-bonfire*/
+picotcp/build-host/
 *.hex
 *.elf
 *.dfu
