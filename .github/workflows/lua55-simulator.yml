@@ -1,0 +1,54 @@
+name: Lua 5.5 Linux simulator
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lua55-simulator:
+    name: Build and test Lua 5.5 simulator
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y \
+            build-essential \
+            lua5.1 \
+            liblua5.1-0-dev \
+            luarocks
+          sudo luarocks --lua-version=5.1 install luafilesystem
+          sudo luarocks --lua-version=5.1 install lpack
+          sudo luarocks --lua-version=5.1 install md5
+
+      - name: Verify Lua 5.1 module search path
+        run: lua5.1 -e 'require("lfs"); require("pack"); require("md5")'
+
+      - name: Build Lua 5.5 simulator
+        run: |
+          set -o pipefail
+          lua5.1 build_elua.lua board=sim lua_version=lua55 \
+            build_mode=build_dir_linearized build_dir=.build-ci-sim-lua55 \
+            2>&1 | tee build.log
+
+      - name: Run curated simulator tests
+        run: |
+          set -o pipefail
+          bash tests/run_lua55_sim_tests.sh 2>&1 | tee tests.log
+
+      - name: Upload build and test logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lua55-simulator-failure-logs
+          path: |
+            build.log
+            tests.log
+          if-no-files-found: warn

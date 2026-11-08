@@ -55,6 +55,19 @@ The selected upstream tests are parser/VM/library tests (`literals`,
 `events`, `coroutine`).  eLua smoke tests cover the board-configured `pd`,
 `elua`, and `term` modules plus filesystem access.
 
+## GitHub Actions
+
+The [Lua 5.5 Linux simulator workflow](../.github/workflows/lua55-simulator.yml)
+runs on every push and pull request, and can also be started manually. It
+installs the native build tools, Lua 5.1 headers and interpreter, and the
+LuaRocks modules used by the build script. The workflow verifies those modules
+are available to `lua5.1`, builds into `.build-ci-sim-lua55`, and runs the same
+curated test script against that simulator. Build and test logs are uploaded
+as an artifact if either step fails.
+
+The local-equivalent build and test commands are the ones shown above; CI uses
+a separate build directory to keep its generated files isolated.
+
 ## Interactive FAT SD-card image
 
 The generator is versioned in this repository:
