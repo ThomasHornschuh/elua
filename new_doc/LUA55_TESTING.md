@@ -53,7 +53,33 @@ can modify globals.
 The selected upstream tests are parser/VM/library tests (`literals`,
 `constructs`, `calls`, `strings`, `utf8`, `math`, `vararg`, `closure`,
 `events`, `coroutine`).  eLua smoke tests cover the board-configured `pd`,
-`elua`, and `term` modules plus filesystem access.
+`elua`, `term`, and `tmr` modules plus filesystem access. The timer smoke
+test runs directly from `/rom/lua55_timers.lua`.
+
+## Simulator timers
+
+The Linux `sim` board has no hardware timers. `require("tmr")` provides
+`tmr.SYS_TIMER`, a `CLOCK_MONOTONIC` microsecond counter with a 1 MHz clock,
+and four virtual counters, `tmr.VIRT0` through `tmr.VIRT3`. The system
+counter wraps at the platform timer range; use `tmr.gettimediff` or
+`tmr.getdiffnow` to calculate elapsed time across a wrap.
+
+Virtual counters are driven by a 10 Hz host timer, including while the
+simulator waits for input. Their resolution is 100 ms. Virtual `delay`
+converts microseconds to whole ticks by rounding down, and resetting a
+virtual timer waits for the next tick. Timer match interrupts are not
+supported. Both system and virtual delays busy-wait.
+
+Host scheduling may delay execution and coalesce periodic signals under
+load, so virtual counters can lose ticks and neither timer guarantees
+real-time latency. `CLOCK_MONOTONIC` is unaffected by wall-clock changes
+but does not count Linux suspend time. The smoke test allows up to two
+seconds of additional scheduling latency rather than asserting exact timing;
+this is a test tolerance, not a real-time guarantee.
+
+The board configuration generator may warn that it cannot include `tmr`
+because `NUM_TIMER` is zero. The simulator platform header overrides that
+hardware-only guard for its system and virtual timers.
 
 ## GitHub Actions
 
