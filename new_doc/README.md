@@ -107,6 +107,10 @@ For guidance on making an eLua C module build with both Lua 5.1 and Lua 5.5,
 including a `pd` walkthrough and a coding-agent checklist, see
 [Lua 5.5 module porting](LUA55_MODULE_PORTING.md).
 
+For the Lua 5.5 architecture, target status, Picolibc policy, deliberate
+compatibility boundaries, and follow-up-agent handover, see
+[Lua 5.5 port status](LUA55_PORT_STATUS.md).
+
 The upstream Lua source includes its comprehensive `src/lua55/testes/` suite.
 Many of its tests intentionally require a Unix/DOS filesystem, locale data,
 dynamic modules, or the special upstream C test module and therefore do not
