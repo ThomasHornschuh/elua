@@ -20,21 +20,15 @@ addlf{ '-Wl,--gc-sections', '-Wl,--allow-multiple-definition',
 addlib{ 'm' }
 addm({"_READ_WRITE_RETURN_TYPE=_ssize_t"})
 
-local target_flags = { '-march=i386','-mfpmath=387','-m32' }
-
-addcf{ target_flags, '-DELUA_SHELL_EOF_CTRL_D', '-fno-pie', '-fno-builtin', '-fno-stack-protector' }
-addlf{ target_flags, '-no-pie' }
-addaf{ '-felf' }
-
--- Need to force the assembler command as we're using nasm
-ascmd = "nasm -felf -o $(TARGET) $(FIRST)"
--- Also tell the builder that we don't need dependency checks for assembler files
-builder:set_asm_dep_cmd( false )
+-- The selected simulator source set contains only C files.  Build with the
+-- native host compiler; do not force a host ISA, 32-bit ABI, or NASM.
+addcf{ '-DELUA_SHELL_EOF_CTRL_D', '-fno-pie', '-fno-builtin', '-fno-stack-protector' }
+addlf{ '-no-pie' }
 
 -- Toolset data
 tools.sim = {}
 
--- Programming function for i386 (not needed, empty function)
+-- Programming function for the native Linux simulator (not needed, empty function)
 tools.sim.progfunc = function( target, deps )
   print "Run the simulator (./run_elua_sim.sh) and enjoy :) Linux only."
   return 0

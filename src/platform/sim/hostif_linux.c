@@ -82,7 +82,7 @@ int hostif_getch_timeout( unsigned timeout_ms )
 
 void* hostif_getmem( unsigned size )
 {
-  void *pmem = host_mmap2( 0, size, (PROT_READ|PROT_WRITE), (MAP_PRIVATE|MAP_ANONYMOUS), -1, 0 );
+  void *pmem = host_mmap( 0, size, (PROT_READ|PROT_WRITE), (MAP_PRIVATE|MAP_ANONYMOUS), -1, 0 );
   return pmem == MAP_FAILED ? NULL : pmem;
 }
 
@@ -121,6 +121,6 @@ s64 hostif_gettime()
 {
   struct timeval tv;
 
-  host_gettimeofday( &tv, NULL );
+  host_gettimeofday( &tv );
   return ( s64 )tv.tv_sec * 1000000 + tv.tv_usec;
 }

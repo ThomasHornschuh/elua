@@ -107,6 +107,17 @@ local toolchain_list =
     cross_lua = 'float 64',
     cross_lualong = 'int 32',
     version = '--version'
+  },
+  [ 'host-gcc' ] = {
+    compile = 'gcc',
+    link = 'ld',
+    asm = 'gcc',
+    bin = 'objcopy',
+    size = 'size',
+    cross_cpumode = 'little',
+    cross_lua = 'float 64',
+    cross_lualong = 'int 32',
+    version = '--version'
   }
 }
 
@@ -139,6 +150,7 @@ local arch_data = {
   cortexm = 'little',
   avr32 = 'big',
   i386 = 'little',
+  host = 'little',
   riscv= 'little'
 }
 
@@ -148,6 +160,7 @@ local toolchain_map = {
   cortexm = { 'arm-gcc', 'codesourcery', 'devkitarm', 'arm-eabi-gcc' },
   avr32 = { 'avr32-gcc', 'avr32-unknown-none-gcc' },
   i386 =  { 'i686-gcc' },
+  host =  { 'host-gcc' },
   riscv =  { 'riscv-gcc' }
 }
 
@@ -158,7 +171,7 @@ local platform_list =
   lm3s = { cpus = { 'LM3S1968', 'LM3S8962', 'LM3S6965', 'LM3S6918', 'LM3S9B92', 'LM3S9D92' }, arch = 'cortexm' },
   str9 = { cpus = { 'STR912FAW44' }, arch = 'arm' },
   i386 = { cpus = { 'I386' }, arch = 'i386' },
-  sim = { cpus = { 'LINUX' }, arch = 'i386' },
+  sim = { cpus = { 'LINUX' }, arch = 'host' },
   lpc288x = { cpus = { 'LPC2888' }, arch = 'arm' },
   str7 = { cpus = { 'STR711FR2' }, arch = 'arm' },
   stm32f2 = { cpus = { 'STM32F205RF' }, arch = 'cortexm' },

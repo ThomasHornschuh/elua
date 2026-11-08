@@ -1,11 +1,12 @@
 # eLua Linux Simulator (sim)
 
-This repository contains a host-side eLua target named sim. It is an i386
-(32-bit) Linux process, not a RISC-V simulator. It is useful for testing eLua
-core functionality, Lua modules and filesystems without FPGA hardware.
+This repository contains a host-side eLua target named `sim`. It is a native
+Linux process, not a RISC-V instruction simulator. It is useful for testing
+eLua core functionality, Lua modules and filesystems without FPGA hardware.
 
-The historical simulator expected an i386 Newlib cross compiler. The adapted
-target builds with the normal Debian/Ubuntu 32-bit GCC runtime instead.
+The simulator builds with the host GCC and Linux C runtime. It does not require
+an i386 cross compiler, 32-bit multilib packages, or NASM, and therefore builds
+natively on RV64 Linux as well as on normal x86-64 and AArch64 Linux hosts.
 
 ## Host dependencies
 
@@ -13,12 +14,12 @@ On Debian or Ubuntu install:
 
 ~~~sh
 sudo apt update
-sudo apt install lua5.1 nasm gcc-multilib libc6-dev-i386
+sudo apt install build-essential lua5.1
 ~~~
 
-Lua 5.1 is required because the eLua build scripts use Lua 5.1. NASM assembles
-the i386 simulator support code; the multilib packages provide the 32-bit
-compiler headers and libraries used by gcc -m32.
+Lua 5.1 is required because the eLua build scripts use Lua 5.1; it is not the
+Lua version embedded in the simulator. The native host compiler and its normal
+Linux development headers are sufficient.
 
 ## Build
 
@@ -109,7 +110,9 @@ including a `pd` walkthrough and a coding-agent checklist, see
 
 For the Lua 5.5 architecture, target status, Picolibc policy, deliberate
 compatibility boundaries, and follow-up-agent handover, see
-[Lua 5.5 port status](LUA55_PORT_STATUS.md).
+[Lua 5.5 port status](LUA55_PORT_STATUS.md).  For RISC-V Newlib versus
+Picolibc toolchain requirements and the planned automatic selection, see
+[RISC-V toolchains](RISCV_TOOLCHAINS.md).
 
 The upstream Lua source includes its comprehensive `src/lua55/testes/` suite.
 Many of its tests intentionally require a Unix/DOS filesystem, locale data,
@@ -164,6 +167,8 @@ eLua# lua /mmc/lua55/run.lua all
 ## Implementation notes
 
 The target uses the normal Linux C runtime and startup code while retaining
-eLua's simulated memory and Linux syscall backend. The build forces non-PIE
-i386 objects so eLua's read-only Lua tables retain the memory layout expected
-by its Lua 5.1 optimisations.
+eLua's simulated memory and Linux host backend. The backend uses syscall
+numbers supplied by the host Linux headers, not architecture-specific inline
+assembly. The build retains non-PIE flags for compatibility with the historic
+Lua 5.1 read-only-table layout; it does not force a host CPU architecture or
+32-bit ABI.

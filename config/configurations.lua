@@ -72,8 +72,8 @@ local function ram_generator( desc, vals, generated )
   local ninternal = vals._NUM_INTERNAL_RAMS.value
   local istart, iend = {}, {}
   for i = 1, ninternal do
-    table.insert( istart, sf( "( u32 )( INTERNAL_RAM%d_FIRST_FREE )", i ) )
-    table.insert( iend, sf( "( u32 )( INTERNAL_RAM%d_LAST_FREE )", i ) )
+    table.insert( istart, sf( "( uintptr_t )( INTERNAL_RAM%d_FIRST_FREE )", i ) )
+    table.insert( iend, sf( "( uintptr_t )( INTERNAL_RAM%d_LAST_FREE )", i ) )
   end
   if not vals.MEM_START_ADDRESS then
     -- Generate configuration only for the internal memory
@@ -84,11 +84,11 @@ local function ram_generator( desc, vals, generated )
     use_multiple_allocator = ninternal > 1
     return gstr
   end
-  local function fmtval( s ) return tonumber( s ) and tostring( s ) .. "UL" or ( "( u32 )( " .. s .. " )" ) end
+  local function fmtval( s ) return tonumber( s ) and tostring( s ) .. "UL" or ( "( uintptr_t )( " .. s .. " )" ) end
   local startvals, sizevals = vals.MEM_START_ADDRESS.value, vals.MEM_END_ADDRESS.value
   for i = 1, ninternal do
-    table.insert( startvals, i, sf( "( u32 )( INTERNAL_RAM%d_FIRST_FREE )", i ) )
-    table.insert( sizevals, i, sf( "( u32 )( INTERNAL_RAM%d_LAST_FREE )", i ) )
+    table.insert( startvals, i, sf( "( uintptr_t )( INTERNAL_RAM%d_FIRST_FREE )", i ) )
+    table.insert( sizevals, i, sf( "( uintptr_t )( INTERNAL_RAM%d_LAST_FREE )", i ) )
   end
   for i = ninternal + 1, #sizevals do
     sizevals[ i ] = sf( "( %s + %s - 1 )", fmtval( startvals[ i ] ), fmtval( sizevals[ i ] ) )

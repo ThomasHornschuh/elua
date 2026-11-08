@@ -1,14 +1,16 @@
 #ifndef __TYPE_H__
 #define __TYPE_H__
 
-typedef unsigned char u8;
-typedef signed char s8;
-typedef unsigned short u16;
-typedef signed short s16;
-typedef unsigned long u32;
-typedef signed long s32;
-typedef unsigned long long u64;
-typedef signed long long s64;
+#include <stdint.h>
+
+typedef uint8_t  u8;
+typedef int8_t   s8;
+typedef uint16_t u16;
+typedef int16_t  s16;
+typedef uint32_t u32;
+typedef int32_t  s32;
+typedef uint64_t u64;
+typedef int64_t  s64;
 
 #ifndef FALSE
 #define FALSE   (0)
@@ -18,12 +20,12 @@ typedef signed long long s64;
 #define TRUE    (1)
 #endif
 
-typedef unsigned char  BYTE;
-typedef unsigned short WORD;
-typedef unsigned long  DWORD;
-typedef unsigned int   BOOL;
+typedef uint8_t  BYTE;
+typedef uint16_t WORD;
+typedef uint32_t DWORD;
+typedef unsigned int BOOL;
 
-typedef volatile unsigned long* PREG;
+typedef volatile uint32_t* PREG;
 
 #endif
 

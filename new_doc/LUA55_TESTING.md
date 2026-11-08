@@ -11,16 +11,16 @@ creating the FAT16 image:
 
 ```sh
 sudo apt update
-sudo apt install build-essential gcc-multilib libc6-dev-i386 nasm \
-  lua5.1 liblua5.1-0-dev luarocks mtools
+sudo apt install build-essential lua5.1 liblua5.1-0-dev luarocks mtools
 sudo luarocks install luafilesystem
 sudo luarocks install lpack
 sudo luarocks install md5
 ```
 
-`lua5.1` runs `build_elua.lua`; it is not the firmware Lua version.  The
+`lua5.1` runs `build_elua.lua`; it is not the firmware Lua version. The
 `lua_version=lua55` build option selects the Lua 5.5.1 runtime embedded in the
-simulator.
+simulator. The `sim` target uses the native host compiler and needs neither
+32-bit multilib packages nor NASM.
 
 `mtools` provides `mformat`, `mmd`, and `mcopy`, which are used by the SD image
 generator.  No loop device, mount operation, or root access is needed to

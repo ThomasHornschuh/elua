@@ -1,75 +1,62 @@
+#define _GNU_SOURCE
+
 #include "host.h"
 
-#define __NR_read             3
-#define __NR_write            4
-#define __NR_mmap2            192
-#define __NR_exit             1
-#define __NR_open             5
-#define __NR_close            6
-#define __NR_gettimeofday     78
-#define __NR_lseek            19
+#include <errno.h>
+#include <stdlib.h>
+#include <sys/syscall.h>
+#include <unistd.h>
 
 int host_errno = 0;
 
-#define __syscall_return(type, res) do { \
-	if((unsigned long)(res) >= (unsigned long)(-125)) { \
-		host_errno = -(res); \
-		res = -1; \
-	} \
-	return (type) (res); \
-} while(0)
-
-#define _syscall1(type,name,type1,arg1) \
-type host_##name(type1 arg1) \
-{ \
-long __res; \
-__asm__ volatile ("int $0x80" \
-        : "=a" (__res) \
-        : "0" (__NR_##name),"b" ((long)(arg1))); \
-__syscall_return(type,__res); \
+static long host_syscall_result( long result )
+{
+  if( result == -1 )
+    host_errno = errno;
+  return result;
 }
 
-#define _syscall2(type,name,type1,arg1,type2,arg2) \
-type host_##name(type1 arg1,type2 arg2) \
-{ \
-long __res; \
-__asm__ volatile ("int $0x80" \
-        : "=a" (__res) \
-        : "0" (__NR_##name),"b" ((long)(arg1)),"c" ((long)(arg2))); \
-__syscall_return(type,__res); \
+ssize_t host_read( int fd, void *buf, size_t count )
+{
+  return (ssize_t)host_syscall_result( syscall( SYS_read, fd, buf, count ) );
 }
 
-
-#define _syscall3(type,name,type1,arg1,type2,arg2,type3,arg3) \
-type host_##name(type1 arg1,type2 arg2,type3 arg3) \
-{ \
-long __res; \
-__asm__ volatile ("int $0x80" \
-        : "=a" (__res) \
-        : "0" (__NR_##name),"b" ((long)(arg1)),"c" ((long)(arg2)), \
-                  "d" ((long)(arg3))); \
-__syscall_return(type,__res); \
+ssize_t host_write( int fd, const void *buf, size_t count )
+{
+  return (ssize_t)host_syscall_result( syscall( SYS_write, fd, buf, count ) );
 }
 
-#define _syscall6(type,name,type1,arg1,type2,arg2,type3,arg3,type4,arg4, \
-          type5,arg5,type6,arg6) \
-type host_##name (type1 arg1,type2 arg2,type3 arg3,type4 arg4,type5 arg5,type6 arg6) \
-{ \
-long __res; \
-__asm__ volatile ("push %%ebp ; movl %%eax,%%ebp ; movl %1,%%eax ; int $0x80 ; pop %%ebp" \
-        : "=a" (__res) \
-        : "i" (__NR_##name),"b" ((long)(arg1)),"c" ((long)(arg2)), \
-          "d" ((long)(arg3)),"S" ((long)(arg4)),"D" ((long)(arg5)), \
-          "0" ((long)(arg6))); \
-	__syscall_return(type, __res); \
+int host_open( const char *name, int flags, mode_t mode )
+{
+  return (int)host_syscall_result(
+      syscall( SYS_openat, AT_FDCWD, name, flags, mode ) );
 }
 
-_syscall3(ssize_t, read, int, fd, void *, buf, size_t, count);
-_syscall3(ssize_t, write, int, fd, const void *, buf, size_t, count);
-_syscall3(int, open, const char*, pathname, int, flags, mode_t, mode);
-_syscall6(void *,mmap2, void *,addr, size_t, length, int, prot, int, flags, int, fd, off_t, offset);
-_syscall1(void, exit, int, status);
-_syscall1(int, close, int, status);
-_syscall2(int, gettimeofday, struct timeval*, tv, struct timezone*, tz);
-_syscall3(long, lseek, int, fd, long, offset, int, whence );
+int host_close( int fd )
+{
+  return (int)host_syscall_result( syscall( SYS_close, fd ) );
+}
 
+off_t host_lseek( int fd, off_t pos, int whence )
+{
+  return (off_t)host_syscall_result( syscall( SYS_lseek, fd, pos, whence ) );
+}
+
+void *host_mmap( void *addr, size_t length, int prot, int flags, int fd,
+                 off_t offset )
+{
+  long result = host_syscall_result(
+      syscall( SYS_mmap, addr, length, prot, flags, fd, offset ) );
+  return result == -1 ? MAP_FAILED : (void *)result;
+}
+
+int host_gettimeofday( struct timeval *tv )
+{
+  return (int)host_syscall_result( syscall( SYS_gettimeofday, tv, NULL ) );
+}
+
+void host_exit( int status )
+{
+  syscall( SYS_exit, status );
+  abort();
+}

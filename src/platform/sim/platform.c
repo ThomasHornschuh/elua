@@ -20,12 +20,12 @@
 
 #ifdef BUILD_TERM
 
-static void i386_term_out( u8 data )
+static void sim_term_out( u8 data )
 {
   hostif_putc( data );
 }
 
-static int i386_term_in( int mode )
+static int sim_term_in( int mode )
 {
   if( mode == TERM_INPUT_DONT_WAIT )
     return -1;
@@ -33,7 +33,7 @@ static int i386_term_in( int mode )
     return hostif_getch();
 }
 
-static int i386_term_translate( int data )
+static int sim_term_translate( int data )
 {
   int newdata = data;
   int seq;
@@ -171,7 +171,7 @@ int platform_init()
 
   // Set term functions
 #ifdef BUILD_TERM  
-  term_init( TERM_LINES, TERM_COLS, i386_term_out, i386_term_in, i386_term_translate );
+  term_init( TERM_LINES, TERM_COLS, sim_term_out, sim_term_in, sim_term_translate );
 #endif
 
   term_clrscr();

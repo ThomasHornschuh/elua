@@ -117,17 +117,17 @@ sync for new modules.
 
 ### Linux `sim`
 
-`sim` is a 32-bit Linux eLua process, not a RISC-V simulator.  It uses the
-host glibc runtime with normal `gcc -m32`; it does **not** use Picolibc or an
-old i386 Newlib cross compiler.  The board selects `pd`, all standard Lua
-libraries, `term`, and `elua`, with line editing/history enabled for both the
-eLua shell and Lua REPL.
+`sim` is a native Linux eLua process, not a RISC-V instruction simulator. It
+uses the host glibc runtime and native GCC; it does **not** use Picolibc, an
+i386 Newlib cross compiler, 32-bit multilib, or NASM. The board selects `pd`,
+all standard Lua libraries, `term`, and `elua`, with line editing/history
+enabled for both the eLua shell and Lua REPL.
 
 On Debian/Ubuntu:
 
 ```sh
 sudo apt update
-sudo apt install lua5.1 nasm gcc-multilib libc6-dev-i386
+sudo apt install build-essential lua5.1
 lua5.1 build_elua.lua board=sim lua_version=lua55 \
   build_mode=build_dir_linearized build_dir=.build-sim-lua55
 ./run_elua_sim.sh
@@ -178,6 +178,10 @@ The profile also carries modern RISC-V fixes required by current GCC:
 linker configuration suitable for Picolibc rather than `libgloss`.
 
 ## Picolibc policy
+
+The current RISC-V board configurations select Picolibc unconditionally.
+Newlib/Picolibc requirements, prefix discovery, and the pending automatic
+selection design are documented in [RISC-V toolchains](RISCV_TOOLCHAINS.md).
 
 The RISC-V Picolibc builds must rely on the selected cross GCC's normal
 installation discovery:

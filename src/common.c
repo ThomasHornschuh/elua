@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <stdint.h>
 #include "math.h"
 #include "elua_adc.h"
 #include "term.h"
@@ -381,10 +382,10 @@ extern char end[];
 
 void* platform_get_first_free_ram( unsigned id )
 {
-  ARRAYSPEC u32 mstart[] = MEM_START_ADDRESS;
-  u32 p;
+  ARRAYSPEC uintptr_t mstart[] = MEM_START_ADDRESS;
+  uintptr_t p;
 
-  if( id >= sizeof( mstart ) / sizeof( u32 ) )
+  if( id >= sizeof( mstart ) / sizeof( uintptr_t ) )
     return NULL;
   p = mstart[ id ];
   if( p & ( MIN_ALIGN - 1 ) )
@@ -394,10 +395,10 @@ void* platform_get_first_free_ram( unsigned id )
 
 void* platform_get_last_free_ram( unsigned id )
 {
-  ARRAYSPEC u32 mend[] = MEM_END_ADDRESS;
-  u32 p;
+  ARRAYSPEC uintptr_t mend[] = MEM_END_ADDRESS;
+  uintptr_t p;
 
-  if( id >= sizeof( mend ) / sizeof( u32 ) )
+  if( id >= sizeof( mend ) / sizeof( uintptr_t ) )
     return NULL;
   p = mend[ id ];
   if( p & ( MIN_ALIGN - 1 ) )

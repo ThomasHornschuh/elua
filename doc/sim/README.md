@@ -1,98 +1,89 @@
 # Overview
 
-The eLua "simulator" is an eLua build that runs on top of Linux. It doesn't emulate any hardware peripherals and it contains only a restricted set of the standard eLua features, but it's very useful for testing core-related issues, as well as modules that don't have hardware dependencies. It also offers a lot of possibilities in terms of code instrumentation. Some of its features:
+The eLua `sim` target runs as a native Linux process. It does not emulate CPU
+instructions or hardware peripherals, but it is useful for testing eLua core
+behaviour and modules without hardware dependencies.
 
-* Emulates the eLua terminal on the Linux console.
-* The maximum RAM size can be configured compile time.
-* The SD card can be emulated (see below).
-* The WOFS can also be emulated.
-* The ROM file system is fully supported.
-* Compiles in 32-bit mode even on 64-bit systems to better emulate the real hardware on which eLua runs.
+Its features include:
+
+* A Linux-console implementation of the eLua terminal.
+* Configurable simulated RAM.
+* Emulated WOFS and optional SD-card images.
+* Full ROM filesystem support.
+* Native builds for the host architecture; no i386 cross compiler, NASM, or
+  32-bit x86 multilib is required.
 
 ## Environment
 
-The instructions in this document were tested on an Ubuntu 16.04.4 64-bit installation running on a Core-i7 CPU, but other Linux flavours and other hardware should work equally well.
+The simulator requires a Linux host with GCC and normal C development headers.
+It has been validated on RV64 Linux and is designed to build natively on
+x86-64 and AArch64 Linux where a matching host compiler is available.
+
+On Debian or Ubuntu, install the native build tools and the Lua 5.1 runtime
+used by the build script:
+
+```
+sudo apt install build-essential lua5.1
+```
+
+`lua5.1` runs `build_elua.lua`; it is not the Lua runtime embedded in the
+firmware image.
 
 ## How to build
 
-The simulator can't be built with the regular Linux toolchain, because eLua assumes that the toolchain used for building is using Newlib. Consequently, it needs a Newlib-based toolchain that can generate code for x86. Such a toolchain used to be available for download from CodeSourcery, but at the time of writing this (April 2018) that's not the case anymore. Fortunately it's fairly easy to build such a toolchain using [crosstool-ng](https://crosstool-ng.github.io).
-
-### Building the toolchain
-
-To build the toolchain:
-
-1. Follow the [crosstool-ng installation instructions](https://crosstool-ng.github.io/docs/install/) to install crosstool-ng. [Version 1.23.0](http://crosstool-ng.org/download/crosstool-ng/crosstool-ng-1.23.0.tar.xz) of crosstool-ng was used for generating the toolchain used in this document, but newer version should work too.
-2. Add the directory with the 'ct-ng' executable to your PATH.
-3. Create a new directory and copy the crossstool-ng configuation file from [here](.config) to that directory.
-4. Execute `ct-ng menuconfig` in that directory. At this point you can examine and even (carefully!) modify the crosstool-ng configuration. When you're done, press "Exit".
-5. Execute `ct-ng build` to build the toolchain. This step will take a while, as it will build the whole toolchain and install it. By default, it will install it to `$HOME/x-tools/i386-unknown-elf` (the installation path can be changed by modifying the configuration in step 4 above).
-6. Add the toolchain's `bin` directory to your PATH:
+Build the default Lua 5.1 image with the native host compiler:
 
 ```
-$ export PATH=$PATH:$HOME/x-tools/i386-unknown-elf/bin
+lua5.1 build_elua.lua board=sim
 ```
 
-Test the installation by running `i686-elf-gcc --version`, which should display the toolchain's GCC version.
-
-### Building the simulator
-
-Install `nasm` if it's not installed:
+To build Lua 5.5.1 instead:
 
 ```
-$ sudo apt install nasm
+lua5.1 build_elua.lua board=sim lua_version=lua55 \
+  build_mode=build_dir_linearized build_dir=.build-sim-lua55
 ```
 
-Then invoke `build_elua` to build the simulator:
+To set the simulated RAM size, pass `-DSIM_MEM_SIZE`:
 
 ```
-$ lua build_elua.lua board=sim
+lua5.1 build_elua.lua board=sim -DSIM_MEM_SIZE=64*1024
 ```
 
-To specify the maximum RAM size available to the simulator (in bytes), build using `-DSIM_MEM_SIZE`:
-
-```
-$ lua build_elua.lua board=sim -DSIM_MEM_SIZE=64*1024 # emulated RAM size is 64KB
-```
-
-The default value of the `SIM_MEM_SIZE` macro can be found [here](../../src/platform/sim/cpu_linux.h).
-
-The builder will create `elua_lua_sim.elf` which will be used to run the simulator (see next paragraph).
-
-It's also possible to build different flavours of eLua. For example, to build a version with the number type set to "long long" instead of the default "double", run the builder like this:
-
-```
-$ lua build_elua.lua board=sim target=lualonglong # use the default value of SIM_MEM_SIZE
-```
-
-In this case, the builder will create `elua_lualonglong_sim.elf`.
+The default `SIM_MEM_SIZE` is defined in
+[`cpu_linux.h`](../../src/platform/sim/cpu_linux.h). The builder creates
+`elua_lua_sim.elf` (or a target-specific variant) in the output directory.
 
 ## How to use
 
-Run the simulator using the `run_elua_sim.sh` script, which sets the console in a mode compatible with eLua's terminal implementation, then runs the simulator:
+Run the simulator using `run_elua_sim.sh`, which configures the console and
+starts the executable:
 
 ```
-$ ./run_elua_sim.sh
+./run_elua_sim.sh
 ```
 
-You can run other flavours of the simulator using the same script:
+After startup, the regular eLua shell is available. Run `lua` to enter the Lua
+interpreter. Use Ctrl-D to leave Lua and `exit` at the eLua prompt to stop the
+simulator.
+
+Hardware-specific facilities such as GPIO, UART, and interrupt configuration
+are not emulated.
+
+## WOFS emulator
+
+When WOFS is enabled, it is stored in `wofs.img` in the simulator's current
+working directory. The file is created automatically when missing.
+
+## SD card emulator
+
+When FAT filesystem support is enabled, the simulator uses `sdcard.img` in its
+current working directory as the emulated SD card. An image can be created
+from a FAT-formatted SD card, for example:
 
 ```
-$ ./run_elua_sim.sh longlong # runs 'elua_lualonglong_sim.elf'
+dd if=/dev/sdX of=sdcard.img bs=4M
 ```
 
-After the simulator starts, you'll be presented with the regular eLua shell prompt, and you can run `lua` from there. Just remember that you're not running on the regular eLua hardware, so anything hardware-related (like using GPIO pins, serial interfaces (such as UARTs) or configuring interrupt handlers) will not work.
-
-To exit the Lua interpreter, press CTRL+Z. To exit the simulator, type `exit` at the eLua shell prompt.
-
-### WOFS emulator
-
-If WOFS is enabled, it is emulated into a file called `wofs.img` located in the same directory as the one used to start the simulator. If the file doesn't exist, it is created automatically.
-
-### SD card emulator
-
-If the FAT filesystem is enabled, the simulator looks for a file called `sdcard.img` in the same directory as the one used to start the simulator. If the file is found, it is considered a valid SD card image and it used to emulate an actual SD card. The easiest way to obtain such an image is to use an SD card that is formatted with a FAT file system. To do that from Linux, insert the card in your system, find out which block device it uses (by using `dmesg` for example) and use `dd` to obtain a complete image of the card:
-
-```
-# The next line assumes that the SD card's block device is /dev/sdd, which might not be true on your system
-$ dd if=/dev/sdd of=sdcard.img bs=4M
-```
+Replace `/dev/sdX` with the correct block device. The Lua 5.5 test-image
+workflow is documented in [`new_doc/LUA55_TESTING.md`](../../new_doc/LUA55_TESTING.md).
