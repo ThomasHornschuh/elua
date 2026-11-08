@@ -8,6 +8,7 @@
 #include <sys/mman.h>
 #include <sys/time.h>
 #include <sys/types.h>
+#include <time.h>
 
 extern int host_errno;
 
@@ -18,7 +19,7 @@ int host_close( int fd );
 off_t host_lseek( int fd, off_t pos, int whence );
 void *host_mmap( void *addr, size_t length, int prot, int flags, int fd,
                  off_t offset );
-int host_gettimeofday( struct timeval *tv );
+int host_clock_gettime( struct timespec *ts );
 void host_exit( int status );
 
 #endif // _HOST_H
