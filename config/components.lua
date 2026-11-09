@@ -51,7 +51,8 @@ local out=''
       print("Warning: buffered parameter ignored for UIP stack")
     end  
  elseif stack=="picotcp" then
-   out= out .. gen.print_define('BUILD_PICOTCP')
+   out= out .. gen.print_define('BUILD_PICOTCP') ..
+                gen.print_define('ELUA_PICOTCP_NG')
               
    generated.BUILD_PICOTCP=true 
    if data.PICOTCP_BUFFERED.value==1 then 

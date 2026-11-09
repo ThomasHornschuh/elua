@@ -115,7 +115,8 @@ int main( void )
  #ifdef BUILD_PICOTCP
     #include "elua_net.h"
 
-    elua_pico_init();
+    if( elua_pico_init() != 0 )
+      hostif_exit( 1 );
 
  #endif
 
@@ -147,6 +148,9 @@ int main( void )
 #endif // #ifdef ELUA_BOOT_RPC
 
 #ifdef ELUA_SIMULATOR
+#ifdef BUILD_PICOTCP
+  elua_pico_shutdown();
+#endif
   hostif_exit(0);
   return 0;
 #else

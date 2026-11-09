@@ -188,6 +188,10 @@ if not bdata then
   print( utils.col_red( "[CONFIG] Error compiling board description file: " .. err ) )
   return
 end
+if bdata.ipstack == "picotcp" and comp.board:lower() ~= "sim_picotcp" then
+  print( utils.col_red( "[CONFIG] PicoTCP-NG is currently supported only by board=sim_picotcp; Bonfire and other profiles are unsupported." ) )
+  os.exit( 1 )
+end
 -- Check if the file has changed. If not, do not rewrite it. This keeps the compilation time sane.
 local bhname = utils.concat_path( { board_base_dir, "headers", "board_" .. comp.board:lower() .. ".h" } )
 if builder:get_option( "skip_conf" ) then
@@ -378,6 +382,10 @@ local source_files = utils.get_files( "src", function( fname )
   local include = fname:find( ".*%.c$" )
   if include then
     utils.foreach( exclude_patterns, function( k, v ) if fname:match( v ) then include = false end end )
+    if bdata.ipstack == "picotcp" and
+       ( fname == 'src/picotcp_driver.c' or fname == 'src/elua_picotcp.c' ) then
+      include = false
+    end
     if without_network and ( fname == 'src/picotcp_driver.c' or
                              fname == 'src/elua_picotcp.c' or
                              fname == 'src/elua_uip.c' ) then

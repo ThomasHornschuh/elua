@@ -25,7 +25,7 @@ int hostif_init_timers();
 void *hostif_getmem( unsigned size );
 
 // Terminate the simulator (exit program)
-void hostif_exit();
+void hostif_exit(int status);
 
 // Open
 int hostif_open( const char* name, int flags, unsigned mode );

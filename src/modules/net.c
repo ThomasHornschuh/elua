@@ -19,7 +19,6 @@
 
 #ifdef BUILD_PICOTCP
 #include "pico_socket.h"
-#include "pico_stack.h"
 #include "elua_picotcp.h"
 #endif
 
@@ -529,7 +528,7 @@ typedef struct {
 
 #define net_timer_check( L, idx ) ( t_net_timer* )luaL_checkudata( L, idx, NET_TIMER_META_NAME )
 
-static void cb_timer(pico_time time, void * arg)
+static void cb_timer(uint64_t time, void * arg)
 {
    if (G_state == NULL) return ; // Don't run callbacks when Lua is not initalized
    
@@ -562,7 +561,7 @@ static int net_timer( lua_State *L )
    // Store callback function in registry
    lua_pushvalue( L, 2 );  
    t->ref = luaL_ref(L, LUA_REGISTRYINDEX);
-   t->id = pico_timer_add(  expire, &cb_timer, (void*) t->ref );
+   t->id = elua_pico_timer_add( (uint64_t)expire, &cb_timer, (void*) t->ref );
 
    return 1; // return userdata object
 
@@ -579,7 +578,7 @@ bool valid=false;
      lua_rawgeti(L, LUA_REGISTRYINDEX,t->ref );
      valid = lua_isfunction (L, -1 );
      if (valid) {
-        pico_timer_cancel( t->id );
+        elua_pico_timer_cancel( t->id );
         luaL_unref(L, LUA_REGISTRYINDEX, t->ref );
         t->id=0;
         t->ref=0;
