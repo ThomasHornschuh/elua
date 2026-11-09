@@ -3,12 +3,19 @@
 #ifndef __ELUA_NET_H__
 #define __ELUA_NET_H__
 
+#include "platform_conf.h"
 #include "lauxlib.h"
 #include "platform.h"
+#include <stdint.h>
 
 // eLua network typedefs
 //typedef s16 elua_net_size;
 typedef size_t elua_net_size;
+#ifdef ELUA_PICOTCP_NG
+typedef uintptr_t elua_net_socket_t;
+#else
+typedef int elua_net_socket_t;
+#endif
 
 // eLua net error codes
 enum
@@ -53,17 +60,17 @@ typedef union
 #define ELUA_NET_NO_LASTCHAR          ( -1 )
 
 // eLua TCP/IP functions
-int elua_net_socket( int type );
-int elua_net_close( int s );
-elua_net_size elua_net_recvbuf( int s, luaL_Buffer *buf, elua_net_size maxsize, s16 readto, unsigned timer_id, timer_data_type to_us );
-elua_net_size elua_net_recv( int s, void *buf, elua_net_size maxsize, s16 readto, unsigned timer_id, timer_data_type to_us );
-elua_net_size elua_net_send( int s, const void* buf, elua_net_size len );
-int elua_accept( u16 port, unsigned timer_id, timer_data_type to_us, elua_net_ip* pfrom );
-int elua_net_connect( int s, elua_net_ip addr, u16 port );
+elua_net_socket_t elua_net_socket( int type );
+int elua_net_close( elua_net_socket_t s );
+elua_net_size elua_net_recvbuf( elua_net_socket_t s, luaL_Buffer *buf, elua_net_size maxsize, s16 readto, unsigned timer_id, timer_data_type to_us );
+elua_net_size elua_net_recv( elua_net_socket_t s, void *buf, elua_net_size maxsize, s16 readto, unsigned timer_id, timer_data_type to_us );
+elua_net_size elua_net_send( elua_net_socket_t s, const void* buf, elua_net_size len );
+elua_net_socket_t elua_accept( u16 port, unsigned timer_id, timer_data_type to_us, elua_net_ip* pfrom );
+int elua_net_connect( elua_net_socket_t s, elua_net_ip addr, u16 port );
 elua_net_ip elua_net_lookup( const char* hostname );
 int elua_listen( u16 port,BOOL flisten ); // Added TH
 
-int elua_net_get_last_err( int s );
+int elua_net_get_last_err( elua_net_socket_t s );
 int elua_net_get_telnet_socket( void );
 
 #ifdef BUILD_PICOTCP

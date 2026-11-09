@@ -7,6 +7,10 @@
 #include <stdio.h>
 #include <string.h>
 
+#ifdef ELUA_PICOTCP_NG
+extern void elua_pico_lua_hook( lua_State *L, lua_Debug *ar );
+#endif
+
 // ****************************************************************************
 // Lua handlers
 
@@ -28,6 +32,10 @@ static void elua_int_hook( lua_State *L, lua_Debug *ar )
 {
   elua_int_element crt;
   int old_status;
+
+#ifdef ELUA_PICOTCP_NG
+  elua_pico_tick();
+#endif
 
   // Get interrupt (and remove from queue)
   crt = elua_int_queue[ elua_int_read_idx ];
@@ -52,7 +60,11 @@ static void elua_int_hook( lua_State *L, lua_Debug *ar )
 
   old_status = platform_cpu_set_global_interrupts( PLATFORM_CPU_DISABLE );
   if( elua_int_queue[ elua_int_read_idx ].id == ELUA_INT_EMPTY_SLOT ) // no more interrupts in the queue, so clear the hook
+#ifdef ELUA_PICOTCP_NG
+    lua_sethook( L, elua_pico_lua_hook, LUA_MASKCOUNT, 10000 );
+#else
     lua_sethook( L, NULL, 0, 0 );
+#endif
   platform_cpu_set_global_interrupts( old_status );
 }
 
@@ -192,4 +204,3 @@ elua_int_c_handler elua_int_get_c_handler( elua_int_id inttype )
 }
 
 #endif // #ifdef BUILD_C_INT_HANDLERS
-

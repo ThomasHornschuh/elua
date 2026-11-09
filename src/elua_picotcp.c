@@ -494,7 +494,7 @@ extern struct pico_device *pico_eth_create(const char *name);
 static bool initComplete = false;
 
 
-void elua_pico_init()
+int elua_pico_init(void)
 {
 
 //struct pico_ip4 ipaddr, netmask;
@@ -524,6 +524,7 @@ uint32_t cid;
   }
   debug_enabled = false; // Disable debug log after inital sequence to avoid screen clobbering
 
+  return 0;
 }
 
 

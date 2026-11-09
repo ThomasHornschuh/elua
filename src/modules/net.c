@@ -19,7 +19,6 @@
 
 #ifdef BUILD_PICOTCP
 #include "pico_socket.h"
-#include "pico_stack.h"
 #include "elua_picotcp.h"
 #endif
 
@@ -51,6 +50,19 @@ typedef struct
 
 static lua_State *G_state =NULL;
 
+#if defined(BUILD_PICOTCP) && LUA_VERSION_NUM >= 502
+static int net_lua_resume( lua_State *L, int nargs )
+{
+#if LUA_VERSION_NUM >= 503
+  int nresults = 0;
+  return lua_resume( L, G_state, nargs, &nresults );
+#else
+  return lua_resume( L, G_state, nargs );
+#endif
+}
+#elif defined(BUILD_PICOTCP)
+#define net_lua_resume(L, nargs) lua_resume((L), (nargs))
+#endif
 
 static void create_table(lua_State *L, const char* registryKey, bool fWeak)
 {
@@ -482,7 +494,7 @@ static void cb_dns( dns_result_t * r )
     unref_callback( L, (void*)r );
     //  Do the callback
     lua_pushinteger( L,  r->ipaddr );
-    int res = lua_resume( L, 1 );
+    int res = net_lua_resume( L, 1 );
     if (  res != 0 && res !=LUA_YIELD ) {
         callback_error( L );
     }
@@ -529,7 +541,7 @@ typedef struct {
 
 #define net_timer_check( L, idx ) ( t_net_timer* )luaL_checkudata( L, idx, NET_TIMER_META_NAME )
 
-static void cb_timer(pico_time time, void * arg)
+static void cb_timer(uint64_t time, void * arg)
 {
    if (G_state == NULL) return ; // Don't run callbacks when Lua is not initalized
    
@@ -541,7 +553,7 @@ static void cb_timer(pico_time time, void * arg)
      
      // Do the callback
      lua_pushnumber( L, time );
-     int res = lua_resume( L, 1 );
+     int res = net_lua_resume( L, 1 );
      if (  res != 0 && res !=LUA_YIELD ) {
         callback_error( L );
      }
@@ -562,7 +574,7 @@ static int net_timer( lua_State *L )
    // Store callback function in registry
    lua_pushvalue( L, 2 );  
    t->ref = luaL_ref(L, LUA_REGISTRYINDEX);
-   t->id = pico_timer_add(  expire, &cb_timer, (void*) t->ref );
+   t->id = elua_pico_timer_add( (uint64_t)expire, &cb_timer, (void*) t->ref );
 
    return 1; // return userdata object
 
@@ -579,7 +591,7 @@ bool valid=false;
      lua_rawgeti(L, LUA_REGISTRYINDEX,t->ref );
      valid = lua_isfunction (L, -1 );
      if (valid) {
-        pico_timer_cancel( t->id );
+        elua_pico_timer_cancel( t->id );
         luaL_unref(L, LUA_REGISTRYINDEX, t->ref );
         t->id=0;
         t->ref=0;
@@ -662,7 +674,7 @@ static void cb_socket(t_socket_event ev, uintptr_t socket)
       lua_pushstring( L ,sock_events[(int)ev] );
       lua_pushvalue( G_state,-2 ); // Dup socket object
       lua_xmove( G_state, L, 1 );
-      int res= lua_resume( L, 2 );
+      int res= net_lua_resume( L, 2 );
       if ( res!=0 && res != LUA_YIELD ) {
         callback_error( L );
       }; 
@@ -869,10 +881,21 @@ static const LUA_REG_TYPE timer_mt_map[] =
 
 #endif 
 
+#ifdef ELUA_PICOTCP_NG
+void elua_pico_lua_hook( lua_State *L, lua_Debug *ar )
+{
+  ( void )L;
+  ( void )ar;
+  elua_pico_tick();
+}
+#endif
 
 LUALIB_API int luaopen_net( lua_State *L )
 {
 
+#ifdef BUILD_PICOTCP
+  elua_pico_set_socketcallback(&cb_socket);
+#endif
 
 #if LUA_OPTIMIZE_MEMORY > 0
 
@@ -880,8 +903,11 @@ LUALIB_API int luaopen_net( lua_State *L )
 
   init_socket_table(L);
 #ifdef BUILD_PICOTCP
-  elua_pico_set_socketcallback(&cb_socket);
   luaL_rometatable( L, NET_TIMER_META_NAME, ( void* )timer_mt_map );
+#endif
+#ifdef ELUA_PICOTCP_NG
+  if( lua_gethook( L ) == NULL )
+    lua_sethook( L, elua_pico_lua_hook, LUA_MASKCOUNT, 10000 );
 #endif
 
   return 0;
@@ -899,6 +925,11 @@ LUALIB_API int luaopen_net( lua_State *L )
   MOD_REG_NUMBER( L, "ELUA_NET_ERR_INVALID_SOCKET", ELUA_NET_ERR_INVALID_SOCKET );
   MOD_REG_NUMBER( L, "NO_TIMEOUT", 0 );
   MOD_REG_NUMBER( L, "INF_TIMEOUT", PLATFORM_TIMER_INF_TIMEOUT );
+
+#ifdef ELUA_PICOTCP_NG
+  if( lua_gethook( L ) == NULL )
+    lua_sethook( L, elua_pico_lua_hook, LUA_MASKCOUNT, 10000 );
+#endif
 
   return 1;
 #endif // #if LUA_OPTIMIZE_MEMORY > 0

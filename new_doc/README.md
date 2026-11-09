@@ -108,6 +108,11 @@ For guidance on making an eLua C module build with both Lua 5.1 and Lua 5.5,
 including a `pd` walkthrough and a coding-agent checklist, see
 [Lua 5.5 module porting](LUA55_MODULE_PORTING.md).
 
+The opt-in native Linux PicoTCP-NG/TAP profile, including its GPL notice,
+runtime configuration, and privileged TCP integration check, is documented in
+[PicoTCP-NG on the Linux simulator](PICOTCP_NG.md). The regular `sim` board
+remains network-free.
+
 For the Lua 5.5 architecture, target status, Picolibc policy, deliberate
 compatibility boundaries, and follow-up-agent handover, see
 [Lua 5.5 port status](LUA55_PORT_STATUS.md).  For RISC-V Newlib versus

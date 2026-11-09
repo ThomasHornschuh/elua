@@ -14,6 +14,9 @@
 #include "hostif.h"
 #include "platform_conf.h"
 #include "common.h"
+#ifdef ELUA_PICOTCP_NG
+#include "elua_picotcp.h"
+#endif
 
 #define EOF (-1)
 #define STDIN_FILENO 0
@@ -100,12 +103,39 @@ void hostif_putstr(const char *c)
 
 int hostif_getch()
 {
+#ifdef ELUA_PICOTCP_NG
+  for( ;; )
+  {
+    fd_set fds;
+    struct timeval timeout;
+    int result;
+    unsigned char ch = 0;
+
+    FD_ZERO( &fds );
+    FD_SET( STDIN_FILENO, &fds );
+    timeout.tv_sec = 0;
+    timeout.tv_usec = 100000;
+    result = select( STDIN_FILENO + 1, &fds, NULL, NULL, &timeout );
+    if( result > 0 )
+    {
+      if( host_read( STDIN_FILENO, &ch, 1 ) == 1 )
+        return (int)ch;
+      return EOF;
+    }
+    if( result == 0 )
+      elua_pico_tick();
+    else if( errno != EINTR )
+      return EOF;
+    else
+      elua_pico_tick();
+  }
+#else
  	unsigned char ch = 0;
 	if(host_read(STDIN_FILENO, &ch, 1) != 1) {
 		return EOF;
 	}
 	return (int)ch;
- 
+#endif
 }
 
 int hostif_getch_timeout( unsigned timeout_ms )
@@ -133,7 +163,7 @@ void* hostif_getmem( unsigned size )
   return pmem == MAP_FAILED ? NULL : pmem;
 }
 
-void hostif_exit()
+void hostif_exit(int status)
 {
 #if VTMR_NUM_TIMERS > 0
   sigset_t blocked;
@@ -146,7 +176,7 @@ void hostif_exit()
   setitimer( ITIMER_REAL, &timer, NULL );
 #endif
 	hostif_restore_terminal();
-	host_exit( 0 );
+	host_exit( status );
 }
 
 int hostif_open( const char* name, int flags, unsigned mode )

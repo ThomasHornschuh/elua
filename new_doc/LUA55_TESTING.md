@@ -95,6 +95,13 @@ but does not count Linux suspend time. The smoke test allows up to two
 seconds of additional scheduling latency rather than asserting exact timing;
 this is a test tolerance, not a real-time guarantee.
 
+## Optional PicoTCP-NG TAP profile
+
+The default `board=sim` build and regression runner remain network-free. For
+the opt-in native Linux profile, pinned source build, TAP setup and cleanup,
+GPL distribution warning, supported API surface, and privileged TCP test, see
+[PicoTCP-NG on the Linux simulator](PICOTCP_NG.md). Building the opt-in profile
+does not create or attach to a TAP interface.
 
 ## GitHub Actions
 

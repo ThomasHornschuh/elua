@@ -38,7 +38,8 @@ typedef void (*t_socketcallback)(t_socket_event ev, uintptr_t socket);
 
 
 
-void elua_pico_init();
+int elua_pico_init(void);
+void elua_pico_shutdown(void);
 void elua_pico_tick();
 void elua_pico_unwind();
 void elua_pico_setdebug(bool d);
@@ -56,5 +57,7 @@ int elua_pico_change_nameserver( elua_net_ip addr, uint8_t flag );
 elua_net_ip elua_net_get_localip();
 
 int elua_pico_isbound(uintptr_t socket);
+uint32_t elua_pico_timer_add(uint64_t expire, void (*timer)(uint64_t, void *), void *arg);
+void elua_pico_timer_cancel(uint32_t id);
 
 #endif

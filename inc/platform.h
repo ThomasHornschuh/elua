@@ -316,6 +316,7 @@ void platform_eth_force_interrupt(void);
 u32 platform_eth_get_elapsed_time(void);
 // Added TH:
 const u8 *platform_eth_init();
+void platform_eth_close(void);
 
 // *****************************************************************************
 // Internal flash erase/write functions
