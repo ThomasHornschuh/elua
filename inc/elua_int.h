@@ -4,6 +4,7 @@
 #define __ELUA_INT_H__
 
 #include "type.h"
+#include "lua.h"
 
 typedef u8 elua_int_id;
 // The resource number is a 16-bit integer because it must be able to hold a 
@@ -36,7 +37,11 @@ typedef struct
 typedef void( *elua_int_c_handler )( elua_int_resnum resnum );
 
 // Handler key in the registry
+#if defined( ELUA_LUA55 )
+#define LUA_INT_HANDLER_KEY             ( ( lua_Integer )( uintptr_t )&elua_int_add )
+#else
 #define LUA_INT_HANDLER_KEY             ( int )&elua_int_add
+#endif
 
 // Maximum number of interrupt sources that can appear in ANY backend
 // Must be a multiple of 32
@@ -44,6 +49,7 @@ typedef void( *elua_int_c_handler )( elua_int_resnum resnum );
 
 // Function prototypes
 int elua_int_add( elua_int_id inttype, elua_int_resnum resnum );
+void elua_int_set_lua_state( lua_State *L );
 void elua_int_enable( elua_int_id inttype );
 void elua_int_disable( elua_int_id inttype );
 int elua_int_is_enabled( elua_int_id inttype );

@@ -224,6 +224,11 @@ timer_data_type platform_s_timer_op( unsigned id, int op, timer_data_type data )
   return 0;
 }
 
+int platform_s_timer_set_match_int( unsigned id, timer_data_type period_us, int type )
+{
+  return PLATFORM_TIMER_INT_INVALID_ID;
+}
+
 timer_data_type platform_timer_read_sys( void )
 {
   return ( u64 )hostif_gettime() % ( ( u64 )PLATFORM_TIMER_SYS_MAX + 1 );
@@ -233,12 +238,17 @@ timer_data_type platform_timer_read_sys( void )
 // "Dummy" CPU functions
 
 
+static int sim_global_interrupts = PLATFORM_CPU_ENABLE;
+
 int platform_cpu_set_global_interrupts( int status )
 {
-  return 0;
+  int previous = sim_global_interrupts;
+
+  sim_global_interrupts = status == PLATFORM_CPU_ENABLE ? PLATFORM_CPU_ENABLE : PLATFORM_CPU_DISABLE;
+  return previous;
 }
 
 int platform_cpu_get_global_interrupts( void )
 {
-  return 0;
+  return sim_global_interrupts;
 }

@@ -95,6 +95,20 @@ but does not count Linux suspend time. The smoke test allows up to two
 seconds of additional scheduling latency rather than asserting exact timing;
 this is a test tolerance, not a real-time guarantee.
 
+## Cooperative virtual timer interrupts
+
+The `sim` board also exposes `cpu.INT_TMR_MATCH` for `tmr.VIRT0` through
+`tmr.VIRT3`. Lua programs can use `cpu.set_int_handler`, `cpu.sei`,
+`cpu.cli`, `cpu.get_int_flag`, and `tmr.set_match_int` with `tmr.INT_ONESHOT`
+or `tmr.INT_CYCLIC`.
+
+`SIGALRM` only records host timer ticks. eLua consumes pending ticks at a Lua
+instruction-count hook and invokes Lua handlers cooperatively; no Lua API or
+eLua interrupt-queue operation runs in signal context. Consequently callbacks
+run only while Lua bytecode is executing. Ticks that occur while the simulator
+is blocked are delivered or coalesced when it resumes normal Lua execution;
+there is no real-time callback-latency or exact delivery-count guarantee.
+
 ## Optional PicoTCP-NG TAP profile
 
 The default `board=sim` build and regression runner remain network-free. For

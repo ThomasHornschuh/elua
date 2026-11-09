@@ -7,6 +7,9 @@
 #include <stdio.h>
 #include <string.h>
 
+#if defined( ELUA_SIM_LINUX )
+void hostif_process_timers( void );
+#endif
 #ifdef ELUA_PICOTCP_NG
 extern void elua_pico_lua_hook( lua_State *L, lua_Debug *ar );
 #endif
@@ -23,6 +26,10 @@ static elua_int_element elua_int_queue[ 1 << PLATFORM_INT_QUEUE_LOG_SIZE ];
 // Interrupt enabled/disabled flags
 static u32 elua_int_flags[ LUA_INT_MAX_SOURCES / 32 ];
 
+#if defined( ELUA_LUA55 )
+static lua_State *elua_int_lua_state;
+#endif
+
 // Masking for read/write indexes
 #define INT_IDX_SHIFT                   ( PLATFORM_INT_QUEUE_LOG_SIZE )
 #define INT_IDX_MASK                    ( ( 1 << INT_IDX_SHIFT ) - 1 )
@@ -36,6 +43,11 @@ static void elua_int_hook( lua_State *L, lua_Debug *ar )
 #ifdef ELUA_PICOTCP_NG
   elua_pico_tick();
 #endif
+#if defined( ELUA_SIM_LINUX )
+  hostif_process_timers();
+#endif
+  if( elua_int_queue[ elua_int_read_idx ].id == ELUA_INT_EMPTY_SLOT )
+    return;
 
   // Get interrupt (and remove from queue)
   crt = elua_int_queue[ elua_int_read_idx ];
@@ -59,11 +71,15 @@ static void elua_int_hook( lua_State *L, lua_Debug *ar )
   }
 
   old_status = platform_cpu_set_global_interrupts( PLATFORM_CPU_DISABLE );
+#if !defined( ELUA_SIM_LINUX )
   if( elua_int_queue[ elua_int_read_idx ].id == ELUA_INT_EMPTY_SLOT ) // no more interrupts in the queue, so clear the hook
+  {
 #ifdef ELUA_PICOTCP_NG
     lua_sethook( L, elua_pico_lua_hook, LUA_MASKCOUNT, 10000 );
 #else
     lua_sethook( L, NULL, 0, 0 );
+#endif
+  }
 #endif
   platform_cpu_set_global_interrupts( old_status );
 }
@@ -77,7 +93,11 @@ int elua_int_add( elua_int_id inttype, elua_int_resnum resnum )
 
   // If Lua is not running (no Lua state), or no Lua interrupt handler is set, 
   // or the interrupt is not enabled, don't do anything
-  if( lua_getstate() == NULL || !elua_int_is_enabled( inttype ) )
+#if defined( ELUA_LUA55 )
+  if( elua_int_lua_state == NULL || !elua_int_is_enabled( inttype ) || !platform_cpu_get_global_interrupts() )
+#else
+  if( lua_getstate() == NULL || !elua_int_is_enabled( inttype ) || !platform_cpu_get_global_interrupts() )
+#endif
     return PLATFORM_ERR;
 
   // If there's no more room in the queue, set the overflow flag and return
@@ -93,13 +113,29 @@ int elua_int_add( elua_int_id inttype, elua_int_resnum resnum )
   elua_int_write_idx = ( elua_int_write_idx + 1 ) & INT_IDX_MASK;
 
   // Set the Lua hook (it's OK to set it even if it's already set)
-  lua_sethook( lua_getstate(), elua_int_hook, LUA_MASKCOUNT, 2 ); 
+#if defined( ELUA_LUA55 )
+  lua_sethook( elua_int_lua_state, elua_int_hook, LUA_MASKCOUNT, 2 );
+#else
+  lua_sethook( lua_getstate(), elua_int_hook, LUA_MASKCOUNT, 2 );
+#endif
 
   // All OK
   return PLATFORM_OK;
 }
 
 // Enable the given interrupt
+void elua_int_set_lua_state( lua_State *L )
+{
+#if defined( ELUA_LUA55 )
+  elua_int_lua_state = L;
+#endif
+#if defined( ELUA_SIM_LINUX )
+  lua_sethook( L, elua_int_hook, LUA_MASKCOUNT, 2 );
+#else
+  ( void )L;
+#endif
+}
+
 void elua_int_enable( elua_int_id inttype )
 {
   if( inttype < LUA_INT_MAX_SOURCES )
@@ -135,6 +171,9 @@ void elua_int_cleanup()
 {
   elua_int_disable_all();
   elua_int_read_idx = elua_int_write_idx = 0;
+#if defined( ELUA_LUA55 )
+  elua_int_lua_state = NULL;
+#endif
   memset( elua_int_queue, ELUA_INT_EMPTY_SLOT, sizeof( elua_int_queue ) );
 }
 
@@ -148,6 +187,11 @@ void elua_int_disable_all()
 // This too
 void elua_int_cleanup()
 {
+}
+
+void elua_int_set_lua_state( lua_State *L )
+{
+  ( void )L;
 }
 
 void elua_int_enable( elua_int_id inttype )

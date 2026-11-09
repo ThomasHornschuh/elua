@@ -3,6 +3,8 @@
 #ifndef __CPU_LINUX_H__
 #define __CPU_LINUX_H__
 
+#include "platform_ints.h"
+
 // Number of resources (0 if not available/not implemented)
 #define NUM_PIO               0
 #define NUM_SPI               0

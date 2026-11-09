@@ -20,6 +20,7 @@ void hostif_init_terminal();
 void hostif_restore_terminal();
 
 int hostif_init_timers();
+void hostif_process_timers();
 
 // Get memory
 void *hostif_getmem( unsigned size );

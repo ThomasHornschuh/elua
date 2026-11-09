@@ -7,6 +7,13 @@
 #include "utils.h"
 #include <stdio.h>
 
+#if defined( ELUA_SIM_LINUX )
+void hostif_process_timers( void );
+#define CMN_TIMER_SERVICE() hostif_process_timers()
+#else
+#define CMN_TIMER_SERVICE() do { } while( 0 )
+#endif
+
 #ifdef BUILD_INT_HANDLERS
   extern const elua_int_descriptor elua_int_table[ INT_ELUA_LAST ];
 #endif // #ifdef BUILD_INT_HANDLERS
@@ -83,7 +90,8 @@ static void vtmr_reset_timer( unsigned vid )
   // TH: Ensure that Interrupts are enabled before timer is reset, otherwise eLua will hang forever....
   int oldstate = platform_cpu_set_global_interrupts(PLATFORM_CPU_ENABLE);
   // End TH
-  while( vtmr_reset_idx != -1 );
+  while( vtmr_reset_idx != -1 )
+    CMN_TIMER_SERVICE();
   platform_cpu_set_global_interrupts(oldstate);
 }
 
@@ -98,7 +106,8 @@ static void vtmr_delay( unsigned vid, timer_data_type delay_us )
   vtmr_reset_timer( vid );
   // TH: Ensure that Interrupts are enabled otherwise eLua will hang forever....
   int oldstate = platform_cpu_set_global_interrupts(PLATFORM_CPU_ENABLE); // TH
-  while( vtmr_counters[ id ] < final );
+  while( vtmr_counters[ id ] < final )
+    CMN_TIMER_SERVICE();
   platform_cpu_set_global_interrupts(oldstate); // TH
 }
 

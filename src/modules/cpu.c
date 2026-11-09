@@ -238,7 +238,11 @@ static int cpu_set_int_handler( lua_State *L )
 
   if( id < ELUA_INT_FIRST_ID || id > INT_ELUA_LAST )
     return luaL_error( L, "invalid interrupt ID" );
-  if( lua_type( L, 2 ) == LUA_TFUNCTION || lua_type( L, 2 ) == LUA_TLIGHTFUNCTION || lua_type( L, 2 ) == LUA_TNIL )
+  if( lua_type( L, 2 ) == LUA_TFUNCTION ||
+#if !defined( ELUA_LUA55 )
+      lua_type( L, 2 ) == LUA_TLIGHTFUNCTION ||
+#endif
+      lua_type( L, 2 ) == LUA_TNIL )
   {
     if( lua_type( L, 2 ) == LUA_TNIL )
       elua_int_disable( id );
@@ -331,6 +335,7 @@ const LUA_REG_TYPE cpu_map[] =
 LUALIB_API int luaopen_cpu( lua_State *L )
 {
 #ifdef BUILD_LUA_INT_HANDLERS
+  elua_int_set_lua_state( L );
   // Create interrupt table
   lua_newtable( L );
   lua_rawseti( L, LUA_REGISTRYINDEX, LUA_INT_HANDLER_KEY );

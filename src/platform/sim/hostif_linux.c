@@ -26,19 +26,33 @@ static struct termios saved_termios;
 static int terminal_is_raw;
 
 #if VTMR_NUM_TIMERS > 0
-#if defined( BUILD_INT_HANDLERS ) && defined( INT_TMR_MATCH )
-#error Simulator virtual timer signal handler cannot run timer interrupt handlers
-#endif
 #if VTMR_FREQ_HZ > 1000000 || 1000000 % VTMR_FREQ_HZ != 0
 #error Simulator virtual timer frequency must divide 1000000
 #endif
 
+/* SIGALRM may only record elapsed host ticks. Lua and eLua APIs are not
+ * async-signal-safe, so normal simulator execution consumes these ticks. */
+static volatile sig_atomic_t pending_timer_ticks;
+
 static void hostif_timer_signal( int signo )
 {
   ( void )signo;
-  cmn_virtual_timer_cb();
+  if( pending_timer_ticks < SIG_ATOMIC_MAX )
+    pending_timer_ticks ++;
 }
 #endif
+
+void hostif_process_timers()
+{
+#if VTMR_NUM_TIMERS > 0
+  sig_atomic_t ticks;
+
+  ticks = pending_timer_ticks;
+  pending_timer_ticks = 0;
+  while( ticks -- > 0 )
+    cmn_virtual_timer_cb();
+#endif
+}
 
 int hostif_init_timers()
 {
