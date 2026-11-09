@@ -73,10 +73,10 @@ created interfaces when finished:
 sudo ip link delete dev elua0
 ```
 
-PicoTCP polling and protocol timers run from the simulator's normal safe
-execution context: while the shell waits for input and while eLua's blocking
-network operations wait. The host timer signal does not call PicoTCP or execute
-Lua network callbacks.
+PicoTCP polling and protocol timers run in the simulator's safe execution
+context: a Lua VM instruction hook services the stack while Lua code runs,
+blocking network operations poll while waiting, and the shell polls while idle.
+The host timer signal does not call PicoTCP or execute Lua network callbacks.
 
 ## TCP over TAP integration check
 

@@ -7,7 +7,17 @@ assert(not pcall(net.lookup, "peer.invalid", function() end))
 assert(not pcall(net.debug, 1, "/tmp/picotcp-debug.log"))
 
 local server = assert(net.listen(8080), "net.listen failed")
+local connection_seen = false
+net.callback(server, function(event)
+  if event == "connect" then
+    connection_seen = true
+  end
+end)
 print("ELUA_PICOTCP_TCP_READY")
+
+local busy_until = os.clock() + 1
+while os.clock() < busy_until do end
+assert(connection_seen, "PicoTCP did not process TAP traffic while Lua was running")
 
 local client, _, accept_error = net.accept(8080, tmr.SYS_TIMER, 15000000)
 assert(client, "net.accept failed: " .. tostring(accept_error))
