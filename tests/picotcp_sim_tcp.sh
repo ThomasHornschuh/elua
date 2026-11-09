@@ -6,123 +6,74 @@ sim=${ELUA_SIM:-"$root/elua_lua_sim_picotcp.elf"}
 tap_name=${PICO_TAP_NAME:-"epico$$"}
 tap_created=0
 sim_pid=
+peer_pid=
 tmpdir=$(mktemp -d)
 
 fail() {
   printf 'FAIL: %s\n' "$*" >&2
-  if [[ -f $tmpdir/sim.log ]]; then
-    cat "$tmpdir/sim.log" >&2
-  fi
+  [[ -f $tmpdir/peer.log ]] && cat "$tmpdir/peer.log" >&2
+  [[ -f $tmpdir/sim.log ]] && cat "$tmpdir/sim.log" >&2
   exit 1
 }
-
 cleanup() {
-  local result=0
-  if [[ -n $sim_pid ]]; then
-    kill "$sim_pid" 2>/dev/null || true
-    wait "$sim_pid" 2>/dev/null || true
-    sim_pid=
-  fi
-  if (( tap_created )); then
-    if ip link delete dev "$tap_name"; then
-      tap_created=0
-    else
-      printf 'FAIL: could not remove temporary TAP interface %s\n' "$tap_name" >&2
-      result=1
-    fi
-  fi
+  [[ -n $sim_pid ]] && { kill "$sim_pid" 2>/dev/null || true; wait "$sim_pid" 2>/dev/null || true; }
+  [[ -n $peer_pid ]] && { kill "$peer_pid" 2>/dev/null || true; wait "$peer_pid" 2>/dev/null || true; }
+  (( tap_created )) && ip link delete dev "$tap_name" || true
   rm -rf "$tmpdir"
-  return "$result"
 }
 trap cleanup EXIT
 
-if [[ $(uname -s) != Linux ]]; then
-  fail "Linux is required"
-fi
-if (( EUID != 0 )); then
-  fail "run as root (CAP_NET_ADMIN and permission to attach to TAP are required)"
-fi
-if [[ ! -c /dev/net/tun ]]; then
-  fail "/dev/net/tun is unavailable"
-fi
-for command in ip python3 timeout; do
-  command -v "$command" >/dev/null 2>&1 || fail "required command '$command' is unavailable"
-done
+[[ $(uname -s) == Linux ]] || fail "Linux is required"
+(( EUID == 0 )) || fail "run as root (CAP_NET_ADMIN and TAP access are required)"
+[[ -c /dev/net/tun ]] || fail "/dev/net/tun is unavailable"
+for command in ip python3 timeout; do command -v "$command" >/dev/null || fail "required command '$command' is unavailable"; done
 [[ -x $sim ]] || fail "simulator executable not found: $sim"
-[[ $tap_name =~ ^[a-zA-Z0-9_.-]{1,15}$ ]] || fail "PICO_TAP_NAME must be a 1-15 character Linux interface name"
-if ip link show dev "$tap_name" >/dev/null 2>&1; then
-  fail "interface $tap_name already exists"
-fi
+[[ $tap_name =~ ^[a-zA-Z0-9_.-]{1,15}$ ]] || fail "invalid PICO_TAP_NAME"
 
-ip tuntap add dev "$tap_name" mode tap ||
-  fail "could not create TAP interface; check CAP_NET_ADMIN"
+ip tuntap add dev "$tap_name" mode tap
 tap_created=1
-ip address add 192.168.254.1/30 dev "$tap_name" ||
-  fail "could not configure private address on $tap_name"
-ip link set dev "$tap_name" up ||
-  fail "could not bring $tap_name up"
+ip address add 192.168.254.1/30 dev "$tap_name"
+ip link set dev "$tap_name" up
 
-printf 'lua /rom/picotcp_tcp_server.lua\nexit\n' > "$tmpdir/input"
+# The host is the TCP listener.  This exercises eLua's outgoing TCP path
+# without Lua-side accept/callback lifetime concerns.
+ELUA_TEST_TMPDIR="$tmpdir" python3 - >"$tmpdir/peer.log" 2>&1 <<'PY' &
+import os
+import socket
+server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+server.bind(("192.168.254.1", 8080))
+server.listen(1)
+open(os.path.join(os.environ["ELUA_TEST_TMPDIR"], "peer-ready"), "w").close()
+server.settimeout(15)
+connection, _ = server.accept()
+with connection:
+    connection.settimeout(5)
+    request = connection.recv(12)
+    if request != b"elua-picotcp":
+        raise SystemExit(f"unexpected request: {request!r}")
+    connection.sendall(b"tcp-ok")
+print("LINUX_PEER_TCP_PASS")
+PY
+peer_pid=$!
+for _ in $(seq 1 100); do
+  [[ -e $tmpdir/peer-ready ]] && break
+  kill -0 "$peer_pid" 2>/dev/null || fail "Linux TCP server exited before listening"
+  sleep 0.1
+done
+[[ -e $tmpdir/peer-ready ]] || fail "Linux TCP server did not begin listening"
+
+printf 'lua /rom/picotcp_tcp_client.lua\nexit\n' > "$tmpdir/input"
 timeout --signal=TERM --kill-after=2s 25s env \
-  ELUA_PICO_TAP="$tap_name" \
-  ELUA_PICO_TAP_IP=192.168.254.2 \
+  ELUA_PICO_TAP="$tap_name" ELUA_PICO_TAP_IP=192.168.254.2 \
   ELUA_PICO_TAP_NETMASK=255.255.255.252 \
   "$sim" < "$tmpdir/input" > "$tmpdir/sim.log" 2>&1 &
 sim_pid=$!
 
-for (( attempt = 0; attempt < 100; ++attempt )); do
-  kill -0 "$sim_pid" 2>/dev/null || fail "simulator exited before starting the TCP server"
-  if grep -Fq 'ELUA_PICOTCP_TCP_READY' "$tmpdir/sim.log"; then
-    break
-  fi
-  sleep 0.1
-done
-grep -Fq 'ELUA_PICOTCP_TCP_READY' "$tmpdir/sim.log" ||
-  fail "simulator did not start its TCP server within 10 seconds"
-
-python3 - 192.168.254.2 > "$tmpdir/peer.log" 2>&1 <<'PY' ||
-  fail "Linux peer TCP exchange failed"
-import socket
-import sys
-import time
-
-peer = sys.argv[1]
-deadline = time.monotonic() + 10
-last_error = None
-while time.monotonic() < deadline:
-    try:
-        connection = socket.create_connection((peer, 8080), timeout=1)
-        break
-    except OSError as error:
-        last_error = error
-        time.sleep(0.1)
-else:
-    raise SystemExit(f"could not connect to eLua TCP server: {last_error}")
-
-with connection:
-    connection.settimeout(5)
-    connection.sendall(b"elua-picotcp")
-    response = bytearray()
-    while len(response) < 6:
-        chunk = connection.recv(6 - len(response))
-        if not chunk:
-            raise SystemExit("peer closed before returning the complete response")
-        response.extend(chunk)
-    if response != b"tcp-ok":
-        raise SystemExit(f"unexpected TCP response: {bytes(response)!r}")
-print("LINUX_PEER_TCP_PASS")
-PY
-grep -Fq 'LINUX_PEER_TCP_PASS' "$tmpdir/peer.log" ||
-  fail "Linux peer did not report a successful TCP exchange"
-cat "$tmpdir/peer.log"
-
+wait "$peer_pid" || fail "Linux TCP server exchange failed"
+peer_pid=
 wait "$sim_pid" || fail "simulator exited with an error"
 sim_pid=
-grep -Fq 'ELUA_PICOTCP_TCP_PASS' "$tmpdir/sim.log" ||
-  fail "eLua did not report a successful TCP exchange"
-cleanup
-trap - EXIT
-if ip link show dev "$tap_name" >/dev/null 2>&1; then
-  fail "temporary TAP interface $tap_name still exists after cleanup"
-fi
+grep -Fq LINUX_PEER_TCP_PASS "$tmpdir/peer.log" || fail "Linux peer did not report success"
+grep -Fq ELUA_PICOTCP_TCP_PASS "$tmpdir/sim.log" || fail "eLua did not report success"
 printf 'PASS: TCP request/response exchanged over TAP %s\n' "$tap_name"

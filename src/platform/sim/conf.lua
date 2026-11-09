@@ -5,8 +5,7 @@
 -- jmp_buf layout is incompatible with glibc and breaks modern Lua runtimes.
 specific_files = sf( "hostif_%s.c platform.c platform_int.c host.c", comp.cpu:lower() )
 if comp.board:lower() == "sim_picotcp" then
-  specific_files = specific_files .. " " ..
-    utils.prepend_path( "picotcp_tap.c", sf( "src/platform/%s", platform ) )
+  specific_files = specific_files .. " picotcp_tap.c"
 end
   
 -- Override default optimize settings

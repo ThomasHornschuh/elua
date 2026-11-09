@@ -32,9 +32,26 @@ static int last_error = ELUA_NET_ERR_OK;
 static uintptr_t last_closed_socket;
 static int last_closed_socket_bound;
 
-extern int elua_pico_tap_send(struct pico_device *dev, void *buf, int len);
-extern int elua_pico_tap_poll(struct pico_device *dev, int loop_score);
-extern void elua_pico_tap_set_destroy(struct pico_device *dev);
+/* The network device adapter is supplied by the selected platform.  The
+ * simulator implementation uses Linux TAP; hardware platforms (including
+ * Bonfire) can supply their own adapter without changing this wrapper. */
+extern int elua_pico_device_send(struct pico_device *dev, void *buf, int len);
+extern int elua_pico_device_poll(struct pico_device *dev, int loop_score);
+extern void elua_pico_device_set_destroy(struct pico_device *dev);
+
+/* PicoTCP-NG requires the embedding application to supply TCP sequence
+ * randomness.  Keep this independent of the Linux TAP backend so a future
+ * hardware device adapter can use the same stack wrapper. */
+uint32_t pico_rand(void)
+{
+  static uint32_t state;
+
+  if( state == 0 )
+    state = (uint32_t)platform_timer_read_sys() ^
+            (uint32_t)(uintptr_t)&state ^ 0x6d2b79f5u;
+  state = state * 1664525u + 1013904223u;
+  return state;
+}
 
 static int find_pending_accept(uint16_t port)
 {
@@ -222,9 +239,9 @@ int elua_pico_init(void)
       platform_eth_close();
       goto fail;
     }
-    pico_device->send = elua_pico_tap_send;
-    pico_device->poll = elua_pico_tap_poll;
-    elua_pico_tap_set_destroy(pico_device);
+    pico_device->send = elua_pico_device_send;
+    pico_device->poll = elua_pico_device_poll;
+    elua_pico_device_set_destroy(pico_device);
     if( pico_device_init(pico_stack, pico_device, getenv("ELUA_PICO_TAP"), mac) != 0 )
     {
       initialized_device = pico_get_device(pico_stack, getenv("ELUA_PICO_TAP")) ==
@@ -268,9 +285,13 @@ fail:
 
 void elua_pico_shutdown(void)
 {
-  deinit_stack();
-  pico_device = NULL;
+  /* The simulator terminates immediately after this call.  PicoTCP-NG's
+   * stack teardown can invoke device/socket callbacks after the Lua state has
+   * gone away, so only release the host device here and let process exit
+   * reclaim the stack.  A reusable hardware lifecycle needs its own ordered
+   * shutdown path. */
   platform_eth_close();
+  pico_device = NULL;
 }
 
 void elua_pico_tick(void)

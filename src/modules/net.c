@@ -95,8 +95,9 @@ static void  init_socket_table(lua_State *L)
    lua_pushstring(L, THREAD_KEY);
    G_state = lua_newthread(L);
    lua_settable(L,LUA_REGISTRYINDEX);
-   lua_pop(L,1); // Pop thread from stack
-
+   /* lua_settable consumes the registry key and the new thread.  Keep the
+    * module table below it on the stack for the constants registered by
+    * luaopen_net (Lua 5.5 passes the module name below that table). */
 
    // Create an empty table and store in the registry
    create_table(L,NET_SOCK_T_NAME,true);
@@ -185,7 +186,11 @@ static sock_t *push_socket( lua_State *L, uintptr_t sock )
       lua_pushvalue(L, -3 ); // Dup our user data
       lua_settable(L,-3);
       lua_pop(L,1); // remove table from TOS, we dont need it
-      if (!lua_isuserdata(L,-1)) kassert_fail("push_socket no userdata at tos\n");
+      if( !lua_isuserdata( L, -1 ) )
+      {
+        luaL_error( L, "internal error: socket userdata is missing" );
+        return NULL;
+      }
 
       return s;
     } else {
@@ -486,7 +491,7 @@ static void cb_dns( dns_result_t * r )
 
    
    lua_State *L = lua_newthread( G_state );
-   if (!L) kassert_fail("dns_cb L is NULL");
+   if( !L ) return;
 
 
   push_callback( L, (void*)r );
@@ -546,9 +551,9 @@ static void cb_timer(uint64_t time, void * arg)
    if (G_state == NULL) return ; // Don't run callbacks when Lua is not initalized
    
    lua_State *L = lua_newthread( G_state );
-   if (!L) kassert_fail("cb_timer: L is NULL");
+   if( !L ) return;
 
-   lua_rawgeti(L, LUA_REGISTRYINDEX,(int) arg );
+   lua_rawgeti( L, LUA_REGISTRYINDEX, (int)(intptr_t)arg );
    if ( lua_isfunction( L, -1) ) {
      
      // Do the callback
@@ -558,7 +563,7 @@ static void cb_timer(uint64_t time, void * arg)
         callback_error( L );
      }
    }
-   luaL_unref(L, LUA_REGISTRYINDEX, (int)arg );
+   luaL_unref( L, LUA_REGISTRYINDEX, (int)(intptr_t)arg );
    lua_pop( G_state, 1 ); // will hopefully GC the thread 
    
 }
@@ -568,13 +573,14 @@ static int net_timer( lua_State *L )
 {
 
    pico_time  expire = (pico_time)luaL_checknumber (L, 1);
-   luaL_checkanyfunction( L, 2);
+   luaL_checktype( L, 2, LUA_TFUNCTION );
 
    t_net_timer * t = (t_net_timer*) newuserdata_meta( L, sizeof(t_net_timer), NET_TIMER_META_NAME ); 
    // Store callback function in registry
    lua_pushvalue( L, 2 );  
    t->ref = luaL_ref(L, LUA_REGISTRYINDEX);
-   t->id = elua_pico_timer_add( (uint64_t)expire, &cb_timer, (void*) t->ref );
+   t->id = elua_pico_timer_add( (uint64_t)expire, &cb_timer,
+                                (void *)(intptr_t)t->ref );
 
    return 1; // return userdata object
 
@@ -733,7 +739,7 @@ static int net_set_debug_mode( lua_State *L )
 {
 
 const char* filename=NULL;  
-int mode=luaL_checkint(L, 1 );
+int mode = (int)luaL_checkinteger( L, 1 );
 
   if ( lua_gettop( L )>=2 )
     filename=luaL_checkstring( L,2 ); 
@@ -853,10 +859,18 @@ const LUA_REG_TYPE net_map[] =
 };
 
 
+static int socket_index( lua_State *L )
+{
+  luaL_getmetatable( L, NET_META_NAME );
+  lua_pushvalue( L, 2 );
+  lua_rawget( L, -2 );
+  return 1;
+}
+
 static const LUA_REG_TYPE socket_mt_map[] =
 {
   { LSTRKEY( "__gc" ), LFUNCVAL( socket_gc ) },
-  { LSTRKEY( "__index" ), LRO_ROVAL( socket_mt_map ) },
+  { LSTRKEY( "__index" ), LFUNCVAL( socket_index ) },
   { LSTRKEY( "connect" ), LFUNCVAL( net_connect ) },
   { LSTRKEY( "close" ), LFUNCVAL( net_close ) },
   { LSTRKEY( "send" ), LFUNCVAL( net_send ) },
@@ -870,9 +884,17 @@ static const LUA_REG_TYPE socket_mt_map[] =
 };
 
 #ifdef BUILD_PICOTCP
+static int timer_index( lua_State *L )
+{
+  luaL_getmetatable( L, NET_TIMER_META_NAME );
+  lua_pushvalue( L, 2 );
+  lua_rawget( L, -2 );
+  return 1;
+}
+
 static const LUA_REG_TYPE timer_mt_map[] =
 {
-   { LSTRKEY( "__index" ), LRO_ROVAL( timer_mt_map ) },
+   { LSTRKEY( "__index" ), LFUNCVAL( timer_index ) },
    //{ LSTRKEY( "__gc" ), LFUNCVAL( timer_gc ) },
    { LSTRKEY( "cancel" ), LFUNCVAL( net_timer_cancel ) },
    { LSTRKEY( "__tostring" ), LFUNCVAL( net_timer_to_string )},
@@ -913,6 +935,14 @@ LUALIB_API int luaopen_net( lua_State *L )
   return 0;
 #else // #if LUA_OPTIMIZE_MEMORY > 0
   luaL_register( L, AUXLIB_NET, net_map );
+#ifdef BUILD_PICOTCP
+  luaL_newmetatable( L, NET_META_NAME );
+  luaL_setfuncs( L, socket_mt_map, 0 );
+  lua_pop( L, 1 );
+  luaL_newmetatable( L, NET_TIMER_META_NAME );
+  luaL_setfuncs( L, timer_mt_map, 0 );
+  lua_pop( L, 1 );
+#endif
   init_socket_table(L);
   // Module constants
   MOD_REG_NUMBER( L, "SOCK_STREAM", ELUA_NET_SOCK_STREAM );

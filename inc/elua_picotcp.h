@@ -8,6 +8,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "elua_net.h"
 
 typedef enum
 {

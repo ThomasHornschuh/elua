@@ -99,3 +99,60 @@ the unprivileged build do not invoke this helper or require TAP privileges.
 
 The check establishes local TCP/IP connectivity only. It does not validate
 Internet access, DHCP, DNS, hardware Ethernet, or Bonfire interoperability.
+
+## SD-card network examples
+
+`sim_picotcp` enables the same MMC/FAT component as `sim`, so it mounts a FAT
+image named `sdcard.img` in its working directory at `/mmc`. Generated images
+are ignored and must not be committed. Create a curated image from a checkout
+of `elua_examples` with `mtools`:
+
+```sh
+ELUA_EXAMPLES_DIR=/path/to/elua_examples \
+  tests/create_picotcp_examples_sd_image.sh /tmp/picotcp-sdcard.img
+mkdir -p /tmp/picotcp-run
+cp /tmp/picotcp-sdcard.img /tmp/picotcp-run/sdcard.img
+cd /tmp/picotcp-run
+sudo env ELUA_PICO_TAP=elua0 /path/to/elua/elua_lua_sim_picotcp.elf
+```
+
+The generator requires `truncate`, `mformat`, `mmd`, and `mcopy`; it refuses to
+overwrite an image. It was checked with `elua_examples` revision
+`06478dfde218897b0be38df3cf6e8eb2e2c55ffa`. The image includes
+`/mmc/net/tcp_echo.lua`, `/mmc/net/http_get_text.lua`, and their local `util`
+and `debugger` dependencies. `tcp_echo.lua` is the selected TCP-server example;
+point a local TAP peer at port 7. `http_get_text.lua` is the selected
+HTTP-style client; give it a numeric address and a local HTTP server on the
+TAP subnet, for example `192.168.254.1:8080/`. Numeric addresses avoid the
+intentionally unsupported DNS client.
+
+### Compatibility matrix (`elua_examples/net` at the revision above)
+
+| Script | Classification | Notes |
+| --- | --- | --- |
+| `tcp_echo.lua` | Runnable unchanged | Selected TAP TCP-server example; byte-count receive is used. |
+| `http_get_text.lua` | Runnable with setup | Included on the SD image with `util.lua` and `debugger.lua`; use a numeric local HTTP URL. |
+| `http_get_file.lua` | Runnable with setup | Needs `util.lua`, a numeric local HTTP endpoint, and writable `/mmc`; not included in the curated image. |
+| `http_client.lua` | Runnable with adjustment | Use numeric local URLs; its `net.tick` calls are harmless because polling is automatic. |
+| `http_get_text_old.lua` | Runnable with setup | Needs `util.lua` and `debugger.lua`, plus a numeric local HTTP endpoint. |
+| `net_timer.lua` | Runnable with setup | Needs `debugger.lua`; timer callbacks and `net.tick` are supported. |
+| `life_server.lua` | Runnable with adjustment | Use a local TAP peer; it uses line-oriented UI/protocol assumptions outside the TCP transport. |
+| `ftpserver.lua` | Intentionally unsupported | Requires `net.get_driver_stats`, unavailable PicoTCP-NG buffered-driver statistics, and FTP peer setup. |
+| `ftp.lua` | Intentionally unsupported | Depends on `ftpserver.lua` and unavailable driver statistics/debug logging. |
+| `lookup.lua` | Intentionally unsupported | Requires DNS and debug/statistics helpers; this isolated profile has no DNS client. |
+| `linkstat.lua` | Intentionally unsupported | Requires `util.lua` and legacy driver-link statistics with no PicoTCP-NG equivalent. |
+
+`net.tick` remains exported for legacy programs. It explicitly services the
+stack, but normal simulator operation also services PicoTCP while Lua executes
+and while the shell is idle; applications do not need polling loops solely for
+transport progress. Unsupported `net.lookup` hostname callbacks,
+`net.nameserver`, debug-file logging, line-mode `net.recv`, and legacy driver
+statistics fail predictably rather than using host DNS or a physical network.
+
+## Portability boundary
+
+The PicoTCP-NG wrapper uses a platform-neutral device-adapter interface. The
+Linux implementation in `src/platform/sim/picotcp_tap.c` is the only code that
+opens `/dev/net/tun`. A future Bonfire Arty adapter can provide the same
+interface over its Ethernet driver without importing TAP code; it remains a
+separate follow-up and is not enabled by this simulator profile.

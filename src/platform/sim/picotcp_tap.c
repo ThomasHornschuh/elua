@@ -3,6 +3,7 @@
 #ifdef ELUA_PICOTCP_NG
 
 #include "platform.h"
+#include "host.h"
 #include "pico_device.h"
 #include "pico_eth.h"
 #include "pico_stack.h"
@@ -57,7 +58,9 @@ const u8 *platform_eth_init(void)
     return NULL;
   }
 
-  tap_fd = open("/dev/net/tun", O_RDWR | O_NONBLOCK);
+  /* Do not use eLua's open()/read()/write()/close() VFS symbols here.
+   * TAP is a host kernel device, so it must use the simulator host syscalls. */
+  tap_fd = host_open("/dev/net/tun", O_RDWR | O_NONBLOCK, 0);
   if( tap_fd < 0 )
   {
     fprintf(stderr, "PicoTCP-NG: cannot open /dev/net/tun: %s\n", strerror(errno));
@@ -111,7 +114,7 @@ void platform_eth_close(void)
 {
   if( tap_fd >= 0 )
   {
-    close(tap_fd);
+    host_close(tap_fd);
     tap_fd = -1;
   }
   tap_name[0] = '\0';
@@ -123,7 +126,7 @@ static int send_frame(const void *src, size_t size)
   if( tap_fd < 0 || size < PICO_SIZE_ETHHDR || size > SIM_ETH_MAX_FRAME )
     return -1;
   do
-    written = write(tap_fd, src, size);
+    written = host_write(tap_fd, src, size);
   while( written < 0 && errno == EINTR );
   if( written < 0 && (errno == EAGAIN || errno == EWOULDBLOCK) )
     return 0;
@@ -157,7 +160,7 @@ u32 platform_eth_get_packet_nb(void *buf, u32 maxlen)
   if( tap_fd < 0 || capacity == 0 )
     return 0;
   do
-    received = read(tap_fd, dst, capacity);
+    received = host_read(tap_fd, dst, capacity);
   while( received < 0 && errno == EINTR );
   if( received < 0 && (errno == EAGAIN || errno == EWOULDBLOCK) )
     return 0;
@@ -188,13 +191,13 @@ u32 platform_eth_get_elapsed_time(void)
   return 0;
 }
 
-int elua_pico_tap_send(struct pico_device *dev, void *buf, int len)
+int elua_pico_device_send(struct pico_device *dev, void *buf, int len)
 {
   (void)dev;
   return send_frame(buf, (size_t)len);
 }
 
-int elua_pico_tap_poll(struct pico_device *dev, int loop_score)
+int elua_pico_device_poll(struct pico_device *dev, int loop_score)
 {
   uint8_t frame[SIM_ETH_MAX_FRAME + 1];
 
@@ -217,7 +220,7 @@ static void tap_destroy(struct pico_device *dev)
   platform_eth_close();
 }
 
-void elua_pico_tap_set_destroy(struct pico_device *dev)
+void elua_pico_device_set_destroy(struct pico_device *dev)
 {
   dev->destroy = tap_destroy;
 }
